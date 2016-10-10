@@ -327,11 +327,9 @@ public abstract class Persistence {
       if(descriptor.isCollection()) {
         Collection related;
         if(descriptor.isModel()) {
-          related = Relationships.getRelatedModels((Model) model, field, annotations.relatedTo,
-            fieldDescriptor, subFields);
+          related = Relationships.getRelatedModels((Model) model, descriptor, fieldDescriptor, subFields);
         } else {
-          related = Relationships.getRelationships((Model) model, field, annotations.relatedTo,
-            fieldDescriptor, subFields);
+          related = Relationships.getRelationships((Model) model, descriptor, fieldDescriptor, subFields);
         }
         field.set(model, Set.class.isAssignableFrom(field.getType())? related: new ArrayList<>(related));        
       } else {

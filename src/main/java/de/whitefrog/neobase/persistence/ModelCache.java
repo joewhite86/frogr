@@ -21,7 +21,8 @@ public class ModelCache {
   }
 
   public AnnotationDescriptor fieldAnnotations(Class clazz, String fieldName) {
-    return fieldDescriptor(clazz, fieldName).annotations();
+    FieldDescriptor descriptor = fieldDescriptor(clazz, fieldName);
+    return descriptor != null? descriptor.annotations(): null;
   }
   
   public FieldDescriptor fieldDescriptor(Class clazz, String fieldName) {

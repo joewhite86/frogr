@@ -17,6 +17,7 @@ import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class Relationships {
@@ -91,7 +92,7 @@ public class Relationships {
     return model;
   }
 
-  static Model getRelatedModel(Model model, RelatedTo annotation, FieldList fields) throws ReflectiveOperationException {
+  public static Model getRelatedModel(Model model, RelatedTo annotation, FieldList fields) throws ReflectiveOperationException {
     Validate.notNull(model);
     Validate.notNull(annotation.type());
 
@@ -118,8 +119,9 @@ public class Relationships {
     return null;
   }
 
-  static <M extends de.whitefrog.neobase.model.Model> Set<M> getRelatedModels(Model model, java.lang.reflect.Field field, RelatedTo annotation, QueryField fieldDescriptor, FieldList fields)
-    throws ReflectiveOperationException {
+  public static <M extends de.whitefrog.neobase.model.Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor, 
+      QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+    RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
     
@@ -129,7 +131,6 @@ public class Relationships {
     
     Set<M> models = new HashSet<>();
     Node node = Persistence.getNode(model);
-    Class<M> modelClass = (Class<M>) ReflectionUtil.getGenericClass(field);
     long count = 0;
     
     while(iterator.hasNext()) {
@@ -139,7 +140,7 @@ public class Relationships {
       Relationship relationship = iterator.next();
       Node other = relationship.getOtherNode(node);
       String type = (String) other.getProperty(Base.Type);
-      if(annotation.restrictType() && !type.equals(modelClass.getSimpleName())) {
+      if(annotation.restrictType() && !type.equals(descriptor.baseClass().getSimpleName())) {
         count--; continue;
       }
       Repository<M> repository = service.repository(type);
@@ -149,9 +150,9 @@ public class Relationships {
     return models;
   }
 
-  static <R extends BaseRelationship> 
-  Set<R> getRelationships(Model model, java.lang.reflect.Field field, RelatedTo annotation, QueryField fieldDescriptor,
-                          FieldList fields) throws ReflectiveOperationException {
+  public static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor, 
+      QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+    RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
 
@@ -160,15 +161,14 @@ public class Relationships {
         annotation.direction(), RelationshipType.withName(annotation.type())).iterator();
 
     Node node = Persistence.getNode(model);
-    Class<R> modelClass = (Class<R>) ReflectionUtil.getGenericClass(field);
     Set<R> models = new HashSet<>();
     long count = 0;
     while(iterator.hasNext()) {
-      if(count < fieldDescriptor.skip()) { iterator.next(); count++; continue; }
-      if(count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
+      if(fieldDescriptor != null && count < fieldDescriptor.skip()) { iterator.next(); count++; continue; }
+      if(fieldDescriptor != null && count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
       
       Relationship relationship = iterator.next();
-      R newRel = modelClass.newInstance();
+      R newRel = (R) descriptor.baseClass().newInstance();
       fetchFields(newRel, relationship, model, node, fields);
       
       models.add(newRel);

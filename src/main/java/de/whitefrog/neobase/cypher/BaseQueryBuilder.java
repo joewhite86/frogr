@@ -11,6 +11,7 @@ import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.repository.Repository;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.neo4j.graphdb.Direction;
@@ -145,34 +146,41 @@ public class BaseQueryBuilder implements QueryBuilder {
       }
     }
     
-    if(params.returns() != null && !matches.containsKey(params.returns())) {
-      AnnotationDescriptor descriptor =
-        Persistence.cache().fieldAnnotations(repository().getModelClass(), params.returns());
-      if(descriptor.relatedTo != null) {
-        boolean isRelationship = false;
-        try {
-          Field field = ModelCache.getField(repository().getModelClass(), params.returns());
-          if(Collection.class.isAssignableFrom(field.getType())) {
-            isRelationship = Relationship.class.isAssignableFrom(ReflectionUtil.getGenericClass(field));
-          } else {
-            isRelationship = Relationship.class.isAssignableFrom(field.getType());
-          }
-        } catch(NoSuchFieldException e) {
-          logger.error(e.getMessage(), e);
-        }
+    for(String returns: params.returns()) {
+      String returnsKey = returns.contains(" ")? returns.substring(0, returns.indexOf(" ")): returns;
+      if(!matches.containsKey(returnsKey)) {
+        AnnotationDescriptor descriptor =
+          Persistence.cache().fieldAnnotations(repository().getModelClass(), returnsKey);
+        if(descriptor == null) continue;
         
-        StringBuilder newMatch = new StringBuilder(match);
-        newMatch.append(descriptor.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
-        if(isRelationship) {
-          newMatch.append("[").append(params.returns()).append(":").append(descriptor.relatedTo.type()).append("]");
-          newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-          newMatch.append("()");
-        } else {
-          newMatch.append("[:").append(descriptor.relatedTo.type()).append("]");
-          newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-          newMatch.append("(").append(params.returns()).append(")");
+        if(descriptor.relatedTo != null) {
+          boolean isRelationship = false;
+          try {
+            Field field = ModelCache.getField(repository().getModelClass(), returnsKey);
+            if(Collection.class.isAssignableFrom(field.getType())) {
+              isRelationship = Relationship.class.isAssignableFrom(ReflectionUtil.getGenericClass(field));
+            }
+            else {
+              isRelationship = Relationship.class.isAssignableFrom(field.getType());
+            }
+          } catch(NoSuchFieldException e) {
+            logger.error(e.getMessage(), e);
+          }
+
+          StringBuilder newMatch = new StringBuilder(match);
+          newMatch.append(descriptor.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
+          if(isRelationship) {
+            newMatch.append("[").append(returnsKey).append(":").append(descriptor.relatedTo.type()).append("]");
+            newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
+            newMatch.append("()");
+          }
+          else {
+            newMatch.append("[:").append(descriptor.relatedTo.type()).append("]");
+            newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
+            newMatch.append("(").append(returnsKey).append(")");
+          }
+          matches.put(returnsKey, newMatch.toString());
         }
-        matches.put(params.returns(), newMatch.toString());
       }
     }
     
@@ -287,7 +295,7 @@ public class BaseQueryBuilder implements QueryBuilder {
 
   public StringBuilder returns(SearchParameter params) {
     List<String> ret = new ArrayList<>();
-    ret.add(params.returns() == null? "distinct " + id: params.returns());
+    ret.add(CollectionUtils.isEmpty(params.returns())? "distinct " + id: StringUtils.join(params.returns(), ","));
     
     // to order by a relationship count we need to count it in return for cypher
     for(SearchParameter.OrderBy order : params.orderBy()) {
@@ -339,11 +347,11 @@ public class BaseQueryBuilder implements QueryBuilder {
       match(params, queryParams) +
       where(params, queryParams);
     
-    if(params.returns() != null) {
-      q+= " return count(" + params.returns() + ") as c";
-    } else {
+//    if(params.returns() != null) {
+//      q+= " return count(" + params.returns() + ") as c";
+//    } else {
       q+= " return count(*) as c";
-    }
+//    }
 
     Query query = new Query(q, queryParams);
     Result result = repository.service().graph().execute(query.query(), query.params());

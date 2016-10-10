@@ -20,8 +20,8 @@ public class Export {
 
       try(Transaction tx = service.beginTx()) {
         File output = new File(path + "/models.json");
-        ExecutionResultIterator<Model> iterator = new ExecutionResultIterator<>(service,
-          service.graph().execute("match (e) return e"), "e");
+//        ExecutionResultIterator<Model> iterator = new ExecutionResultIterator<>(service,
+//          service.graph().execute("match (e) return e"), "e");
 //        List<Model> models = Iterators.asList(Iterables.get(iterator));
 //        mapper.writerWithDefaultPrettyPrinter().writeValue(output, models);
 

@@ -5,8 +5,7 @@ import de.whitefrog.neobase.Service;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 
-public class 
-GraphRepository {
+public class GraphRepository {
   private Service service;
   private Graph graph = null;
 

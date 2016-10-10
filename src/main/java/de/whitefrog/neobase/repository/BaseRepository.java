@@ -14,7 +14,9 @@ import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.rest.FieldList;
+import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
+import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
@@ -33,7 +35,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model> implements Repository<T> {
+public abstract class BaseRepository<T extends Model> implements Repository<T> {
   private final Logger logger;
   private static final Map<Service, Map<String, Index<Node>>> indexCache = new HashMap<>();
 
@@ -170,13 +172,7 @@ public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model>
 
   @Override
   public ResultIterator<T> findAll(int limit, int page) {
-    int skip = (page - 1) * limit;
-
-    Result results = graph().execute(
-      "match (n:" + label().name() + ") return n skip {skip} limit {limit}",
-      MapUtil.map("skip", skip, "limit", limit));
-
-    return new ExecutionResultIterator<>(this, results, "n");
+    return search(new SearchParameter(page, limit));
   }
 
   @Override
@@ -220,19 +216,10 @@ public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model>
   }
 
   @Override
-  public ResultIterator<T> findChangedSince(long timestamp, long limit, long page) {
-    Map<String, Object> params = new HashMap<>();
-
-    params.put("timestamp", timestamp);
-    params.put("skip", (page - 1) * limit);
-    params.put("limit", limit);
-    Result results = service().graph().execute(
-      "MATCH (n:" + label() + ") " +
-      "WHERE n.lastModified >= {timestamp} OR (not(has(n.lastModified)) AND n.created > {timestamp}) " +
-      "RETURN n SKIP {skip} LIMIT {limit}", params
-    );
-
-    return new ExecutionResultIterator<>(this, results, "n");
+  public ResultIterator<T> findChangedSince(long timestamp, int limit, int page) {
+    return search(new SearchParameter(page, limit)
+      .filter(T.LastModified, new Filter.GreaterThan(timestamp))
+      .filter(T.Created, new Filter.GreaterThan(timestamp)));
   }
 
   @Override
@@ -401,7 +388,7 @@ public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model>
   @Override
   public ResultIterator<T> query(String query) {
     Result results = graph().execute(query);
-    return new ExecutionResultIterator<>(this, results, queryIdentifier());
+    return new ExecutionResultIterator<>(this, results, new SearchParameter());
   }
 
   @Override
@@ -476,7 +463,7 @@ public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model>
     }
     
     Result result = queryBuilder().execute(params);
-    return new ExecutionResultIterator<>(this, result, "e").fields(params.fieldList());
+    return new ExecutionResultIterator<>(this, result, params);
   }
 
   @Override
@@ -485,30 +472,12 @@ public abstract class BaseRepository<T extends de.whitefrog.neobase.model.Model>
     if(params.returns() == null) {
       throw new UnsupportedOperationException("params.returns can't be null");
     }
-    try {
-      Field field = ModelCache.getField(getModelClass(), params.returns());
-      boolean isRelationship;
-      if(Collection.class.isAssignableFrom(field.getType())) {
-        isRelationship = 
-          de.whitefrog.neobase.model.relationship.Relationship.class.isAssignableFrom(ReflectionUtil.getGenericClass(field));
-      } else {
-        isRelationship =
-          de.whitefrog.neobase.model.relationship.Relationship.class.isAssignableFrom(field.getType());
-      }
-      if(isRelationship) {
-        return new RelationshipResultIterator<R>(result, params.returns()).fields(params.fieldList());
-      } else {
-        Repository repository;
-        if(Collection.class.isAssignableFrom(field.getType())) {
-          repository = service().repository(ReflectionUtil.getGenericClass(field).getSimpleName());
-        } else {
-          repository = service().repository(field.getType().getSimpleName());
-        }
-        return new ExecutionResultIterator<>(repository, result, params.returns()).fields(params.fieldList());
-      }
-    } catch(NoSuchFieldException e) {
-      logger.error(e.getMessage(), e);
-      throw new UnsupportedOperationException(label() + " has no field \"" + params.returns() + "\"");
+    FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(getModelClass(), params.returns().get(0));
+    if(descriptor.isRelationship()) {
+      return new RelationshipResultIterator<R>(result, params);
+    } else {
+      Repository repository = service().repository(descriptor.baseClass().getSimpleName());
+      return new ExecutionResultIterator<>(repository, result, params);
     }
   }
 

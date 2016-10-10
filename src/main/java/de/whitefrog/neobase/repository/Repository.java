@@ -82,7 +82,7 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
    * @param limit     Limit the amount of nodes returned
    * @return List of nodes, which changed after timestamp
    */
-  ResultIterator<T> findChangedSince(long timestamp, long limit, long page);
+  ResultIterator<T> findChangedSince(long timestamp, int limit, int page);
 
   ResultIterator<T> findIndexed(String field, Object value);
 

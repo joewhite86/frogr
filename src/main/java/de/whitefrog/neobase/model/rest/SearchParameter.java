@@ -38,7 +38,7 @@ public class SearchParameter implements Serializable {
   private List<PropertyFilter> filters = new ArrayList<>();
   private List<OrderBy> orderBy = new ArrayList<>();
   private FieldList fields = new FieldList();
-  private String returns;
+  private List<String> returns = new ArrayList<>();
   
   public SearchParameter clone() {
     SearchParameter clone = new SearchParameter();
@@ -293,12 +293,12 @@ public class SearchParameter implements Serializable {
     return !orderBy.isEmpty();
   }
   
-  public SearchParameter returns(String field) {
-    this.returns = field;
+  public SearchParameter returns(String... fields) {
+    this.returns.addAll(Arrays.asList(fields));
     return this;
   }
   
-  public String returns() {
+  public List<String> returns() {
     return this.returns;
   }
 
