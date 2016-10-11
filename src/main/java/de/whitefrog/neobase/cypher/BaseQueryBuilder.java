@@ -57,6 +57,9 @@ public class BaseQueryBuilder implements QueryBuilder {
       query.append("start e=node:").append(repository().index().getName()).append("({query}) ");
       if(params.query().contains(":")) {
         String[] split = params.query().split(":", 2);
+        if(split[1].isEmpty()) {
+          throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
+        }
         queryParams.put("query", split[0] + ":" + QueryParser.escape(split[1])
           .replace(" ", "\\ ")
           .replace("\\*", "*"));
