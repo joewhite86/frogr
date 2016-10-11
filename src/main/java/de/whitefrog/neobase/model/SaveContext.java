@@ -10,6 +10,7 @@ import de.whitefrog.neobase.repository.Repository;
 import org.neo4j.graphdb.Node;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     this.repository = repository;
     this.model = model;
     if(model.getId() > 0) {
-      this.original = repository.createModel(node());
+      this.original = repository.createModel(node(), FieldList.parseFields(Base.AllFields));
     }
     else if(model.getUuid() != null) {
       this.original = repository.findByUuid(model.getUuid());
@@ -59,7 +60,7 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
         }
         else {
           if(annotation.relatedTo != null && annotation.lazy) return true;
-          repository().fetch(original, FieldList.parseFields(field.getName()+"(max)"));
+          if(annotation.relatedTo != null) repository().fetch(original, FieldList.parseFields(field.getName()+"(max)"));
           Object originalValue = field.get(original);
           return !value.equals(originalValue);
         }
