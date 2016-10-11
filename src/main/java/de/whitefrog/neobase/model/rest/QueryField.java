@@ -1,6 +1,9 @@
 package de.whitefrog.neobase.model.rest;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import de.whitefrog.neobase.model.Base;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import java.util.Arrays;
 
@@ -14,13 +17,16 @@ public class QueryField {
   private String field;
   private int skip = 0;
   private int limit = SearchParameter.DefaultLimit;
-  private FieldList subFields;
+  private FieldList subFields = new FieldList();
 
   public QueryField(String field) {
+    this(field, false);
+  }
+  public QueryField(String field, boolean addAll) {
     if(field.contains(".")) {
       String[] fields = field.split("\\.", 2);
       parseField(fields[0]);
-      this.subFields = FieldList.parseFields(fields[1]);
+      this.subFields = FieldList.parseFields(Arrays.asList(fields[1]), addAll);
     } else {
       parseField(field);
     }
@@ -58,7 +64,7 @@ public class QueryField {
   public void skip(int skip) { this.skip = skip; }
 
   public FieldList subFields() {
-    return subFields == null? new FieldList(): subFields;
+    return subFields;
   }
 
   public void subFields(FieldList fields) {
@@ -67,5 +73,21 @@ public class QueryField {
   
   public void subFields(QueryField... fd) {
     this.subFields.addAll(Arrays.asList(fd));
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+      .append(field)
+      .toHashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if(!(obj instanceof QueryField)) return false;
+    QueryField other = (QueryField) obj;
+    return new EqualsBuilder()
+      .append(field, other.field)
+      .isEquals();
   }
 }
