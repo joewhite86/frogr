@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class Entity implements Model {
+public class Entity implements Model, Comparable<Base> {
   @JsonView({Views.Hidden.class})
   private String model;
   @Uuid
@@ -197,7 +197,12 @@ public class Entity implements Model {
   public boolean isPersisted() {
     return getId() > 0 || getUuid() != null;
   }
-  
+
+  @Override
+  public int compareTo(Base o) {
+    return Long.compare(getId(), o.getId());
+  }
+
   @Override
   public boolean equals(Object o) {
     if(this == o) return true;
