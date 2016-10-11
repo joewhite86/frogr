@@ -10,6 +10,8 @@ import java.util.*;
 public class ModelCache {
   private Map<Class, List<FieldDescriptor>> cache = new HashMap<>();
   private Map<String, Class> modelCache = new HashMap<>();
+  private List<String> ignoreFields = Arrays.asList(
+    "id", "initialId", "checkedFields", "fetchedFields");
 
   public ModelCache(Collection<String> packages) {
     for(String pkg: packages) {
@@ -40,8 +42,7 @@ public class ModelCache {
 
     while(traverse != null && Base.class.isAssignableFrom(traverse)) {
       for(Field field : traverse.getDeclaredFields()) {
-        if(!field.getName().equals("id") &&
-           !field.getName().equals("fetchedFields") &&
+        if(!ignoreFields.contains(field.getName()) &&
            !Modifier.isStatic(field.getModifiers())) {
           descriptors.add(new FieldDescriptor(field));
         }
