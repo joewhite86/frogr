@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
+import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -192,8 +193,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
   }
 
   private static FieldList resolveFields(String value) {
-    String[] fields = StringUtils.split(value, ",");
-    return FieldList.parseFields(fields);
+    List<String> fields = Arrays.asList(StringUtils.split(value, ","));
+    return FieldList.parseFields(fields, true);
   }
 
   private static void resolveOrder(SearchParameter params, String value) {
