@@ -306,7 +306,7 @@ public abstract class Persistence {
     if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
     AnnotationDescriptor annotations = descriptor.annotations();
     java.lang.reflect.Field field = descriptor.field();
-    if(!field.getName().equals(Base.Type) && !annotations.fetch && 
+    if(!field.getName().equals(Base.Type) && !annotations.fetch && !field.getName().equals(Base.Uuid) &&
       !fields.containsField(Base.AllFields) && !fields.containsField(field.getName())) return;
     field.setAccessible(true);
     
