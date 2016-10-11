@@ -13,7 +13,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public interface Base extends Serializable {
-  String AllFields = "allFields";
+  String AllFields = "all";
   String IdProperty = "id";
   String ModifiedBy = "modifiedBy";
   String LastModified = "lastModified";

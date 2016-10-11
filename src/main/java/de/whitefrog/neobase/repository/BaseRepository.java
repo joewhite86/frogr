@@ -112,7 +112,7 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
       throw new TypeMismatchException(node, label());
     }
 
-    return Persistence.get(node, fields);
+    return fetch(Persistence.get(node), false, fields);
   }
 
   boolean checkType(Node node) {
@@ -289,7 +289,7 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
 
   @Override
   public Node getNode(Model model) {
-    Validate.notNull(model);
+    Validate.notNull(model, "The model is null");
     Validate.notNull(model.getId(), "ID can not be null.");
     try {
       return service().graph().getNodeById(model.getId());

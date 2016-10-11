@@ -239,7 +239,7 @@ public class Relationships {
       throws IllegalAccessException {
     RelatedTo relatedTo = annotations.relatedTo;
     Object value = descriptor.field().get(model);
-    if(!(value instanceof Collection)) {
+    if(!descriptor.isCollection()) {
       Relationship existing = node.getSingleRelationship(
         RelationshipType.withName(relatedTo.type()), relatedTo.direction());
       if(existing != null) {
