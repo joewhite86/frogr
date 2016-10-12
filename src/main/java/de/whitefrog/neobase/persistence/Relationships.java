@@ -8,13 +8,14 @@ import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
-import de.whitefrog.neobase.model.relationship.BaseRelationship;
+import de.whitefrog.neobase.model.relationship.*;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.repository.Repository;
 import de.whitefrog.neobase.Service;
 import org.apache.commons.lang.Validate;
 import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class Relationships {
   private static final Logger logger = LoggerFactory.getLogger(Relationships.class);
   private static Service service;
   private static ModelCache cache;
-  
+
   public static void setService(Service _service) {
     service = _service;
   }
@@ -33,23 +34,106 @@ public class Relationships {
     cache = _cache;
   }
 
-  /**
-   * Tests if a particular node has a specific relationship to another one.
-   *
-   * @param node  The node from where the relationship should start.
-   * @param other The node, which should be related.
-   * @param type  The relationship type.
-   * @return true if a relationship exists, otherwise false.
-   */
-  public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type) {
-    return hasRelationshipTo(node, other, type, Direction.OUTGOING);
-  }
-  public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type, Direction direction) {
-    Iterable<Relationship> relationships = node.getRelationships(direction, type);
-    for(Relationship relationship : relationships) {
-      if(relationship.getEndNode().equals(other)) return true;
+  public static <T extends de.whitefrog.neobase.model.Model> Relationship addRelationship(T model, Node node, RelatedTo annotation, Model foreignModel) {
+    if(foreignModel.getId() == -1) {
+      if(foreignModel.getUuid() != null) {
+        foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
+      } else {
+        throw new RelatedNotPersistedException(
+          "the related field " + foreignModel + " is not yet persisted");
+      }
     }
-    return false;
+    Relationship relationship = null;
+    Node foreignNode = Persistence.getNode(foreignModel);
+    RelationshipType relationshipType = RelationshipType.withName(annotation.type());
+    if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
+      throw new RelationshipExistsException("a relationship " + annotation.type() +
+        " between " + model + " and " + foreignModel + " already exists");
+    }
+    if(annotation.direction() == Direction.OUTGOING) {
+      relationship = node.createRelationshipTo(foreignNode, relationshipType);
+      logger.info("created relationship {} ({}) from {} to {}",
+        annotation.type(), relationship.getId(), model, foreignModel);
+    } else if(annotation.direction() == Direction.INCOMING) {
+      relationship = foreignNode.createRelationshipTo(node, relationshipType);
+      logger.info("created relationship {} ({}) from {} to {}",
+        annotation.type(), relationship.getId(), foreignModel, model);
+    } else if(annotation.direction() == Direction.BOTH) {
+      // TODO: implement sth useful here
+    }
+
+    return relationship;
+  }
+  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel) {
+    fetch(relModel, new FieldList());
+  }
+
+  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel,
+                           FieldList fields) {
+    Relationship relationship = getRelationshipBetween(
+      Persistence.getNode(relModel.getFrom()), Persistence.getNode(relModel.getTo()),
+      RelationshipType.withName(relModel.getClass().getSimpleName()));
+    List<String> bypass = Arrays.asList("id", "from", "to");
+
+    try {
+      for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
+        if(bypass.contains(descriptor.field().getName())) continue;
+        Persistence.fetchField(relationship, relModel, descriptor, fields, false);
+      }
+    } catch(ReflectiveOperationException e) {
+      logger.error("could not load relations for {}: {}", relModel, e.getMessage(), e);
+    }
+  }
+
+  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
+                                  Relationship relationship, Node node, FieldList fields) throws ReflectiveOperationException {
+    fetchFields(relModel, relationship, Persistence.get(node), node, fields);
+  }
+
+  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
+                                  Relationship relationship, Model model, Node node, FieldList fields) throws ReflectiveOperationException {
+    Node other = relationship.getOtherNode(node);
+    boolean isStart = relationship.getStartNode().equals(node);
+    String type = (String) other.getProperty(Base.Type);
+    Repository<? extends Model> repository = service.repository(type);
+    if(repository == null) throw new NullPointerException("no repository with type: " + type);
+    relModel.setId(relationship.getId());
+    relModel.setType(relationship.getType().name());
+    Persistence.fetch(model, FieldList.parseFields(Base.Type), false);
+    if(isStart) {
+      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
+      Model from = service.repository(model.getType()).createModel(node, fieldList);
+      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
+      Model to = repository.createModel(other, fieldList);
+      relModel.setFrom(from);
+      relModel.setTo(to);
+    } else {
+      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
+      Model from = repository.createModel(other, fieldList);
+      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
+      Model to = service.repository(model.getType()).createModel(node, fieldList);
+      relModel.setFrom(from);
+      relModel.setTo(to);
+    }
+
+    List<String> bypass = Arrays.asList("id", "from", "to");
+    for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
+      if(bypass.contains(descriptor.field().getName())) continue;
+      Persistence.fetchField(relationship, relModel, descriptor, fields, false);
+    }
+  }
+
+  public static <R extends de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model>> R get(
+    Node node, Node other, RelationshipType type, Direction dir) throws ReflectiveOperationException {
+    Relationship relationship = getRelationshipBetween(node, other, type, dir);
+    String className = (String) relationship.getProperty(Base.Type);
+    if(!cache.containsModel(className)) {
+      throw new ClassNotFoundException(className);
+    }
+    Class<R> clazz = (Class<R>) cache.getModel(className);
+    R model = clazz.newInstance();
+    fetchFields(model, relationship, node, new FieldList());
+    return model;
   }
 
   public static Relationship getRelationshipBetween(Model model, Model other, RelationshipType type) {
@@ -79,19 +163,6 @@ public class Relationships {
     }
     return null;
   }
-  
-  public static <R extends de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model>> R get(
-      Node node, Node other, RelationshipType type, Direction dir) throws ReflectiveOperationException {
-    Relationship relationship = getRelationshipBetween(node, other, type, dir);
-    String className = (String) relationship.getProperty(Base.Type);
-    if(!cache.containsModel(className)) {
-      throw new ClassNotFoundException(className);
-    }
-    Class<R> clazz = (Class<R>) cache.getModel(className);
-    R model = clazz.newInstance();
-    fetchFields(model, relationship, node, new FieldList());
-    return model;
-  }
 
   public static Model getRelatedModel(Model model, RelatedTo annotation, FieldList fields) throws ReflectiveOperationException {
     Validate.notNull(model);
@@ -120,24 +191,24 @@ public class Relationships {
     return null;
   }
 
-  public static <M extends de.whitefrog.neobase.model.Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor, 
-      QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+  public static <M extends de.whitefrog.neobase.model.Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor,
+                                                                                     QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
-    
+
     ResourceIterator<Relationship> iterator =
       (ResourceIterator<Relationship>) Persistence.getNode(model).getRelationships(
         annotation.direction(), RelationshipType.withName(annotation.type())).iterator();
-    
+
     Set<M> models = new HashSet<>();
     Node node = Persistence.getNode(model);
     long count = 0;
-    
+
     while(iterator.hasNext()) {
       if(count < fieldDescriptor.skip()) { iterator.next(); count++; continue; }
       if(count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
-      
+
       Relationship relationship = iterator.next();
       Node other = relationship.getOtherNode(node);
       String type = (String) other.getProperty(Base.Type);
@@ -151,8 +222,12 @@ public class Relationships {
     return models;
   }
 
-  public static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor, 
-      QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+  private static <R extends de.whitefrog.neobase.model.relationship.Relationship> Relationship getRelationship(R relationship) {
+    return service.graph().getRelationshipById(relationship.getId());
+  }
+  
+  public static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor,
+                                                                     QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
@@ -167,73 +242,35 @@ public class Relationships {
     while(iterator.hasNext()) {
       if(fieldDescriptor != null && count < fieldDescriptor.skip()) { iterator.next(); count++; continue; }
       if(fieldDescriptor != null && count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
-      
+
       Relationship relationship = iterator.next();
       R newRel = (R) descriptor.baseClass().newInstance();
       fetchFields(newRel, relationship, model, node, fields);
-      
+
       models.add(newRel);
     }
     iterator.close();
     return models;
   }
-  
-  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel) {
-    fetch(relModel, new FieldList());
-  }
-  
-  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel,
-                           FieldList fields) {
-    Relationship relationship = getRelationshipBetween(
-      Persistence.getNode(relModel.getFrom()), Persistence.getNode(relModel.getTo()), 
-      RelationshipType.withName(relModel.getClass().getSimpleName()));
-    List<String> bypass = Arrays.asList("id", "from", "to");
-    
-    try {
-      for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
-        if(bypass.contains(descriptor.field().getName())) continue;
-        Persistence.fetchField(relationship, relModel, descriptor, fields, false);
-      }
-    } catch(ReflectiveOperationException e) {
-      logger.error("could not load relations for {}: {}", relModel, e.getMessage(), e);
-    }
+
+  /**
+   * Tests if a particular node has a specific relationship to another one.
+   *
+   * @param node  The node from where the relationship should start.
+   * @param other The node, which should be related.
+   * @param type  The relationship type.
+   * @return true if a relationship exists, otherwise false.
+   */
+  public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type) {
+    return hasRelationshipTo(node, other, type, Direction.OUTGOING);
   }
 
-  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
-                                  Relationship relationship, Node node, FieldList fields) throws ReflectiveOperationException {
-    fetchFields(relModel, relationship, Persistence.get(node), node, fields);
-  }
-  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
-                                  Relationship relationship, Model model, Node node, FieldList fields) throws ReflectiveOperationException {
-    Node other = relationship.getOtherNode(node);
-    boolean isStart = relationship.getStartNode().equals(node);
-    String type = (String) other.getProperty(Base.Type);
-    Repository<? extends Model> repository = service.repository(type);
-    if(repository == null) throw new NullPointerException("no repository with type: " + type);
-    relModel.setId(relationship.getId());
-    relModel.setType(relationship.getType().name());
-    Persistence.fetch(model, FieldList.parseFields(Base.Type), false);
-    if(isStart) {
-      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
-      Model from = service.repository(model.getType()).createModel(node, fieldList);
-      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
-      Model to = repository.createModel(other, fieldList);
-      relModel.setFrom(from);
-      relModel.setTo(to);
-    } else {
-      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
-      Model from = repository.createModel(other, fieldList);
-      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
-      Model to = service.repository(model.getType()).createModel(node, fieldList);
-      relModel.setFrom(from);
-      relModel.setTo(to);
+  public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type, Direction direction) {
+    Iterable<Relationship> relationships = node.getRelationships(direction, type);
+    for(Relationship relationship : relationships) {
+      if(relationship.getOtherNode(node).equals(other)) return true;
     }
-    
-    List<String> bypass = Arrays.asList("id", "from", "to");
-    for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
-      if(bypass.contains(descriptor.field().getName())) continue;
-      Persistence.fetchField(relationship, relModel, descriptor, fields, false);
-    }
+    return false;
   }
 
   static <T extends de.whitefrog.neobase.model.Model> void save(T model, Node node, FieldDescriptor descriptor, AnnotationDescriptor annotations)
@@ -262,6 +299,7 @@ public class Relationships {
           }
         }
       }
+      // Handle collection of models
       if(descriptor.isModel()) {
         // add the relationship if the foreign model is persisted
         for(Model foreignModel : ((Collection<Model>) value)) {
@@ -320,7 +358,7 @@ public class Relationships {
       }
     }
   }
-  
+
   public static void save(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> model) {
     Relationship relationship;
     if(model.getId() <= 0) {
@@ -387,38 +425,18 @@ public class Relationships {
     }
   }
 
-  public static <T extends de.whitefrog.neobase.model.Model> Relationship addRelationship(T model, Node node, RelatedTo annotation, Model foreignModel) {
-    if(foreignModel.getId() == -1) {
-      if(foreignModel.getUuid() != null) {
-        foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
-      } else {
-        throw new RelatedNotPersistedException(
-          "the related field " + foreignModel + " is not yet persisted");
-      }
-    }
-    Relationship relationship = null;
-    Node foreignNode = Persistence.getNode(foreignModel);
-    RelationshipType relationshipType = RelationshipType.withName(annotation.type());
-    if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      throw new RelationshipExistsException("a relationship " + annotation.type() + 
-        " between " + model + " and " + foreignModel + " already exists"); 
-    }
-    if(annotation.direction() == Direction.OUTGOING) {
-        relationship = node.createRelationshipTo(foreignNode, relationshipType);
-        logger.info("created relationship {} ({}) from {} to {}", 
-          annotation.type(), relationship.getId(), model, foreignModel);
-    } else if(annotation.direction() == Direction.INCOMING) {
-        relationship = foreignNode.createRelationshipTo(node, relationshipType);
-        logger.info("created relationship {} ({}) from {} to {}", 
-          annotation.type(), relationship.getId(), foreignModel, model);
-    } else if(annotation.direction() == Direction.BOTH) {
-      // TODO: implement sth useful here
-    }
-    
-    return relationship;
+  public static <R extends de.whitefrog.neobase.model.relationship.Relationship> void delete(R relationship) {
+    getRelationship(relationship).delete();
+    logger.info("relationship {} between {} and {} removed", 
+      relationship.type(), relationship.getFrom(), relationship.getTo());
   }
 
-  public static <T extends de.whitefrog.neobase.model.Model> void remove(T model, RelationshipType type,
+  public static <T extends de.whitefrog.neobase.model.Model> void delete(T model, RelatedTo annoation, 
+                                                                         Model foreignModel) {
+    delete(model, RelationshipType.withName(annoation.type()), annoation.direction(), foreignModel);
+  }
+
+  public static <T extends de.whitefrog.neobase.model.Model> void delete(T model, RelationshipType type,
                                                                          Direction direction, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
@@ -431,7 +449,11 @@ public class Relationships {
     Node node = Persistence.getNode(model);
     Node foreignNode = Persistence.getNode(foreignModel);
     for(Relationship relationship: node.getRelationships(type, direction)) {
-      if(relationship.getEndNode().equals(foreignNode)) relationship.delete();
+      if(relationship.getOtherNode(node).equals(foreignNode)) {
+        relationship.delete();
+        logger.info("relationship {} between {} and {} removed", 
+          type.name(), model, foreignModel);
+      }
     }
   }
 }

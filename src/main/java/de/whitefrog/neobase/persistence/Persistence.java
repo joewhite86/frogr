@@ -56,7 +56,7 @@ public abstract class Persistence {
     for(FieldDescriptor descriptor : fieldMap) {
       AnnotationDescriptor annotations = descriptor.annotations();
       if(annotations.indexed != null || annotations.unique) {
-        // remove node from index
+        // delete node from index
         repository.indexRemove(node);
       } else if(annotations.relatedTo != null) {
         for(Relationship relationship : node.getRelationships(
@@ -169,6 +169,7 @@ public abstract class Persistence {
                 node.setProperty(field.getName(), ((Enum<?>) value).name());
               }
             } else if(value instanceof Date) {
+              // store dates as timestamp
               node.setProperty(field.getName(), ((Date) value).getTime());
             } else if(valueChanged) {
               // store default values

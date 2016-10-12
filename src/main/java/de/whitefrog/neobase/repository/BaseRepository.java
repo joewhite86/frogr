@@ -18,7 +18,6 @@ import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
-import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import de.whitefrog.neobase.Service;
@@ -417,7 +416,7 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
 
   public void removeRelationship(T model, String field, Model other) {
     RelatedTo relatedTo = Persistence.cache().fieldAnnotations(model.getClass(), field).relatedTo;
-    Relationships.remove(model, RelationshipType.withName(relatedTo.type()), relatedTo.direction(), other);
+    Relationships.delete(model, relatedTo, other);
   }
 
   @Override
