@@ -117,7 +117,7 @@ public abstract class Persistence {
     }
     model.getCheckedFields().clear();
 
-    logger.info("{} {}", model, create? "created": "saved");
+    logger.info("{} {}", model, create? "created": "updated");
 
     return model;
   }

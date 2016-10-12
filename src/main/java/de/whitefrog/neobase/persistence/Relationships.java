@@ -3,6 +3,7 @@ package de.whitefrog.neobase.persistence;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.RelatedNotPersistedException;
+import de.whitefrog.neobase.exception.RelationshipExistsException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
@@ -399,7 +400,8 @@ public class Relationships {
     Node foreignNode = Persistence.getNode(foreignModel);
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      return null;
+      throw new RelationshipExistsException("a relationship " + annotation.type() + 
+        " between " + model + " and " + foreignModel + " already exists"); 
     }
     if(annotation.direction() == Direction.OUTGOING) {
         relationship = node.createRelationshipTo(foreignNode, relationshipType);
