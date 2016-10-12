@@ -90,4 +90,9 @@ public class QueryField {
       .append(field, other.field)
       .isEquals();
   }
+
+  @Override
+  public String toString() {
+    return field + (subFields().isEmpty()? "": " (" + subFields.size() + " subfields)");
+  }
 }

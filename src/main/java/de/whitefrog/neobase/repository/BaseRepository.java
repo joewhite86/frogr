@@ -6,6 +6,7 @@ import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
+import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import de.whitefrog.neobase.exception.TypeMismatchException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.index.IndexUtils;
@@ -468,16 +469,22 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
 
   @Override
   public <R extends Base> ResultIterator<R> searchRelated(SearchParameter params) {
+    if(!params.returns().contains("e")) params.returns().add("e");
     Result result = queryBuilder().execute(params);
     if(params.returns() == null) {
       throw new UnsupportedOperationException("params.returns can't be null");
     }
     FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(getModelClass(), params.returns().get(0));
     if(descriptor.isRelationship()) {
-      return new RelationshipResultIterator<R>(result, params);
+      return new RelationshipResultIterator<>(result, params);
     } else {
-      Repository repository = service().repository(descriptor.baseClass().getSimpleName());
-      return new ExecutionResultIterator<>(repository, result, params);
+      try {
+        Repository repository = service().repository(descriptor.baseClass().getSimpleName());
+        return new ExecutionResultIterator<>(repository, result, params);
+      }
+      catch(RepositoryInstantiationException e) {
+        return new ExecutionResultIterator<>(service(), descriptor.baseClass(), result, params);
+      }
     }
   }
 

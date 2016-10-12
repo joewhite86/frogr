@@ -9,13 +9,13 @@ import de.whitefrog.neobase.model.relationship.Relationship;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
-public class FieldDescriptor {
+public class FieldDescriptor<T extends Base> {
   private AnnotationDescriptor annotations;
   private Field field;
   private boolean collection;
   private boolean model;
   private boolean relationship;
-  private Class<? extends Base> baseClass;
+  private Class<T> baseClass;
 
   public FieldDescriptor(Field field) {
     field.setAccessible(true);
@@ -36,9 +36,9 @@ public class FieldDescriptor {
     this.annotations = descriptor;
     this.collection = Collection.class.isAssignableFrom(field.getType());
     if(this.collection) {
-      this.baseClass = (Class<? extends Base>) ReflectionUtil.getGenericClass(field);
+      this.baseClass = (Class<T>) ReflectionUtil.getGenericClass(field);
     } else {
-      this.baseClass = (Class<? extends Base>) field.getType();
+      this.baseClass = (Class<T>) field.getType();
     }
     model = Model.class.isAssignableFrom(baseClass);
     relationship = Relationship.class.isAssignableFrom(baseClass);
@@ -50,7 +50,7 @@ public class FieldDescriptor {
   public boolean isCollection() {
     return collection;
   }
-  public Class<? extends Base> baseClass() {
+  public Class<T> baseClass() {
     return baseClass;
   }
   public Field field() {

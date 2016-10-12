@@ -23,16 +23,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ExecutionResultIterator<T extends de.whitefrog.neobase.model.Model> extends ResultIterator<T> {
-  private Service service;
+  private final Service service;
   private final Result results;
   private final SearchParameter params;
   private Map<String, Object> next = null;
 
+  public ExecutionResultIterator(Service service, Class<T> clazz, Result results, SearchParameter params) {
+    super(null, results);
+    this.results = results;
+    this.params = params;
+    this.service = service;
+  }
   @SuppressWarnings("unchecked")
   public ExecutionResultIterator(Repository<T> repository, Result results, SearchParameter params) {
     super(repository, results);
     this.params = params;
     this.results = results;
+    this.service = repository.service();
   }
 
   private Repository repository(Node node) {

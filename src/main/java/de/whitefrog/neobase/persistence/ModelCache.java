@@ -44,7 +44,7 @@ public class ModelCache {
       for(Field field : traverse.getDeclaredFields()) {
         if(!ignoreFields.contains(field.getName()) &&
            !Modifier.isStatic(field.getModifiers())) {
-          descriptors.add(new FieldDescriptor(field));
+          descriptors.add(new FieldDescriptor<>(field));
         }
       }
       traverse = traverse.getSuperclass();
