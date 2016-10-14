@@ -547,6 +547,12 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
     }
   }
 
+
+  @Override
+  public Number sum(String field, SearchParameter params) {
+    return queryBuilder().sum(field, params);
+  }
+
   public void validateModel(SaveContext<T> context) {
     context.changedFields().forEach(f -> {
       Set<ConstraintViolation<T>> violations = service().validator().validateProperty(context.model(), f.getName());

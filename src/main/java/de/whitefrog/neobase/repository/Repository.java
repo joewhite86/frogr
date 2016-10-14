@@ -177,5 +177,7 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   void sort(List<T> list, List<SearchParameter.OrderBy> orderBy);
 
+  Number sum(String field, SearchParameter params);
+
   void dispose();
 }

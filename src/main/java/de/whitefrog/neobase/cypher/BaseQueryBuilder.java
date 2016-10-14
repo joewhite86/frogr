@@ -343,6 +343,30 @@ public class BaseQueryBuilder implements QueryBuilder {
   }
 
   @Override
+  public Number sum(String field, SearchParameter params) {
+    Map<String, Object> queryParams = new HashMap<>();
+    String q = "" +
+      start(params, queryParams) +
+      match(params, queryParams) +
+      where(params, queryParams);
+
+//    if(params.returns() != null) {
+//      q+= " return count(" + params.returns() + ") as c";
+//    } else {
+    q+= " return sum(" + field + ") as c";
+//    }
+
+    Query query = new Query(q, queryParams);
+    Result result = repository.service().graph().execute(query.query(), query.params());
+
+    logger.debug(params.toString());
+    logger.debug(query.query());
+    logger.debug(query.params().toString());
+
+    return (Number) result.columnAs("c").next();
+  }
+
+  @Override
   public long count(SearchParameter params) {
     Map<String, Object> queryParams = new HashMap<>();
     String q = "" +

@@ -17,6 +17,8 @@ public interface QueryBuilder {
 
     Query build(SearchParameter params);
 
+    Number sum(String field, SearchParameter params);
+
     long count(SearchParameter params);
 
     Result execute(SearchParameter params);

@@ -49,7 +49,7 @@ public abstract class Persistence {
    * @param repository The repository to delete from.
    * @param model      The model to delete.
    */
-  public static <T extends de.whitefrog.neobase.model.Model> void delete(Repository<T> repository, T model) {
+  public static <T extends Model> void delete(Repository<T> repository, T model) {
     Node node = getNode(model);
     // check fields for bulk or indexed
     List<FieldDescriptor> fieldMap = cache.fieldMap(model.getClass());
