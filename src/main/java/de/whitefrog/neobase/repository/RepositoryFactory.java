@@ -58,7 +58,12 @@ public class RepositoryFactory {
         Constructor<Repository> ctor = c.getConstructor(Service.class);
         repository = ctor.newInstance(service);
       } catch(ClassNotFoundException | NoSuchMethodException e) {
-        throw new RepositoryInstantiationException("No repository with name " + name + " found", e.getCause());
+        try {
+          Constructor<DefaultRepository> ctor = DefaultRepository.class.getConstructor(Service.class, String.class);
+          repository = ctor.newInstance(service, name);
+        } catch(ReflectiveOperationException ex) {
+          throw new RepositoryInstantiationException(e.getCause());
+        }
       } catch(ReflectiveOperationException e) {
         throw new RepositoryInstantiationException(e.getCause());
       }

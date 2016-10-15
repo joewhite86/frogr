@@ -58,6 +58,18 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
     this.service = service;
     this.queryBuilder = new BaseQueryBuilder(this);
   }
+
+  public BaseRepository(Service service, String modelName) {
+    this.logger = LoggerFactory.getLogger(getClass());
+    this.label = Label.label(modelName);
+
+    Class modelClass = Persistence.cache().getModel(modelName);
+    this.labels = getModelInterfaces(modelClass).stream()
+      .map(Label::label)
+      .collect(Collectors.toSet());
+    this.service = service;
+    this.queryBuilder = new BaseQueryBuilder(this);
+  }
   
   private Set<String> getModelInterfaces(Class<?> clazz) {
     Set<String> output = new HashSet<>();
