@@ -7,6 +7,7 @@ import org.neo4j.helpers.collection.Iterators;
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ResultIterator<T extends Base> implements Iterator<T>, Closeable {
   private Repository repository;
@@ -27,6 +28,10 @@ public abstract class ResultIterator<T extends Base> implements Iterator<T>, Clo
 
   public List<T> asList() {
     return Iterators.asList(this);
+  }
+
+  public Set<T> asSet() {
+    return Iterators.asSet(this);
   }
   
   public T single() {
