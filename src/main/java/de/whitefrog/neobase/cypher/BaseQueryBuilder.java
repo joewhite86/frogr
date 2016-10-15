@@ -381,13 +381,18 @@ public class BaseQueryBuilder implements QueryBuilder {
 //    }
 
     Query query = new Query(q, queryParams);
-    Result result = repository.service().graph().execute(query.query(), query.params());
+    try {
+      Result result = repository.service().graph().execute(query.query(), query.params());
 
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
+      logger.debug(params.toString());
+      logger.debug(query.query());
+      logger.debug(query.params().toString());
 
-    return (long) result.columnAs("c").next();
+      return (long) result.columnAs("c").next();
+    } catch(IllegalStateException e) {
+      logger.error("On query: " + query.query(), e);
+      throw e;
+    }
   }
 
   @Override
@@ -396,6 +401,11 @@ public class BaseQueryBuilder implements QueryBuilder {
     logger.debug(params.toString());
     logger.debug(query.query());
     logger.debug(query.params().toString());
-    return repository.service().graph().execute(query.query(), query.params());
+    try {
+      return repository.service().graph().execute(query.query(), query.params());
+    } catch(IllegalStateException e) {
+      logger.error("On query: " + query.query(), e);
+      throw e;
+    }
   }
 }
