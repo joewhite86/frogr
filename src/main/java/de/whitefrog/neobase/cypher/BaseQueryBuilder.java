@@ -374,11 +374,11 @@ public class BaseQueryBuilder implements QueryBuilder {
       match(params, queryParams) +
       where(params, queryParams);
     
-//    if(params.returns() != null) {
-//      q+= " return count(" + params.returns() + ") as c";
-//    } else {
+    if(!CollectionUtils.isEmpty(params.returns())) {
+      q+= " return count(" + params.returns().get(0) + ") as c";
+    } else {
       q+= " return count(*) as c";
-//    }
+    }
 
     Query query = new Query(q, queryParams);
     try {

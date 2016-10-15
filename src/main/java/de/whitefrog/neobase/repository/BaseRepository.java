@@ -1,5 +1,6 @@
 package de.whitefrog.neobase.repository;
 
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.*;
 import de.whitefrog.neobase.collection.ListIterator;
 import de.whitefrog.neobase.cypher.BaseQueryBuilder;
@@ -20,7 +21,6 @@ import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
-import de.whitefrog.neobase.Service;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.*;

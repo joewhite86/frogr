@@ -84,7 +84,7 @@ public abstract class Persistence {
     Label label = repository.label();
     boolean create = false;
 
-    if(model.getId() == -1 && model.getUuid() == null) {
+    if(!model.isPersisted()) {
       create = true;
       node = service.graph().createNode(label);
       // add labels defined in repository

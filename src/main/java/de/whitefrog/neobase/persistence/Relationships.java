@@ -47,8 +47,9 @@ public class Relationships {
     Node foreignNode = Persistence.getNode(foreignModel);
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      throw new RelationshipExistsException("a relationship " + annotation.type() +
-        " between " + model + " and " + foreignModel + " already exists");
+      return getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction());
+//      throw new RelationshipExistsException("a relationship " + annotation.type() +
+//        " between " + model + " and " + foreignModel + " already exists");
     }
     if(annotation.direction() == Direction.OUTGOING) {
       relationship = node.createRelationshipTo(foreignNode, relationshipType);
@@ -61,6 +62,8 @@ public class Relationships {
     } else if(annotation.direction() == Direction.BOTH) {
       // TODO: implement sth useful here
     }
+    
+    if(relationship != null) relationship.setProperty(Base.Created, System.currentTimeMillis());
 
     return relationship;
   }
