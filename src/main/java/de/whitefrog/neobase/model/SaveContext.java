@@ -20,7 +20,7 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
   private T original;
   private Repository<T> repository;
   private Node node;
-  private Set<Field> changedFields;
+  private List<FieldDescriptor> changedFields;
   private List<FieldDescriptor> fieldMap;
 
   public SaveContext(Repository<T> repository, T model) {
@@ -35,18 +35,13 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     fieldMap = Persistence.cache().fieldMap(model.getClass());
   }
 
-  public Set<Field> changedFields() {
+  public List<FieldDescriptor> changedFields() {
     if(changedFields == null) findChangedFields();
     return changedFields;
   }
   
   public boolean fieldChanged(String fieldName) {
-    try {
-      Field field = ModelCache.getField(model.getClass(), fieldName);
-      return fieldChanged(field);
-    } catch(NoSuchFieldException e) {
-      throw new NeobaseRuntimeException(e.getMessage(), e);
-    }
+    return changedFields().stream().anyMatch(f -> f.getName().equals(fieldName));
   }
   private boolean fieldChanged(Field field) {
     AnnotationDescriptor annotation = 
@@ -71,12 +66,15 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     
     return false;
   }
+  
+  public List<FieldDescriptor> fieldMap() {
+    return fieldMap;
+  }
 
   private void findChangedFields() {
     changedFields = fieldMap.stream()
-      .map(FieldDescriptor::field)
-      .filter(this::fieldChanged)
-      .collect(Collectors.toSet());
+      .filter(f-> fieldChanged(f.field()))
+      .collect(Collectors.toList());
   }
 
   public T model() {

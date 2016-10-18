@@ -7,6 +7,7 @@ import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.Model;
+import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelationshipCount;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
@@ -19,6 +20,7 @@ import org.neo4j.helpers.collection.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 @SuppressWarnings("unchecked")
@@ -74,12 +76,12 @@ public abstract class Persistence {
    * Save the specified model.
    *
    * @param repository Repository to save the model in.
-   * @param model      The model to save.
+   * @param context      The model to save.
    * @return The saved model.
    * @throws MissingRequiredException A required field is missing.
    */
-  public static <T extends Model> T save(Repository<T> repository, T model) throws MissingRequiredException {
-    Validate.notNull(model);
+  public static <T extends Model> T save(Repository<T> repository, SaveContext<T> context) throws MissingRequiredException {
+    T model = context.model();
     Node node;
     Label label = repository.label();
     boolean create = false;
@@ -112,8 +114,8 @@ public abstract class Persistence {
     }
 
     // clone all properties from model
-    for(FieldDescriptor field : cache.fieldMap(model.getClass())) {
-      saveField(repository, model, node, field, create);
+    for(FieldDescriptor field : context.fieldMap()) {
+      saveField(context, field, create);
     }
     model.getCheckedFields().clear();
 
@@ -122,11 +124,12 @@ public abstract class Persistence {
     return model;
   }
 
-  private static <T extends Model> void saveField(Repository<T> repository, T model, Node node,
-                                                  FieldDescriptor descriptor,
-                                                  boolean created) {
-    java.lang.reflect.Field field = descriptor.field();
+  private static <T extends Model> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
+    Field field = descriptor.field();
     AnnotationDescriptor annotations = descriptor.annotations();
+    T model = context.model();
+    Node node = context.node();
+    
     try {
       Object value = field.get(model);
       
@@ -135,10 +138,10 @@ public abstract class Persistence {
         throw new MissingRequiredException(model, field);
       }
 
-      boolean valueChanged = created || value == null || !node.hasProperty(field.getName()) ||
-        (node.hasProperty(field.getName()) && !node.getProperty(field.getName()).equals(value));
+      boolean valueChanged = created || context.fieldChanged(field.getName());
 
       if(!annotations.notPersistant && !annotations.blob) {
+        // Generate an uuid when the value is actually null
         if(created && annotations.uuid && field.get(model) == null) {
           String uuid = generateUuid();
           field.set(model, uuid);
@@ -147,12 +150,14 @@ public abstract class Persistence {
         }
 
         if(value != null) {
+          // handle relationships
           if(annotations.relatedTo != null) {
-            // handle relationships
-            Relationships.save(model, node, descriptor, annotations);
-          } else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
-            // check uniqueness
-            T exist = repository.findIndexedSingle(field.getName(), value);
+            Relationships.save(context, descriptor);
+          }
+          
+          // check uniqueness
+          else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
+            T exist = context.repository().findIndexedSingle(field.getName(), value);
             if(exist != null && model.getId() != exist.getId()) {
               throw new ConstraintViolationException(
                 "failed to save " + model + ", a " + model.getClass().getSimpleName() + " with " +
@@ -162,29 +167,37 @@ public abstract class Persistence {
             }
           }
 
+          // Handle other values
           if(!(value instanceof Collection) && !(value instanceof Model)) {
+            
+            // store enum names
             if(value.getClass().isEnum()) {
               if((!node.hasProperty(field.getName()) || !((Enum<?>) value).name().equals(node.getProperty(field.getName())))) {
-                // store enum names
                 node.setProperty(field.getName(), ((Enum<?>) value).name());
               }
-            } else if(value instanceof Date) {
-              // store dates as timestamp
+            }
+            // store dates as timestamp
+            else if(value instanceof Date) {
               node.setProperty(field.getName(), ((Date) value).getTime());
-            } else if(valueChanged) {
-              // store default values
+            }
+            // store all other values
+            else if(valueChanged) {
               node.setProperty(field.getName(), value);
             }
           }
+          // if the value has changed and the field is indexed, we need to add the value to the index
           if(valueChanged && (annotations.indexed != null || annotations.unique)) {
-            if(!created) repository.indexRemove(node, field.getName());
-            repository.index(model, field.getName(),
+            if(!created) context.repository().indexRemove(node, field.getName());
+            context.repository().index(model, field.getName(),
               value instanceof String? ((String) value).toLowerCase(): value);
           }
-        } else if(valueChanged && annotations.nullRemove) {
+        } 
+        // if the new value is null and @NullRemove is set on the field,
+        // we need to remove the property from the node and the index
+        else if(valueChanged && annotations.nullRemove) {
           node.removeProperty(field.getName());
           if((annotations.indexed != null || annotations.unique)) {
-            repository.indexRemove(node, field.getName());
+            context.repository().indexRemove(node, field.getName());
           }
         }
       }

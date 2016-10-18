@@ -7,6 +7,7 @@ import de.whitefrog.neobase.exception.RelationshipExistsException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
+import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.relationship.*;
 import de.whitefrog.neobase.model.rest.FieldList;
@@ -75,7 +76,7 @@ public class Relationships {
                            FieldList fields) {
     Relationship relationship = getRelationshipBetween(
       Persistence.getNode(relModel.getFrom()), Persistence.getNode(relModel.getTo()),
-      RelationshipType.withName(relModel.getClass().getSimpleName()));
+      RelationshipType.withName(relModel.getClass().getSimpleName()), Direction.OUTGOING);
     List<String> bypass = Arrays.asList("id", "from", "to");
 
     try {
@@ -139,24 +140,8 @@ public class Relationships {
     return model;
   }
 
-  public static Relationship getRelationshipBetween(Model model, Model other, RelationshipType type) {
-    return getRelationshipBetween(Persistence.getNode(model), Persistence.getNode(other), type);
-  }
-
-  /**
-   * Get a relationship between two nodes.
-   *
-   * @param node  First node
-   * @param other Second node
-   * @param type  Relationship type
-   * @return The found relationship, if none was found, null is returned.
-   */
-  public static Relationship getRelationshipBetween(Node node, Node other, RelationshipType type) {
-    Iterable<Relationship> relationships = node.getRelationships(Direction.BOTH, type);
-    for(Relationship relationship : relationships) {
-      if(relationship.getEndNode().equals(other)) return relationship;
-    }
-    return null;
+  public static Relationship getRelationshipBetween(Model model, Model other, RelationshipType type, Direction dir) {
+    return getRelationshipBetween(Persistence.getNode(model), Persistence.getNode(other), type, dir);
   }
 
   public static Relationship getRelationshipBetween(Node node, Node other, RelationshipType type, Direction dir) {
@@ -276,10 +261,14 @@ public class Relationships {
     return false;
   }
 
-  static <T extends de.whitefrog.neobase.model.Model> void save(T model, Node node, FieldDescriptor descriptor, AnnotationDescriptor annotations)
+  static <T extends de.whitefrog.neobase.model.Model> void save(SaveContext<T> context, FieldDescriptor descriptor)
       throws IllegalAccessException {
+    AnnotationDescriptor annotations = descriptor.annotations();
+    T model = context.model();
+    Node node = context.node();
     RelatedTo relatedTo = annotations.relatedTo;
     Object value = descriptor.field().get(model);
+    // Handle single relationships
     if(!descriptor.isCollection()) {
       Relationship existing = node.getSingleRelationship(
         RelationshipType.withName(relatedTo.type()), relatedTo.direction());
@@ -289,10 +278,12 @@ public class Relationships {
 
       Model foreignModel = (Model) value;
       addRelationship(model, node, relatedTo, foreignModel);
-    } else {
+    } 
+    // Handle collections
+    else {
       Collection collection = (Collection) value;
+      // check if relationship is obsolete and delete if neccessary
       if(!annotations.lazy) {
-        // check if relationship is obsolete and delete if neccessary
         RelationshipType relationshipType = RelationshipType.withName(relatedTo.type());
         for(Relationship relationship : node.getRelationships(relatedTo.direction(), relationshipType)) {
           Base other = Persistence.get(relationship.getOtherNode(node));
@@ -303,8 +294,8 @@ public class Relationships {
         }
       }
       // Handle collection of models
+      // add the relationship if the foreign model is persisted
       if(descriptor.isModel()) {
-        // add the relationship if the foreign model is persisted
         for(Model foreignModel : ((Collection<Model>) value)) {
           if(foreignModel.getId() == -1) {
             if(foreignModel.getUuid() != null) {

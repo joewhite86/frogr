@@ -5,10 +5,7 @@ import de.whitefrog.neobase.collection.*;
 import de.whitefrog.neobase.collection.ListIterator;
 import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
-import de.whitefrog.neobase.exception.NeobaseRuntimeException;
-import de.whitefrog.neobase.exception.PersistException;
-import de.whitefrog.neobase.exception.RepositoryInstantiationException;
-import de.whitefrog.neobase.exception.TypeMismatchException;
+import de.whitefrog.neobase.exception.*;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Base;
@@ -18,6 +15,7 @@ import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
+import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
@@ -416,13 +414,7 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   @Override
   public void remove(T model) throws PersistException {
     Validate.notNull(model.getId(), "'id' is required");
-
-    Node node = service().graph().getNodeById(model.getId());
-    indexRemove(node);
-    for(Relationship relationship: node.getRelationships()) {
-      relationship.delete();
-    }
-    node.delete();
+    Persistence.delete(this, model);
     logger.info("{} deleted", model);
   }
 
@@ -447,7 +439,7 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   @Override
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
-    Persistence.save(this, context.model());
+    Persistence.save(this, context);
     logger.info("{} saved", context.model());
   }
 
@@ -566,7 +558,19 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   public void validateModel(SaveContext<T> context) {
-    context.changedFields().forEach(f -> {
+    context.fieldMap().forEach(f -> {
+      if(context.model().getCheckedFields().contains(f.getName())) return;
+      AnnotationDescriptor annotations = Persistence.cache().fieldAnnotations(context.model().getClass(), f.getName());
+      if(!context.model().isPersisted() && annotations.required) {
+        try {
+          Object value = f.field().get(context.model());
+          if(value == null || (value instanceof String && ((String) value).isEmpty())) {
+            throw new MissingRequiredException(context.model(), f.field());
+          }
+        } catch(IllegalAccessException e) {
+          logger.error(e.getMessage(), e);
+        }
+      }
       Set<ConstraintViolation<T>> violations = service().validator().validateProperty(context.model(), f.getName());
       for(ConstraintViolation<T> violation : violations) {
         logger.error(violation.getPropertyPath().toString() + " " + violation.getMessage());

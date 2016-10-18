@@ -33,6 +33,10 @@ public class ModelCache {
     }
     return null;
   }
+  
+  public FieldDescriptor fieldDescriptor(Field field) {
+    return fieldDescriptor(field.getDeclaringClass(), field.getName());
+  }
 
   public List<FieldDescriptor> fieldMap(Class clazz) {
     if(cache.containsKey(clazz)) return cache.get(clazz);
