@@ -180,11 +180,13 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         resolveOrder(params, value);
         break;
       case "filter":
+      case "filters":
         resolveFilter(params, value);
         break;
       case "fields":
         params.fields(resolveFields(value));
         break;
+      case "returns":
       case "return":
         params.returns(value);
         break;
@@ -241,6 +243,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       } else if(value.startsWith("(") && value.contains("-") && value.endsWith(")")) {
         String[] range = value.substring(1, value.length() - 1).split("-");
         filter = new Filter.Range(Long.parseLong(range[0]), Long.parseLong(range[1]));
+      } else if(value.startsWith("=")) {
+        filter = new Filter.Equals(guessType(value.substring(1)));
       } else {
         filter = new Filter.Equals(guessType(value));
       }

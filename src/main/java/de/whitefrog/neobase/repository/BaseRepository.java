@@ -1,12 +1,15 @@
 package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.collection.*;
-import de.whitefrog.neobase.collection.ListIterator;
+import de.whitefrog.neobase.collection.ExecutionResultIterator;
+import de.whitefrog.neobase.collection.NodeIterator;
+import de.whitefrog.neobase.collection.RelationshipResultIterator;
+import de.whitefrog.neobase.collection.ResultIterator;
 import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.*;
 import de.whitefrog.neobase.helper.ReflectionUtil;
+import de.whitefrog.neobase.helper.StreamUtils;
 import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
@@ -32,6 +35,7 @@ import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class BaseRepository<T extends Model> implements Repository<T> {
   private final Logger logger;
@@ -176,12 +180,12 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public ResultIterator<T> findAll() {
+  public Stream<T> findAll() {
     return findAll(Integer.MAX_VALUE, 1);
   }
 
   @Override
-  public ResultIterator<T> findAll(int limit, int page) {
+  public Stream<T> findAll(int limit, int page) {
     return search(new SearchParameter(page, limit));
   }
 
@@ -210,13 +214,13 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public ResultIterator<T> find(String property, Object value) {
+  public Stream<T> find(String property, Object value) {
     ResourceIterator<Node> found = graph().findNodes(label(), property, value);
-    return new NodeIterator<>(this, found);
+    return StreamUtils.get(new NodeIterator<>(this, found));
   }
 
   @Override
-  public ResultIterator<T> find(SearchParameter params) {
+  public Stream<T> find(SearchParameter params) {
     throw new UnsupportedOperationException("no query possible on this class");
   }
 
@@ -226,33 +230,33 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public ResultIterator<T> findChangedSince(long timestamp, int limit, int page) {
+  public Stream<T> findChangedSince(long timestamp, int limit, int page) {
     return search(new SearchParameter(page, limit)
       .filter(T.LastModified, new Filter.GreaterThan(timestamp))
       .filter(T.Created, new Filter.GreaterThan(timestamp)));
   }
 
   @Override
-  public ResultIterator<T> findIndexed(String field, Object value) {
+  public Stream<T> findIndexed(String field, Object value) {
     return findIndexed(field, value, new SearchParameter());
   }
 
   @Override
-  public ResultIterator<T> findIndexed(String field, Object value, SearchParameter params) {
+  public Stream<T> findIndexed(String field, Object value, SearchParameter params) {
     return findIndexed(index(), field, value, params);
   }
 
   @Override
-  public ResultIterator<T> findIndexed(Index<Node> index, String field, Object value) {
+  public Stream<T> findIndexed(Index<Node> index, String field, Object value) {
     return findIndexed(index, field, value, new SearchParameter());
   }
 
   @Override
-  public ResultIterator<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params) {
+  public Stream<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params) {
     IndexHits<Node> found = IndexUtils.query(index, field,
       value instanceof String? ((String) value).toLowerCase(): value.toString(),
       params.limit() * params.page());
-    return new NodeIterator<>(this, found, params);
+    return StreamUtils.get(new NodeIterator<>(this, found, params));
   }
 
   @Override
@@ -274,9 +278,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   public T findIndexedSingle(Index<Node> index, String field, Object value, SearchParameter params) {
     Node node = IndexUtils.querySingle(index, field,
       value instanceof String? value.toString().toLowerCase(): value);
-    if(node != null) {
-      
-    }
     return node == null? null: createModel(node, params.fieldList());
   }
 
@@ -396,9 +397,9 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public ResultIterator<T> query(String query) {
+  public Stream<T> query(String query) {
     Result results = graph().execute(query);
-    return new ExecutionResultIterator<>(this, results, new SearchParameter());
+    return StreamUtils.get(new ExecutionResultIterator<>(this, results, new SearchParameter()));
   }
 
   @Override
@@ -444,34 +445,42 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public ResultIterator<T> search(String query) {
+  public Stream<T> search(String query) {
     return search(new SearchParameter().query(query));
   }
 
   @Override
-  public ResultIterator<T> search(SearchParameter params) {
+  public T searchSingle(String query) {
+    Optional<T> optional = search(new SearchParameter(1).query(query)).findFirst();
+    return optional.isPresent()? optional.get(): null;
+  }
+
+  @Override
+  public Stream<T> search(SearchParameter params) {
     if(!params.isFiltered() && !params.isOrdered() && params.returns() == null && params.page() == 1) {
       if(!CollectionUtils.isEmpty(params.ids())) {
-        List<T> list = params.ids().stream()
+        return params.ids().stream()
           .map(id -> find(id, params.fields()))
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
-        return new ListIterator<>(this, list.iterator());
+          .filter(Objects::nonNull);
       } else if(!CollectionUtils.isEmpty(params.uuids())) {
-        List<T> list = params.uuids().stream()
+        return params.uuids().stream()
           .map(uuid -> findIndexedSingle(Model.Uuid, uuid, params))
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
-        return new ListIterator<>(this, list.iterator());
+          .filter(Objects::nonNull);
       }
     }
     
     Result result = queryBuilder().execute(params);
-    return new ExecutionResultIterator<>(this, result, params);
+    return StreamUtils.get(new ExecutionResultIterator<>(this, result, params));
   }
 
   @Override
-  public <R extends Base> ResultIterator<R> searchRelated(SearchParameter params) {
+  public T searchSingle(SearchParameter params) {
+    Optional<T> optional = search(params.limit(1)).findFirst();
+    return optional.isPresent()? optional.get(): null;
+  }
+
+  @Override
+  public <R extends Base> Stream<R> searchRelated(SearchParameter params) {
     if(!params.returns().contains("e")) params.returns().add("e");
     Result result = queryBuilder().execute(params);
     if(params.returns() == null) {
@@ -479,14 +488,14 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
     }
     FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(getModelClass(), params.returns().get(0));
     if(descriptor.isRelationship()) {
-      return new RelationshipResultIterator<>(result, params);
+      return StreamUtils.get(new RelationshipResultIterator<>(result, params));
     } else {
       try {
         Repository repository = service().repository(descriptor.baseClass().getSimpleName());
-        return new ExecutionResultIterator<>(repository, result, params);
+        return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
       }
       catch(RepositoryInstantiationException e) {
-        return new ExecutionResultIterator<>(service(), descriptor.baseClass(), result, params);
+        return StreamUtils.get(new ExecutionResultIterator<>(service(), descriptor.baseClass(), result, params));
       }
     }
   }

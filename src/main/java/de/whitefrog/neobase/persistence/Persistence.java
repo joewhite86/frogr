@@ -302,6 +302,10 @@ public abstract class Persistence {
     return service.graph().getNodeById(model.getId());
   }
 
+  public static <T extends Model> void fetch(T model, String... fields) {
+    fetch(model, FieldList.parseFields(Arrays.asList(fields)), false);
+  }
+  
   public static <T extends Model> void fetch(T model, FieldList fields, boolean refetch) {
     if(model.getId() <= 0) return;
 

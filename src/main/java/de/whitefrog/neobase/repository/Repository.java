@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface Repository<T extends de.whitefrog.neobase.model.Model> {
   /**
@@ -48,11 +49,11 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   T find(long id, List<String> fields);
 
-  ResultIterator<T> find(String property, Object value);
+  Stream<T> find(String property, Object value);
 
-  ResultIterator<T> find(SearchParameter params);
+  Stream<T> find(SearchParameter params);
 
-  ResultIterator<T> findAll();
+  Stream<T> findAll();
 
   T findByUuid(String uuid);
 
@@ -73,7 +74,7 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
    *
    * @return List of all nodes
    */
-  ResultIterator<T> findAll(int limit, int page);
+  Stream<T> findAll(int limit, int page);
 
   /**
    * Get a list of entities, which changed since a particular date
@@ -82,15 +83,15 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
    * @param limit     Limit the amount of nodes returned
    * @return List of nodes, which changed after timestamp
    */
-  ResultIterator<T> findChangedSince(long timestamp, int limit, int page);
+  Stream<T> findChangedSince(long timestamp, int limit, int page);
 
-  ResultIterator<T> findIndexed(String field, Object value);
+  Stream<T> findIndexed(String field, Object value);
 
-  ResultIterator<T> findIndexed(String field, Object value, SearchParameter params);
+  Stream<T> findIndexed(String field, Object value, SearchParameter params);
 
-  ResultIterator<T> findIndexed(Index<Node> index, String field, Object value);
+  Stream<T> findIndexed(Index<Node> index, String field, Object value);
 
-  ResultIterator<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params);
+  Stream<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params);
 
   T findIndexedSingle(String field, Object value);
 
@@ -148,7 +149,7 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   Set<Label> labels();
 
-  ResultIterator<T> query(String query);
+  Stream<T> query(String query);
 
   QueryBuilder queryBuilder();
 
@@ -167,11 +168,15 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   void save(SaveContext<T> context);
 
-  ResultIterator<T> search(String query);
+  Stream<T> search(String query);
 
-  ResultIterator<T> search(SearchParameter params);
+  T searchSingle(String query);
 
-  <R extends Base> ResultIterator<R> searchRelated(SearchParameter params);
+  Stream<T> search(SearchParameter params);
+
+  T searchSingle(SearchParameter params);
+
+  <R extends Base> Stream<R> searchRelated(SearchParameter params);
 
   Service service();
 
