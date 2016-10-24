@@ -12,6 +12,7 @@ import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import de.whitefrog.neobase.repository.Repository;
 import de.whitefrog.neobase.Service;
+import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.ResourceIterator;
@@ -27,6 +28,7 @@ public class ExecutionResultIterator<T extends de.whitefrog.neobase.model.Model>
   private final Result results;
   private final SearchParameter params;
   private Map<String, Object> next = null;
+  private boolean nextFound;
 
   public ExecutionResultIterator(Service service, Class<T> clazz, Result results, SearchParameter params) {
     super(null, results);
@@ -55,7 +57,9 @@ public class ExecutionResultIterator<T extends de.whitefrog.neobase.model.Model>
   @SuppressWarnings("unchecked")
   public T next() {
     Map<String, Object> result = next != null? next: results.next();
-    Node node = (Node) result.get("e");
+    String identifier = CollectionUtils.isEmpty(params.returns())? 
+      repository().queryIdentifier(): params.returns().get(0);
+    Node node = (Node) result.get(identifier);
     T model = (T) (repository() != null? repository(): repository(node))
       .createModel(node, params.fieldList());
     if(result.size() > 1) {
@@ -63,10 +67,10 @@ public class ExecutionResultIterator<T extends de.whitefrog.neobase.model.Model>
       boolean nextFound = false;
       while(!nextFound && results.hasNext()) {
         next = results.next();
-        Node nextNode = (Node) next.get("e");
+        Node nextNode = (Node) next.get(identifier);
         if(node.equals(nextNode)) {
           for(String fieldName: next.keySet()) {
-            if(fieldName.equals("e")) continue;
+            if(fieldName.equals(identifier)) continue;
             PropertyContainer item = (PropertyContainer) next.get(fieldName);
             if(!map.containsKey(fieldName)) map.put(fieldName, new ArrayList<>());
             FieldList fields = params.fieldList().containsField(fieldName)?

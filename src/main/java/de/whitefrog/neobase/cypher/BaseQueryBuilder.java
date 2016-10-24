@@ -15,7 +15,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 public class BaseQueryBuilder implements QueryBuilder {
   private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
   private Repository repository;
-  private String id = "e";
   private List<String> queryFields = new ArrayList<>();
 
   public BaseQueryBuilder(Repository repository) {
@@ -43,18 +41,20 @@ public class BaseQueryBuilder implements QueryBuilder {
     StringBuilder query = new StringBuilder();
     if(!params.ids().isEmpty()) {
       query.append("start ")
-        .append(id).append("=node(").append(StringUtils.join(params.ids(), ",")).append(") ");
+        .append(id()).append("=node(").append(StringUtils.join(params.ids(), ",")).append(") ");
     }
     else if(!params.uuids().isEmpty()) {
       query.append("start ")
-        .append(id).append("=node:").append(repository().label())
+        .append(id()).append("=node:").append(repository().label())
         .append("(\"uuid: ").append(StringUtils.join(params.uuids(), " uuid: ")).append("\") ");
     }
     else if(params.query() != null) {
       if(params.query().trim().isEmpty()) {
         throw new IllegalArgumentException("empty query is not allowed");
       }
-      query.append("start e=node:").append(repository().index().getName()).append("({query}) ");
+      query.append("start ")
+        .append(id()).append("=node:").append(repository().label())
+        .append("({query}) ");
       if(params.query().contains(":")) {
         String[] split = params.query().split(":", 2);
         if(split[1].isEmpty()) {
@@ -81,12 +81,12 @@ public class BaseQueryBuilder implements QueryBuilder {
   }
 
   public String id() {
-    return id;
+    return repository().queryIdentifier();
   }
   
   @Override
   public StringBuilder match(SearchParameter params, Map<String, Object> queryParams) {
-    StringBuilder match = new StringBuilder("(").append(id);
+    StringBuilder match = new StringBuilder("(").append(id());
     StringBuilder start = start(params, queryParams);
     // only append label if there is no legacy index lookup
     if(start.length() == 0) {
@@ -188,7 +188,7 @@ public class BaseQueryBuilder implements QueryBuilder {
     }
     
     if(matches.isEmpty() && start.length() > 0) return new StringBuilder();
-    else if(matches.isEmpty()) return new StringBuilder(" match (" + id + ":" + repository().label() + ")");
+    else if(matches.isEmpty()) return new StringBuilder(" match (" + id() + ":" + repository().label() + ")");
     return new StringBuilder(" match ").append(StringUtils.join(matches.values(), ", ")).append(" ");
   }
 
@@ -206,7 +206,7 @@ public class BaseQueryBuilder implements QueryBuilder {
         // only write a where clause for properties, not for relationships
         // this should be handled by the "match" method
         if(descriptor != null) {
-          String lookup = descriptor.relatedTo == null? id + "." + filter.property(): filter.property();
+          String lookup = descriptor.relatedTo == null? id() + "." + filter.property(): filter.property();
           String marker = filter.property().replaceAll("\\.", "") + i;
           
           if(lookup.contains(".to.")) lookup = lookup.replace(".to.", ".");
@@ -287,7 +287,7 @@ public class BaseQueryBuilder implements QueryBuilder {
           orders.add(order.field() + " " + order.dir());
         }
         else {
-          orders.add(id + "." + order.field() + " " + order.dir());
+          orders.add(id() + "." + order.field() + " " + order.dir());
         }
       }
       query.append(" order by ").append(StringUtils.join(orders, ", "));
@@ -298,7 +298,7 @@ public class BaseQueryBuilder implements QueryBuilder {
 
   public StringBuilder returns(SearchParameter params) {
     List<String> ret = new ArrayList<>();
-    ret.add(CollectionUtils.isEmpty(params.returns())? "distinct " + id: StringUtils.join(params.returns(), ","));
+    ret.add(CollectionUtils.isEmpty(params.returns())? "distinct " + id(): StringUtils.join(params.returns(), ","));
     
     // to order by a relationship count we need to count it in return for cypher
     for(SearchParameter.OrderBy order : params.orderBy()) {
@@ -343,69 +343,16 @@ public class BaseQueryBuilder implements QueryBuilder {
   }
 
   @Override
-  public Number sum(String field, SearchParameter params) {
+  public Query buildSimple(SearchParameter params) {
     Map<String, Object> queryParams = new HashMap<>();
-    String q = "" +
-      start(params, queryParams) +
-      match(params, queryParams) +
-      where(params, queryParams);
+    StringBuilder query = new StringBuilder();
 
-//    if(params.returns() != null) {
-//      q+= " return count(" + params.returns() + ") as c";
-//    } else {
-    q+= " return sum(" + field + ") as c";
-//    }
+    query.append(start(params, queryParams));
 
-    Query query = new Query(q, queryParams);
-    Result result = repository.service().graph().execute(query.query(), query.params());
+    query.append(match(params, queryParams));
 
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
+    query.append(where(params, queryParams));
 
-    return (Number) result.columnAs("c").next();
-  }
-
-  @Override
-  public long count(SearchParameter params) {
-    Map<String, Object> queryParams = new HashMap<>();
-    String q = "" +
-      start(params, queryParams) +
-      match(params, queryParams) +
-      where(params, queryParams);
-    
-    if(!CollectionUtils.isEmpty(params.returns())) {
-      q+= " return count(" + params.returns().get(0) + ") as c";
-    } else {
-      q+= " return count(*) as c";
-    }
-
-    Query query = new Query(q, queryParams);
-    try {
-      Result result = repository.service().graph().execute(query.query(), query.params());
-
-      logger.debug(params.toString());
-      logger.debug(query.query());
-      logger.debug(query.params().toString());
-
-      return (long) result.columnAs("c").next();
-    } catch(IllegalStateException e) {
-      logger.error("On query: " + query.query(), e);
-      throw e;
-    }
-  }
-
-  @Override
-  public Result execute(SearchParameter params) {
-    Query query = build(params);
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
-    try {
-      return repository.service().graph().execute(query.query(), query.params());
-    } catch(IllegalStateException e) {
-      logger.error("On query: " + query.query(), e);
-      throw e;
-    }
+    return new Query(query.toString(), queryParams);
   }
 }

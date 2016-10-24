@@ -119,8 +119,6 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   Set<Label> labels();
 
-  Stream<T> query(String query);
-
   QueryBuilder queryBuilder();
 
   String queryIdentifier();

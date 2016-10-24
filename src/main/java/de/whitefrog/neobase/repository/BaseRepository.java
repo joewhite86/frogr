@@ -366,12 +366,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public Stream<T> query(String query) {
-    Result results = graph().execute(query);
-    return StreamUtils.get(new ExecutionResultIterator<>(this, results, new SearchParameter()));
-  }
-
-  @Override
   public QueryBuilder queryBuilder() {
     return queryBuilder;
   }

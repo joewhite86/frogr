@@ -3,6 +3,7 @@ package de.whitefrog.neobase.repository;
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.ExecutionResultIterator;
 import de.whitefrog.neobase.collection.RelationshipResultIterator;
+import de.whitefrog.neobase.cypher.Query;
 import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import de.whitefrog.neobase.helper.StreamUtils;
 import de.whitefrog.neobase.model.Base;
@@ -15,12 +16,15 @@ import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Search {
+  private static final Logger logger = LoggerFactory.getLogger(Search.class);
   private final Service service;
   private final Repository<? extends Model> repository;
   private SearchParameter params;
@@ -31,72 +35,43 @@ public class Search {
     this.params = new SearchParameter();
   }
 
-  private Stream<? extends Base> search(SearchParameter params) {
-    if(CollectionUtils.isEmpty(params.returns()) || (params.returns().size() == 1 && params.returns().contains("e"))) {
-      if(!params.isFiltered() && !params.isOrdered() && params.returns() == null && params.page() == 1) {
-        if(!CollectionUtils.isEmpty(params.ids())) {
-          return params.ids().stream()
-            .map(id -> repository.find(id, params.fields()))
-            .filter(Objects::nonNull);
-        }
-        else if(!CollectionUtils.isEmpty(params.uuids())) {
-          return params.uuids().stream()
-            .map(uuid -> repository.findIndexedSingle(Model.Uuid, uuid, params))
-            .filter(Objects::nonNull);
-        }
-      }
-
-      Result result = repository.queryBuilder().execute(params);
-      return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
-    } else if(params.returns().size() == 1) {
-      Result result = repository.queryBuilder().execute(params);
-      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(), 
-        params.returns().get(0));
-      if(descriptor.isRelationship()) {
-        return StreamUtils.get(new RelationshipResultIterator<>(result, params));
-      } else {
-        try {
-          Repository repository = service.repository(descriptor.baseClass().getSimpleName());
-          return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
-        }
-        catch(RepositoryInstantiationException e) {
-          return StreamUtils.get(new ExecutionResultIterator<>(service, descriptor.baseClass(), result, params));
-        }
-      }
+  public long count() {
+    Query query = repository.queryBuilder().buildSimple(params);
+    if(!CollectionUtils.isEmpty(params.returns())) {
+      query.query(query.query() + " return count(" + params.returns().get(0) + ") as c");
     } else {
-      // TODO: Handle correctly
-      throw new UnsupportedOperationException();
+      query.query(query.query() + " return count(*) as c");
+    }
+    logger.debug(params.toString());
+    logger.debug(query.query());
+    logger.debug(query.params().toString());
+
+    try {
+      Result result = repository.service().graph().execute(query.query(), query.params());
+
+      return (long) result.columnAs("c").next();
+    } catch(IllegalStateException e) {
+      logger.error("On query: " + query.query(), e);
+      throw e;
     }
   }
-  
-  public long count() {
-    return repository.queryBuilder().count(params);
-  }
 
-  public Number sum(String field) {
-    return repository.queryBuilder().sum(field, params);
-  }
-  
-  public <T extends Base> Stream<T> stream() {
-    return (Stream<T>) search(params);
-  }
-
-  public <T extends Base> List<T> list() {
-    return ((Stream<T>) search(params)).collect(Collectors.toList());
-  }
-
-  public <T extends Base> Set<T> set() {
-    return ((Stream<T>) search(params)).collect(Collectors.toSet());
-  }
-
-  public <T extends Base> T single() {
-    Optional<T> optional = (Optional<T>) search(params.limit(1)).findFirst();
-    return optional.isPresent()? optional.get(): null;
-  }
-  
-  public Search params(SearchParameter params) {
-    this.params = params;
+  public Search depth(int depth) {
+    params.depth(depth);
     return this;
+  }
+
+  private Result execute(SearchParameter params) {
+    Query query = repository.queryBuilder().build(params);
+    logger.debug(params.toString());
+    logger.debug(query.query());
+    logger.debug(query.params().toString());
+    try {
+      return repository.service().graph().execute(query.query(), query.params());
+    } catch(IllegalStateException e) {
+      logger.error("On query: " + query.query(), e);
+      throw e;
+    }
   }
 
   public Search fields(String... fields) {
@@ -114,8 +89,86 @@ public class Search {
     return this;
   }
 
-  public Search depth(int depth) {
-    params.depth(depth);
+  public Search filter(String property, String value) {
+    params.filter(property, value);
+    return this;
+  }
+
+  public Search filter(String property, Filter filter) {
+    params.filter(property, filter);
+    return this;
+  }
+
+  public Number sum(String field) {
+    Query query = repository.queryBuilder().buildSimple(params);
+    query.query(query.query() + " return sum(" + field + ") as c");
+    logger.debug(params.toString());
+    logger.debug(query.query());
+    logger.debug(query.params().toString());
+
+    Result result = repository.service().graph().execute(query.query(), query.params());
+
+    return (Number) result.columnAs("c").next();
+  }
+
+  public <T extends Base> List<T> list() {
+    return ((Stream<T>) search(params)).collect(Collectors.toList());
+  }
+
+  private Stream<? extends Base> search(SearchParameter params) {
+    if(CollectionUtils.isEmpty(params.returns()) || 
+        (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
+      if(!params.isFiltered() && !params.isOrdered() && params.returns() == null && params.page() == 1) {
+        if(!CollectionUtils.isEmpty(params.ids())) {
+          return params.ids().stream()
+            .map(id -> repository.find(id, params.fields()))
+            .filter(Objects::nonNull);
+        }
+        else if(!CollectionUtils.isEmpty(params.uuids())) {
+          return params.uuids().stream()
+            .map(uuid -> repository.findIndexedSingle(Model.Uuid, uuid, params))
+            .filter(Objects::nonNull);
+        }
+      }
+
+      Result result = execute(params);
+      return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
+    } else if(params.returns().size() == 1) {
+      Result result = execute(params);
+      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
+        params.returns().get(0));
+      if(descriptor.isRelationship()) {
+        return StreamUtils.get(new RelationshipResultIterator<>(result, params));
+      } else {
+        try {
+          Repository repository = service.repository(descriptor.baseClass().getSimpleName());
+          return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
+        }
+        catch(RepositoryInstantiationException e) {
+          return StreamUtils.get(new ExecutionResultIterator<>(service, descriptor.baseClass(), result, params));
+        }
+      }
+    } else {
+      // TODO: Handle correctly
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  public <T extends Base> Set<T> set() {
+    return ((Stream<T>) search(params)).collect(Collectors.toSet());
+  }
+
+  public <T extends Base> Stream<T> stream() {
+    return (Stream<T>) search(params);
+  }
+
+  public <T extends Base> T single() {
+    Optional<T> optional = (Optional<T>) search(params.limit(1)).findFirst();
+    return optional.isPresent()? optional.get(): null;
+  }
+
+  public Search params(SearchParameter params) {
+    this.params = params;
     return this;
   }
 
@@ -126,16 +179,6 @@ public class Search {
 
   public Search query(String query) {
     params.query(query);
-    return this;
-  }
-
-  public Search filter(String property, String value) {
-    params.filter(property, value);
-    return this;
-  }
-
-  public Search filter(String property, Filter filter) {
-    params.filter(property, filter);
     return this;
   }
 
