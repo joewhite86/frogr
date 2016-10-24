@@ -1,14 +1,17 @@
 package de.whitefrog.neobase.rest.response;
 
+import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.NeobaseException;
 import org.neo4j.helpers.collection.MapUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.ConstraintViolationException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.Provider;
+import java.security.InvalidParameterException;
 import java.util.Map;
 
 @Provider
@@ -29,7 +32,14 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
       }
       return javax.ws.rs.core.Response.fromResponse(((WebApplicationException) exception).getResponse())
         .entity(response).build();
-    } else {
+    }
+    // not severe exceptions, which don't need stack trace logging
+    else if(exception instanceof MissingRequiredException || exception instanceof InvalidParameterException ||
+            exception instanceof ConstraintViolationException) {
+      logger.error(exception.getMessage());
+      return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).entity(response).build();
+    }
+    else {
       logger.error(exception.getMessage(), exception);
       return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).entity(response).build();
     }
