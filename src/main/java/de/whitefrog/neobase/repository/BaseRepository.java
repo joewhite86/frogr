@@ -3,11 +3,12 @@ package de.whitefrog.neobase.repository;
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.ExecutionResultIterator;
 import de.whitefrog.neobase.collection.NodeIterator;
-import de.whitefrog.neobase.collection.RelationshipResultIterator;
-import de.whitefrog.neobase.collection.ResultIterator;
 import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
-import de.whitefrog.neobase.exception.*;
+import de.whitefrog.neobase.exception.MissingRequiredException;
+import de.whitefrog.neobase.exception.NeobaseRuntimeException;
+import de.whitefrog.neobase.exception.PersistException;
+import de.whitefrog.neobase.exception.TypeMismatchException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.helper.StreamUtils;
 import de.whitefrog.neobase.index.IndexUtils;
@@ -16,10 +17,8 @@ import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.rest.FieldList;
-import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.AnnotationDescriptor;
-import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;
@@ -92,19 +91,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   @Override
   public boolean contains(T model) {
     return model.getId() != -1 && find(model.getId()) != null;
-  }
-
-  @Override
-  public long count() {
-    try(Result results = graph().execute("match (n:" + label() + ") return count(*) as c")) {
-      Iterator<Long> iterator = results.columnAs("c");
-      return iterator.next();
-    }
-  }
-
-  @Override
-  public long count(SearchParameter params) {
-    return queryBuilder().count(params);
   }
 
   public T createModel() {
@@ -180,16 +166,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   }
 
   @Override
-  public Stream<T> findAll() {
-    return findAll(Integer.MAX_VALUE, 1);
-  }
-
-  @Override
-  public Stream<T> findAll(int limit, int page) {
-    return search(new SearchParameter(page, limit));
-  }
-
-  @Override
   public T find(long id, String... fields) {
     return find(id, Arrays.asList(fields));
   }
@@ -227,13 +203,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
   @Override
   public T findByUuid(String uuid) {
     return findIndexedSingle(Model.Uuid, uuid);
-  }
-
-  @Override
-  public Stream<T> findChangedSince(long timestamp, int limit, int page) {
-    return search(new SearchParameter(page, limit)
-      .filter(T.LastModified, new Filter.GreaterThan(timestamp))
-      .filter(T.Created, new Filter.GreaterThan(timestamp)));
   }
 
   @Override
@@ -443,61 +412,10 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
     Persistence.save(this, context);
     logger.info("{} saved", context.model());
   }
-
+  
   @Override
-  public Stream<T> search(String query) {
-    return search(new SearchParameter().query(query));
-  }
-
-  @Override
-  public T searchSingle(String query) {
-    Optional<T> optional = search(new SearchParameter(1).query(query)).findFirst();
-    return optional.isPresent()? optional.get(): null;
-  }
-
-  @Override
-  public Stream<T> search(SearchParameter params) {
-    if(!params.isFiltered() && !params.isOrdered() && params.returns() == null && params.page() == 1) {
-      if(!CollectionUtils.isEmpty(params.ids())) {
-        return params.ids().stream()
-          .map(id -> find(id, params.fields()))
-          .filter(Objects::nonNull);
-      } else if(!CollectionUtils.isEmpty(params.uuids())) {
-        return params.uuids().stream()
-          .map(uuid -> findIndexedSingle(Model.Uuid, uuid, params))
-          .filter(Objects::nonNull);
-      }
-    }
-    
-    Result result = queryBuilder().execute(params);
-    return StreamUtils.get(new ExecutionResultIterator<>(this, result, params));
-  }
-
-  @Override
-  public T searchSingle(SearchParameter params) {
-    Optional<T> optional = search(params.limit(1)).findFirst();
-    return optional.isPresent()? optional.get(): null;
-  }
-
-  @Override
-  public <R extends Base> Stream<R> searchRelated(SearchParameter params) {
-    if(!params.returns().contains("e")) params.returns().add("e");
-    Result result = queryBuilder().execute(params);
-    if(params.returns() == null) {
-      throw new UnsupportedOperationException("params.returns can't be null");
-    }
-    FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(getModelClass(), params.returns().get(0));
-    if(descriptor.isRelationship()) {
-      return StreamUtils.get(new RelationshipResultIterator<>(result, params));
-    } else {
-      try {
-        Repository repository = service().repository(descriptor.baseClass().getSimpleName());
-        return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
-      }
-      catch(RepositoryInstantiationException e) {
-        return StreamUtils.get(new ExecutionResultIterator<>(service(), descriptor.baseClass(), result, params));
-      }
-    }
+  public Search search() {
+    return new Search(this);
   }
 
   @Override
@@ -558,12 +476,6 @@ public abstract class BaseRepository<T extends Model> implements Repository<T> {
         }
       }
     }
-  }
-
-
-  @Override
-  public Number sum(String field, SearchParameter params) {
-    return queryBuilder().sum(field, params);
   }
 
   public void validateModel(SaveContext<T> context) {

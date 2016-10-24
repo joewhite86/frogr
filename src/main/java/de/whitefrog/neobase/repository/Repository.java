@@ -1,13 +1,12 @@
 package de.whitefrog.neobase.repository;
 
-import de.whitefrog.neobase.collection.ResultIterator;
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.cypher.QueryBuilder;
-import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
+import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.SearchParameter;
-import de.whitefrog.neobase.Service;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -20,24 +19,31 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public interface Repository<T extends de.whitefrog.neobase.model.Model> {
-  /**
-   * Returns the overall count.
-   * @return how many entities of this type exists
-   */
-  long count();
-
-  /**
-   * Execute a filtered query and return the overall count of all found entities.
-   * @param params search parameters
-   * @return how many entities were found
-   */
-  long count(SearchParameter params);
-
   boolean contains(T entity);
 
   T createModel(Node node);
 
   T createModel(Node node, FieldList fields);
+
+  void dispose();
+
+  T fetch(T tag);
+
+  T fetch(T tag, String... fields);
+
+  T fetch(T tag, boolean refetch, String... fields);
+
+  T fetch(T tag, FieldList fields);
+
+  T fetch(T tag, boolean refetch, FieldList fields);
+
+  void fetch(Relationship relationship);
+
+  void fetch(Relationship relationship, String... fields);
+
+  void fetch(Relationship relationship, FieldList fields);
+
+  boolean filter(Node node, Collection<SearchParameter.PropertyFilter> filters);
 
   /**
    * Get a node by id
@@ -53,37 +59,9 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   Stream<T> find(SearchParameter params);
 
-  Stream<T> findAll();
-
   T findByUuid(String uuid);
 
   T findSingle(String property, Object value);
-
-  T fetch(T tag);
-
-  T fetch(T tag, String... fields);
-
-  T fetch(T tag, boolean refetch, String... fields);
-
-  T fetch(T tag, FieldList fields);
-
-  T fetch(T tag, boolean refetch, FieldList fields);
-
-  /**
-   * Get a list of all nodes of this type
-   *
-   * @return List of all nodes
-   */
-  Stream<T> findAll(int limit, int page);
-
-  /**
-   * Get a list of entities, which changed since a particular date
-   *
-   * @param timestamp Timestamp after which nodes should be returned
-   * @param limit     Limit the amount of nodes returned
-   * @return List of nodes, which changed after timestamp
-   */
-  Stream<T> findChangedSince(long timestamp, int limit, int page);
 
   Stream<T> findIndexed(String field, Object value);
 
@@ -100,14 +78,6 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
   T findIndexedSingle(Index<Node> index, String field, Object value);
 
   T findIndexedSingle(Index<Node> index, String field, Object value, SearchParameter params);
-
-  void fetch(de.whitefrog.neobase.model.relationship.Relationship relationship);
-
-  void fetch(de.whitefrog.neobase.model.relationship.Relationship relationship, String... fields);
-
-  void fetch(de.whitefrog.neobase.model.relationship.Relationship relationship, FieldList fields);
-
-  boolean filter(Node node, Collection<SearchParameter.PropertyFilter> filters);
 
   Class<?> getModelClass();
 
@@ -168,21 +138,9 @@ public interface Repository<T extends de.whitefrog.neobase.model.Model> {
 
   void save(SaveContext<T> context);
 
-  Stream<T> search(String query);
-
-  T searchSingle(String query);
-
-  Stream<T> search(SearchParameter params);
-
-  T searchSingle(SearchParameter params);
-
-  <R extends Base> Stream<R> searchRelated(SearchParameter params);
+  Search search();
 
   Service service();
 
   void sort(List<T> list, List<SearchParameter.OrderBy> orderBy);
-
-  Number sum(String field, SearchParameter params);
-
-  void dispose();
 }
