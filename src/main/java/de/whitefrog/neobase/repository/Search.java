@@ -26,10 +26,10 @@ import java.util.stream.Stream;
 public class Search {
   private static final Logger logger = LoggerFactory.getLogger(Search.class);
   private final Service service;
-  private final Repository<? extends Model> repository;
+  private final Repository<? extends Base> repository;
   private SearchParameter params;
   
-  public Search(Repository<? extends Model> repository) {
+  public Search(Repository<? extends Base> repository) {
     this.repository = repository;
     this.service = repository.service();
     this.params = new SearchParameter();

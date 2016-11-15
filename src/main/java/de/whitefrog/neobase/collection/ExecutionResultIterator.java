@@ -1,29 +1,20 @@
 package de.whitefrog.neobase.collection;
 
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.model.Base;
-import de.whitefrog.neobase.model.Model;
-import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
-import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
-import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
-import de.whitefrog.neobase.persistence.Relationships;
 import de.whitefrog.neobase.repository.Repository;
-import de.whitefrog.neobase.Service;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
-import org.neo4j.kernel.impl.core.RelationshipProxy;
 
-import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class ExecutionResultIterator<T extends de.whitefrog.neobase.model.Model> extends ResultIterator<T> {
+public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   private final Service service;
   private final Result results;
   private final SearchParameter params;

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
-import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -207,7 +206,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         dir = SearchParameter.SortOrder.DESC;
         split = split.substring(1);
       }
-      // " " needs to be captured too, "+" is converted to " " on URIs
+      // " " needs to be captured too since "+" is converted to " " on URIs
       else if(split.startsWith("+") || split.startsWith(" ")) {
         split = split.substring(1);
       }

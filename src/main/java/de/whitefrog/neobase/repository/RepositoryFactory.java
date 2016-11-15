@@ -1,7 +1,7 @@
 package de.whitefrog.neobase.repository;
 
-import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import de.whitefrog.neobase.Service;
+import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.reflections.Reflections;
 

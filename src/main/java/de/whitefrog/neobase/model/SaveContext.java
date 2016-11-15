@@ -4,22 +4,20 @@ import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
-import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.repository.Repository;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
+public class SaveContext<T extends Base> {
   private T model;
   private T original;
   private Repository<T> repository;
-  private Node node;
+  private PropertyContainer node;
   private List<FieldDescriptor> changedFields;
   private List<FieldDescriptor> fieldMap;
 
@@ -31,12 +29,18 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     }
     else if(model.getUuid() != null) {
       this.original = repository.findByUuid(model.getUuid());
+      this.original = repository.fetch(original, Base.AllFields);
+      this.model.setId(this.original.getId());
     }
     fieldMap = Persistence.cache().fieldMap(model.getClass());
   }
 
   public List<FieldDescriptor> changedFields() {
-    if(changedFields == null) findChangedFields();
+    if(changedFields == null) {
+      changedFields = fieldMap.stream()
+        .filter(f-> fieldChanged(f.field()))
+        .collect(Collectors.toList());
+    }
     return changedFields;
   }
   
@@ -71,12 +75,6 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     return fieldMap;
   }
 
-  private void findChangedFields() {
-    changedFields = fieldMap.stream()
-      .filter(f-> fieldChanged(f.field()))
-      .collect(Collectors.toList());
-  }
-
   public T model() {
     return model;
   }
@@ -85,14 +83,22 @@ public class SaveContext<T extends de.whitefrog.neobase.model.Model> {
     return repository;
   }
 
-  public Node node() {
-    if(node == null && model.getId() != -1) {
-      node = repository.getNode(model);
+  public PropertyContainer node() {
+    if(node == null && original() != null) {
+      if(model instanceof Model) node = repository.graph().getNodeById(original().getId());
+      else node = repository.graph().getRelationshipById(original().getId());
+    } else if(node == null && model().getId() > 0) {
+      if(model instanceof Model) node = repository.graph().getNodeById(model().getId());
+      else node = repository.graph().getRelationshipById(model().getId());
     }
     return node;
   }
 
   public T original() {
     return original;
+  }
+
+  public void setNode(Node node) {
+    this.node = node;
   }
 }

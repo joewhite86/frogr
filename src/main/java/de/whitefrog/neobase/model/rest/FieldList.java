@@ -3,7 +3,6 @@ package de.whitefrog.neobase.model.rest;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import de.whitefrog.neobase.model.Base;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

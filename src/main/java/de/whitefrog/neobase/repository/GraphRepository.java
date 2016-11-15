@@ -1,7 +1,7 @@
 package de.whitefrog.neobase.repository;
 
-import de.whitefrog.neobase.model.Graph;
 import de.whitefrog.neobase.Service;
+import de.whitefrog.neobase.model.Graph;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 

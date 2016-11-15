@@ -1,11 +1,11 @@
 package de.whitefrog.neobase.rest.service;
 
 import com.codahale.metrics.MetricRegistry;
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.repository.Repository;
-import de.whitefrog.neobase.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

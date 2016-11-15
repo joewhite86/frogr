@@ -1,7 +1,6 @@
 package de.whitefrog.neobase.model.rest;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import de.whitefrog.neobase.model.Base;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 

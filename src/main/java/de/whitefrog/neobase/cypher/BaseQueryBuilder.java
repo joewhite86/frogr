@@ -45,7 +45,7 @@ public class BaseQueryBuilder implements QueryBuilder {
     }
     else if(!params.uuids().isEmpty()) {
       query.append("start ")
-        .append(id()).append("=node:").append(repository().label())
+        .append(id()).append("=node:").append(repository.getModelClass().getSimpleName())
         .append("(\"uuid: ").append(StringUtils.join(params.uuids(), " uuid: ")).append("\") ");
     }
     else if(params.query() != null) {
@@ -53,7 +53,7 @@ public class BaseQueryBuilder implements QueryBuilder {
         throw new IllegalArgumentException("empty query is not allowed");
       }
       query.append("start ")
-        .append(id()).append("=node:").append(repository().label())
+        .append(id()).append("=node:").append(repository.getModelClass().getSimpleName())
         .append("({query}) ");
       if(params.query().contains(":")) {
         String[] split = params.query().split(":", 2);
@@ -90,7 +90,7 @@ public class BaseQueryBuilder implements QueryBuilder {
     StringBuilder start = start(params, queryParams);
     // only append label if there is no legacy index lookup
     if(start.length() == 0) {
-      match.append(":").append(repository.label().name());
+      match.append(":").append(repository.getModelClass().getSimpleName());
     }
     match.append(")");
 
@@ -141,9 +141,9 @@ public class BaseQueryBuilder implements QueryBuilder {
         } else {
           boolean isTo = filter.property().contains(".to.");
           newMatch.append(annotations.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
-          newMatch.append("[").append(!isTo? fieldName: "").append(":").append(annotations.relatedTo.type()).append("]");
+          newMatch.append("[").append(fieldName).append(":").append(annotations.relatedTo.type()).append("]");
           newMatch.append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-          newMatch.append("(").append(isTo? fieldName: "").append(")");
+          newMatch.append("(").append(fieldName + "_to").append(")");
         }
         matches.put(fieldName, newMatch.toString());
       }
@@ -188,7 +188,7 @@ public class BaseQueryBuilder implements QueryBuilder {
     }
     
     if(matches.isEmpty() && start.length() > 0) return new StringBuilder();
-    else if(matches.isEmpty()) return new StringBuilder(" match (" + id() + ":" + repository().label() + ")");
+    else if(matches.isEmpty()) return new StringBuilder(" match (" + id() + ":" + repository.getModelClass().getSimpleName() + ")");
     return new StringBuilder(" match ").append(StringUtils.join(matches.values(), ", ")).append(" ");
   }
 
@@ -209,7 +209,7 @@ public class BaseQueryBuilder implements QueryBuilder {
           String lookup = descriptor.relatedTo == null? id() + "." + filter.property(): filter.property();
           String marker = filter.property().replaceAll("\\.", "") + i;
           
-          if(lookup.contains(".to.")) lookup = lookup.replace(".to.", ".");
+          if(lookup.contains(".to.")) lookup = lookup.replace(".to", "_to");
 
           if(filter.getFilter() instanceof Filter.Equals) {
             if(filter.getFilter().getValue() == null) {
@@ -298,7 +298,16 @@ public class BaseQueryBuilder implements QueryBuilder {
 
   public StringBuilder returns(SearchParameter params) {
     List<String> ret = new ArrayList<>();
-    ret.add(CollectionUtils.isEmpty(params.returns())? "distinct " + id(): StringUtils.join(params.returns(), ","));
+    
+    if(CollectionUtils.isEmpty(params.returns())) {
+      ret.add("distinct " + id());
+    } else {
+      List<String> returns = new ArrayList<>(params.returns());
+      returns.forEach(r -> {
+        if(r.contains(".to")) r = r.replace(".to", "_to");
+      });
+      ret.add(StringUtils.join(returns, ","));
+    }
     
     // to order by a relationship count we need to count it in return for cypher
     for(SearchParameter.OrderBy order : params.orderBy()) {

@@ -2,6 +2,7 @@ package de.whitefrog.neobase.persistence;
 
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.model.Base;
@@ -11,8 +12,8 @@ import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelationshipCount;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
+import de.whitefrog.neobase.repository.ModelRepository;
 import de.whitefrog.neobase.repository.Repository;
-import de.whitefrog.neobase.Service;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.neo4j.graphdb.*;
@@ -51,7 +52,7 @@ public abstract class Persistence {
    * @param repository The repository to delete from.
    * @param model      The model to delete.
    */
-  public static <T extends Model> void delete(Repository<T> repository, T model) {
+  public static <T extends Model> void delete(ModelRepository<T> repository, T model) {
     Node node = getNode(model);
     // check fields for bulk or indexed
     List<FieldDescriptor> fieldMap = cache.fieldMap(model.getClass());
@@ -60,12 +61,15 @@ public abstract class Persistence {
       if(annotations.indexed != null || annotations.unique) {
         // delete node from index
         repository.indexRemove(node);
-      } else if(annotations.relatedTo != null) {
-        for(Relationship relationship : node.getRelationships(
-          annotations.relatedTo.direction(), RelationshipType.withName(annotations.relatedTo.type()))) {
-          relationship.delete();
-        }
+//      } else if(annotations.relatedTo != null) {
+//        for(Relationship relationship : node.getRelationships(
+//          annotations.relatedTo.direction(), RelationshipType.withName(annotations.relatedTo.type()))) {
+//          relationship.delete();
+//        }
       }
+    }
+    for(Relationship relationship: node.getRelationships()) {
+      relationship.delete();
     }
 
     // delete node
@@ -80,7 +84,7 @@ public abstract class Persistence {
    * @return The saved model.
    * @throws MissingRequiredException A required field is missing.
    */
-  public static <T extends Model> T save(Repository<T> repository, SaveContext<T> context) throws MissingRequiredException {
+  public static <T extends Model> T save(ModelRepository<T> repository, SaveContext<T> context) throws MissingRequiredException {
     T model = context.model();
     Node node;
     Label label = repository.label();
@@ -89,6 +93,7 @@ public abstract class Persistence {
     if(!model.isPersisted()) {
       create = true;
       node = service.graph().createNode(label);
+      context.setNode(node);
       // add labels defined in repository
       repository.labels().stream()
         .filter(l -> !node.hasLabel(l))
@@ -96,12 +101,9 @@ public abstract class Persistence {
       model.setId(node.getId());
       model.setCreated(System.currentTimeMillis());
       model.setType(label.name());
-    } else if(model.getId() > 0) {
-      if(model.getType() == null) model.setType(label.name());
-      node = service.graph().getNodeById(model.getId());
     } else {
       if(model.getType() == null) model.setType(label.name());
-      node = getNode(repository.findByUuid(model.getUuid()));
+      node = (Node) context.node();
     }
 
     model.updateLastModified();
@@ -128,7 +130,15 @@ public abstract class Persistence {
     Field field = descriptor.field();
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
-    Node node = context.node();
+    Node node = (Node) context.node();
+    ModelRepository<T> repository = (ModelRepository<T>) context.repository();
+    
+    if(node == null) {
+      throw new NullPointerException("node can not be null");
+    }
+    if(field == null) {
+      throw new NullPointerException("field can not be null");
+    }
     
     try {
       Object value = field.get(model);
@@ -151,8 +161,9 @@ public abstract class Persistence {
 
         if(value != null) {
           // handle relationships
-          if(annotations.relatedTo != null) {
+          if(annotations.relatedTo != null && valueChanged) {
             Relationships.save(context, descriptor);
+            logger.info("{}: updated relationships for \"{}\"", model, field.getName());
           }
           
           // check uniqueness
@@ -174,21 +185,24 @@ public abstract class Persistence {
             if(value.getClass().isEnum()) {
               if((!node.hasProperty(field.getName()) || !((Enum<?>) value).name().equals(node.getProperty(field.getName())))) {
                 node.setProperty(field.getName(), ((Enum<?>) value).name());
+                logger.info("{}: set enum value for \"{}\" to \"{}\"", model, field.getName(), ((Enum<?>) value).name());
               }
             }
             // store dates as timestamp
             else if(value instanceof Date) {
               node.setProperty(field.getName(), ((Date) value).getTime());
+              logger.info("{}: set date value for \"{}\" to \"{}\"", model, field.getName(), ((Date) value).getTime());
             }
             // store all other values
             else if(valueChanged) {
               node.setProperty(field.getName(), value);
+              logger.info("{}: set value for \"{}\" to \"{}\"", model, field.getName(), value);
             }
           }
           // if the value has changed and the field is indexed, we need to add the value to the index
           if(valueChanged && (annotations.indexed != null || annotations.unique)) {
-            if(!created) context.repository().indexRemove(node, field.getName());
-            context.repository().index(model, field.getName(),
+            if(!created) repository.indexRemove(node, field.getName());
+            repository.index(model, field.getName(),
               value instanceof String? ((String) value).toLowerCase(): value);
           }
         } 
@@ -197,7 +211,7 @@ public abstract class Persistence {
         else if(valueChanged && annotations.nullRemove) {
           node.removeProperty(field.getName());
           if((annotations.indexed != null || annotations.unique)) {
-            context.repository().indexRemove(node, field.getName());
+            repository.indexRemove(node, field.getName());
           }
         }
       }

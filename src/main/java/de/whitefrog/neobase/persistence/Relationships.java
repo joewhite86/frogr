@@ -1,26 +1,22 @@
 package de.whitefrog.neobase.persistence;
 
+import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.RelatedNotPersistedException;
-import de.whitefrog.neobase.exception.RelationshipExistsException;
-import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
-import de.whitefrog.neobase.model.relationship.*;
+import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.repository.Repository;
-import de.whitefrog.neobase.Service;
 import org.apache.commons.lang.Validate;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class Relationships {
@@ -35,7 +31,7 @@ public class Relationships {
     cache = _cache;
   }
 
-  public static <T extends de.whitefrog.neobase.model.Model> Relationship addRelationship(T model, Node node, RelatedTo annotation, Model foreignModel) {
+  public static <T extends Model> Relationship addRelationship(T model, Node node, RelatedTo annotation, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
         foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
@@ -106,7 +102,7 @@ public class Relationships {
     Persistence.fetch(model, FieldList.parseFields(Base.Type), false);
     if(isStart) {
       FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
-      Model from = service.repository(model.getType()).createModel(node, fieldList);
+      Model from = (Model) service.repository(model.getType()).createModel(node, fieldList);
       fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
       Model to = repository.createModel(other, fieldList);
       relModel.setFrom(from);
@@ -115,7 +111,7 @@ public class Relationships {
       FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
       Model from = repository.createModel(other, fieldList);
       fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
-      Model to = service.repository(model.getType()).createModel(node, fieldList);
+      Model to = (Model) service.repository(model.getType()).createModel(node, fieldList);
       relModel.setFrom(from);
       relModel.setTo(to);
     }
@@ -179,7 +175,7 @@ public class Relationships {
     return null;
   }
 
-  public static <M extends de.whitefrog.neobase.model.Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor,
+  public static <M extends Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor,
                                                                                      QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
@@ -261,11 +257,11 @@ public class Relationships {
     return false;
   }
 
-  static <T extends de.whitefrog.neobase.model.Model> void save(SaveContext<T> context, FieldDescriptor descriptor)
+  static <T extends Model> void save(SaveContext<T> context, FieldDescriptor descriptor)
       throws IllegalAccessException {
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
-    Node node = context.node();
+    Node node = (Node) context.node();
     RelatedTo relatedTo = annotations.relatedTo;
     Object value = descriptor.field().get(model);
     // Handle single relationships
@@ -425,13 +421,13 @@ public class Relationships {
       relationship.type(), relationship.getFrom(), relationship.getTo());
   }
 
-  public static <T extends de.whitefrog.neobase.model.Model> void delete(T model, RelatedTo annoation, 
+  public static <T extends Model> void delete(T model, RelatedTo annoation, 
                                                                          Model foreignModel) {
     delete(model, RelationshipType.withName(annoation.type()), annoation.direction(), foreignModel);
   }
 
-  public static <T extends de.whitefrog.neobase.model.Model> void delete(T model, RelationshipType type,
-                                                                         Direction direction, Model foreignModel) {
+  public static <T extends Model> void delete(T model, RelationshipType type, 
+                                              Direction direction, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
         foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
