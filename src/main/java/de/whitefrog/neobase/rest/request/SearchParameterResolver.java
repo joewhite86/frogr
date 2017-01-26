@@ -222,32 +222,32 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       String value = splitted[1];
       Filter filter;
       if(value.startsWith("!")) {
-        filter = new Filter.NotEquals(guessType(value.substring(1)));
+        filter = new Filter.NotEquals(field, guessType(value.substring(1)));
       } else if(value.startsWith("<")) {
         if(value.substring(1, 2).equals("=")) {
-          filter = new Filter.LessThan(Long.parseLong(value.substring(2)));
+          filter = new Filter.LessThan(field, Long.parseLong(value.substring(2)));
           ((Filter.LessThan) filter).setIncluding(true);
         } else {
-          filter = new Filter.LessThan(Long.parseLong(value.substring(1)));
+          filter = new Filter.LessThan(field, Long.parseLong(value.substring(1)));
           ((Filter.LessThan) filter).setIncluding(false);
         }
       } else if(value.startsWith(">")) {
         if(value.substring(1, 2).equals("=")) {
-          filter = new Filter.GreaterThan(Long.parseLong(value.substring(2)));
+          filter = new Filter.GreaterThan(field, Long.parseLong(value.substring(2)));
           ((Filter.GreaterThan) filter).setIncluding(true);
         } else {
-          filter = new Filter.GreaterThan(Long.parseLong(value.substring(1)));
+          filter = new Filter.GreaterThan(field, Long.parseLong(value.substring(1)));
           ((Filter.GreaterThan) filter).setIncluding(false);
         }
       } else if(value.startsWith("(") && value.contains("-") && value.endsWith(")")) {
         String[] range = value.substring(1, value.length() - 1).split("-");
-        filter = new Filter.Range(Long.parseLong(range[0]), Long.parseLong(range[1]));
+        filter = new Filter.Range(field, Long.parseLong(range[0]), Long.parseLong(range[1]));
       } else if(value.startsWith("=")) {
-        filter = new Filter.Equals(guessType(value.substring(1)));
+        filter = new Filter.Equals(field, guessType(value.substring(1)));
       } else {
-        filter = new Filter.Equals(guessType(value));
+        filter = new Filter.Equals(field, guessType(value));
       }
-      params.filter(field, filter);
+      params.filter(filter);
     }
   }
 

@@ -12,14 +12,24 @@ public class ModelCache {
   private Map<String, Class> modelCache = new HashMap<>();
   private List<String> ignoreFields = Arrays.asList(
     "id", "initialId", "checkedFields", "fetchedFields");
+  private List<Reflections> reflections = new ArrayList<>();
 
   public ModelCache(Collection<String> packages) {
     for(String pkg: packages) {
       Reflections reflections = new Reflections(pkg);
+      this.reflections.add(reflections);
       for(Class clazz: reflections.getSubTypesOf(Base.class)) {
         modelCache.put(clazz.getSimpleName(), clazz);
       }
     }
+  }
+  
+  public List<Class> subTypesOf(Class<?> baseClass) {
+    List<Class> subTypes = new ArrayList<>();
+    for(Reflections reflection: reflections) {
+      subTypes.addAll(reflection.getSubTypesOf(baseClass));
+    }
+    return subTypes;
   }
 
   public AnnotationDescriptor fieldAnnotations(Class clazz, String fieldName) {

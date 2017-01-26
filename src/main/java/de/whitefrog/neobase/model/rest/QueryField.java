@@ -1,6 +1,7 @@
 package de.whitefrog.neobase.model.rest;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -14,10 +15,14 @@ import java.util.Arrays;
   setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class QueryField {
   private String field;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
   private int skip = 0;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
   private int limit = SearchParameter.DefaultLimit;
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private FieldList subFields = new FieldList();
 
+  public QueryField() {}
   public QueryField(String field) {
     this(field, false);
   }

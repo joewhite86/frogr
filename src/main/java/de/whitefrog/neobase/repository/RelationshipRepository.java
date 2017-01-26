@@ -12,10 +12,6 @@ public interface RelationshipRepository<T extends Relationship> extends Reposito
 
   Stream<T> findIndexed(Index<org.neo4j.graphdb.Relationship> index, String field, Object value, SearchParameter params);
 
-  T findIndexedSingle(Index<org.neo4j.graphdb.Relationship> index, String field, Object value);
-
-  T findIndexedSingle(Index<org.neo4j.graphdb.Relationship> index, String field, Object value, SearchParameter params);
-
   org.neo4j.graphdb.Relationship getRelationship(Relationship model);
 
   Index<org.neo4j.graphdb.Relationship> index();

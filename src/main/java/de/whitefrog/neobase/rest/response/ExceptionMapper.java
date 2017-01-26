@@ -1,5 +1,6 @@
 package de.whitefrog.neobase.rest.response;
 
+import de.whitefrog.neobase.exception.DuplicateEntryException;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.NeobaseException;
 import org.neo4j.helpers.collection.MapUtil;
@@ -22,7 +23,7 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
   );
 
   public javax.ws.rs.core.Response toResponse(Exception exception) {
-    ModelResponse response = new ModelResponse();
+    Response response = new Response();
     response.setSuccess(false);
     response.setMessage(exception.getMessage());
     if(exception instanceof WebApplicationException) {
@@ -35,7 +36,7 @@ public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exceptio
     }
     // not severe exceptions, which don't need stack trace logging
     else if(exception instanceof MissingRequiredException || exception instanceof InvalidParameterException ||
-            exception instanceof ConstraintViolationException) {
+            exception instanceof ConstraintViolationException || exception instanceof DuplicateEntryException) {
       logger.error(exception.getMessage());
       return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).entity(response).build();
     }

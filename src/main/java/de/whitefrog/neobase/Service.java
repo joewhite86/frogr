@@ -1,5 +1,6 @@
 package de.whitefrog.neobase;
 
+import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Graph;
 import de.whitefrog.neobase.patch.Patcher;
 import de.whitefrog.neobase.persistence.Persistence;
@@ -36,7 +37,7 @@ public class Service implements AutoCloseable {
   private Set<String> packageRegistry = new HashSet<>();
   private Validator validator;
   private boolean connected = false;
-  private boolean useBolt = false;
+  private boolean useBolt = true;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -129,7 +130,7 @@ public class Service implements AutoCloseable {
   }
 
   @SuppressWarnings("unchecked")
-  public <R extends Repository<T>, T extends de.whitefrog.neobase.model.Model> R repository(Class<T> clazz) {
+  public <R extends Repository<T>, T extends Base> R repository(Class<T> clazz) {
     return repository(clazz.getSimpleName());
   }
 

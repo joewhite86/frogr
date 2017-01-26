@@ -16,10 +16,6 @@ public interface ModelRepository<T extends Model> extends Repository<T> {
 
   Stream<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params);
 
-  T findIndexedSingle(Index<Node> index, String field, Object value);
-
-  T findIndexedSingle(Index<Node> index, String field, Object value, SearchParameter params);
-
   Node getNode(Model model);
 
   Index<Node> index();

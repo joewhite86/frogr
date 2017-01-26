@@ -19,7 +19,6 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   private final Result results;
   private final SearchParameter params;
   private Map<String, Object> next = null;
-  private boolean nextFound;
 
   public ExecutionResultIterator(Service service, Class<T> clazz, Result results, SearchParameter params) {
     super(null, results);

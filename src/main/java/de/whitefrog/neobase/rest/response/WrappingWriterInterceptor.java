@@ -29,11 +29,10 @@ public class WrappingWriterInterceptor implements ContainerResponseFilter, Conta
     if(entity instanceof String || entity instanceof File || entity instanceof StreamingOutput) {
       return;
     } else if(entity instanceof Response) {
-      containerResponse.setEntity(new ResponseWrapper((Response) entity));
       return;
     }
 
-    final ModelResponse response = new ModelResponse();
+    final Response response = new Response();
     response.setSuccess(true);
     // Handle JSON responses
     if(entity instanceof ValidationErrorMessage) {
@@ -48,6 +47,6 @@ public class WrappingWriterInterceptor implements ContainerResponseFilter, Conta
     }
 
     // Tell JAX-RS about new entity.
-    containerResponse.setEntity(new ResponseWrapper(response));
+    containerResponse.setEntity(response);
   }
 }

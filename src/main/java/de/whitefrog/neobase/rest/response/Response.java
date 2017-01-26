@@ -1,24 +1,72 @@
 package de.whitefrog.neobase.rest.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public interface Response extends Serializable {
-  boolean isSuccess();
+public class Response<T> implements Serializable {
+  private boolean success;
+  private Long total;
+  private String message;
+  private Integer errorCode;
+  private Integer pages;
+  private List<T> data = new ArrayList<>();
+  
+  public void add(T... data) {
+    CollectionUtils.addAll(this.data, data);
+  }
+  
+  public Object singleton() {
+    return data.get(0);
+  }
 
-  @JsonProperty("total")
-  long total();
+  public boolean isSuccess() {
+    return success;
+  }
 
-  @JsonProperty("data")
-  List data();
+  public void setSuccess(boolean success) {
+    this.success = success;
+  }
 
-  String getMessage();
+  public Long getTotal() {
+    return total;
+  }
 
-  @JsonProperty("pages")
-  int pages();
+  public void setTotal(Long total) {
+    this.total = total;
+  }
 
-  @JsonProperty("errorCode")
-  int errorCode();
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
+  public Integer getErrorCode() {
+    return errorCode;
+  }
+
+  public void setErrorCode(Integer errorCode) {
+    this.errorCode = errorCode;
+  }
+
+  public Integer getPages() {
+    return pages;
+  }
+
+  public void setPages(Integer pages) {
+    this.pages = pages;
+  }
+
+  public List<T> getData() {
+    return data;
+  }
+
+  public void setData(List<T> data) {
+    this.data = data;
+  }
 }

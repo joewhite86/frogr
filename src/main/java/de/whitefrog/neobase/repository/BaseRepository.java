@@ -2,24 +2,25 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.DefaultResultIterator;
-import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.TypeMismatchException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
-import de.whitefrog.neobase.helper.StreamUtils;
+import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.rest.FieldList;
+import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
+import de.whitefrog.neobase.service.Search;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.*;
@@ -39,8 +40,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   private final Logger logger;
   private static final Map<Service, Map<String, Index<Node>>> indexCache = new HashMap<>();
 
-  private QueryBuilder queryBuilder;
-
   private final Label label;
   private Set<Label> labels;
   private Service service;
@@ -56,7 +55,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
       .map(Label::label)
       .collect(Collectors.toSet());
     this.service = service;
-    this.queryBuilder = new BaseQueryBuilder(this);
   }
 
   public BaseRepository(Service service, String modelName) {
@@ -68,7 +66,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
       .map(Label::label)
       .collect(Collectors.toSet());
     this.service = service;
-    this.queryBuilder = new BaseQueryBuilder(this);
   }
   
   private Set<String> getModelInterfaces(Class<?> clazz) {
@@ -146,9 +143,9 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public boolean filter(Node node, Collection<SearchParameter.PropertyFilter> filters) {
+  public boolean filter(Node node, Collection<Filter> filters) {
     return filters.stream().anyMatch(filter ->
-      !node.hasProperty(filter.property()) || !filter.getFilter().test(node.getProperty(filter.property())));
+      !node.hasProperty(filter.getProperty()) || !filter.test(node.getProperty(filter.getProperty())));
   }
 
   @Override
@@ -178,7 +175,7 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   @Override
   public Stream<T> find(String property, Object value) {
     ResourceIterator<Node> found = graph().findNodes(label(), property, value);
-    return StreamUtils.get(new DefaultResultIterator<>(this, found));
+    return Streams.get(new DefaultResultIterator<>(this, found));
   }
 
   @Override
@@ -188,7 +185,8 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
 
   @Override
   public T findByUuid(String uuid) {
-    return findIndexedSingle(Model.Uuid, uuid);
+    Optional<T> found = findIndexed(Model.Uuid, uuid).findFirst();
+    return found.isPresent()? found.get(): null;
   }
 
   @Override
@@ -211,37 +209,7 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
     IndexHits<Node> found = IndexUtils.query(index, field,
       value instanceof String? ((String) value).toLowerCase(): value.toString(),
       params.limit() * params.page());
-    return StreamUtils.get(new DefaultResultIterator<>(this, found, params));
-  }
-
-  @Override
-  public T findIndexedSingle(String field, Object value) {
-    return findIndexedSingle(field, value, new SearchParameter());
-  }
-
-  @Override
-  public T findIndexedSingle(String field, Object value, SearchParameter params) {
-    return findIndexedSingle(index(), field, value, params);
-  }
-
-  @Override
-  public T findIndexedSingle(Index<Node> index, String field, Object value) {
-    return findIndexedSingle(index, field, value, new SearchParameter());
-  }
-
-  @Override
-  public T findIndexedSingle(Index<Node> index, String field, Object value, SearchParameter params) {
-    Node node = IndexUtils.querySingle(index, field,
-      value instanceof String? value.toString().toLowerCase(): value);
-    return node == null? null: createModel(node, params.fieldList());
-  }
-
-  @Override
-  public T findSingle(String property, Object value) {
-    T model = null;
-    Node node = graph().findNode(label(), property, value);
-    if(node != null) model = createModel(node);
-    return model;
+    return Streams.get(new DefaultResultIterator<>(this, found, params));
   }
   
   @Override
@@ -353,7 +321,7 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
 
   @Override
   public QueryBuilder queryBuilder() {
-    return queryBuilder;
+    return new QueryBuilder(this);
   }
   
   @Override

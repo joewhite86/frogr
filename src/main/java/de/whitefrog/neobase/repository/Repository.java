@@ -5,7 +5,9 @@ import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.rest.FieldList;
+import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
+import de.whitefrog.neobase.service.Search;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
@@ -29,7 +31,7 @@ public interface Repository<T extends Base> {
 
   T fetch(T tag, boolean refetch, FieldList fields);
 
-  boolean filter(Node node, Collection<SearchParameter.PropertyFilter> filters);
+  boolean filter(Node node, Collection<Filter> filters);
 
   /**
    * Get a node by id
@@ -45,9 +47,11 @@ public interface Repository<T extends Base> {
 
   Stream<T> find(SearchParameter params);
 
-  T findByUuid(String uuid);
+  Stream<T> findIndexed(String field, Object value);
 
-  T findSingle(String property, Object value);
+  Stream<T> findIndexed(String field, Object value, SearchParameter params);
+
+  T findByUuid(String uuid);
 
   Class<?> getModelClass();
   
@@ -80,12 +84,4 @@ public interface Repository<T extends Base> {
   Service service();
 
   void sort(List<T> list, List<SearchParameter.OrderBy> orderBy);
-
-  Stream<T> findIndexed(String field, Object value);
-
-  Stream<T> findIndexed(String field, Object value, SearchParameter params);
-
-  T findIndexedSingle(String field, Object value);
-
-  T findIndexedSingle(String field, Object value, SearchParameter params);
 }

@@ -5,83 +5,94 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.function.Predicate;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = Filter.Equals.class),
-  @JsonSubTypes.Type(value = Filter.LessThan.class),
-  @JsonSubTypes.Type(value = Filter.GreaterThan.class),
-  @JsonSubTypes.Type(value = Filter.Range.class)
+  @JsonSubTypes.Type(value = Filter.Equals.class, name = "eq"),
+  @JsonSubTypes.Type(value = Filter.NotEquals.class, name = "neq"),
+  @JsonSubTypes.Type(value = Filter.LessThan.class, name = "lt"),
+  @JsonSubTypes.Type(value = Filter.GreaterThan.class, name = "gt"),
+  @JsonSubTypes.Type(value = Filter.Range.class, name = "range")
 })
 public interface Filter extends Predicate<Object> {
     Object getValue();
-
     void setValue(Object value);
+  
+    String getProperty();
+    void setProperty(String property);
+  
+  
+    abstract class Default implements Filter {
+      private Object value;
+      private String property;
+      
+      public Default() {}
+      public Default(String property, Object value) {
+        this.property = property;
+        this.value = value;
+      }
 
-    class Equals implements Filter, Predicate<Object> {
-        private Object value;
+      public String getProperty() {
+        return property;
+      }
 
-        public Equals() {
-        }
+      public void setProperty(String property) {
+        this.property = property;
+      }
 
-        public Equals(Object value) {
-            this.value = value;
-        }
+      @Override
+      public Object getValue() {
+        return value;
+      }
 
-        public Object getValue() {
-            return value;
-        }
+      @Override
+      public void setValue(Object value) {
+        this.value = value;
+      }
+    }
 
-        public void setValue(Object value) {
-            this.value = value;
-        }
+    class Equals extends Default implements Filter, Predicate<Object> {
+      public Equals() {
+        super();
+      }
+      public Equals(String property, Object value) {
+        super(property, value);
+      }
 
-        @Override
+      @Override
         public boolean test(Object other) {
             return other.equals(getValue());
         }
     }
 
-    class NotEquals implements Filter, Predicate<Object> {
-        private Object value;
+    class NotEquals extends Default implements Filter, Predicate<Object> {
+      public NotEquals() {
+        super();
+      }
 
-        public NotEquals() {
-        }
+      public NotEquals(String property, Object value) {
+        super(property, value);
+      }
 
-        public NotEquals(Object value) {
-            this.value = value;
-        }
-
-        public Object getValue() {
-            return value;
-        }
-
-        public void setValue(Object value) {
-            this.value = value;
-        }
-
-        @Override
+      @Override
         public boolean test(Object other) {
             return !other.equals(getValue());
         }
     }
 
-    class GreaterThan implements Filter, Predicate<Object> {
+    class GreaterThan extends Default implements Filter, Predicate<Object> {
         private boolean including = false;
-        private long value;
 
-        public GreaterThan() {
-        }
+      public GreaterThan() {
+        super();
+      }
 
-        public GreaterThan(long value) {
-            this.value = value;
-        }
+      public GreaterThan(String property, Object value) {
+        super(property, value);
+      }
 
+      @Override
         public Long getValue() {
-            return value;
-        }
-
-        public void setValue(Object value) {
-            this.value = (long) value;
+            return (Long) super.getValue();
         }
 
         public boolean isIncluding() {
@@ -101,23 +112,19 @@ public interface Filter extends Predicate<Object> {
         }
     }
 
-    class LessThan implements Filter, Predicate<Object> {
+    class LessThan extends Default implements Filter, Predicate<Object> {
         private boolean including = false;
-        private long value;
 
-        public LessThan() {
-        }
+      public LessThan() {
+        super();
+      }
 
-        public LessThan(long value) {
-            this.value = value;
-        }
+      public LessThan(String property, Object value) {
+        super(property, value);
+      }
 
-        public Long getValue() {
-            return value;
-        }
-
-        public void setValue(Object value) {
-            this.value = (long) value;
+      public Long getValue() {
+            return (Long) super.getValue();
         }
 
         public boolean isIncluding() {
@@ -137,7 +144,7 @@ public interface Filter extends Predicate<Object> {
         }
     }
 
-    class Range implements Filter, Predicate<Object> {
+    class Range extends Default implements Filter, Predicate<Object> {
         private boolean including = true;
         private long from;
         private long to;
@@ -145,7 +152,8 @@ public interface Filter extends Predicate<Object> {
         public Range() {
         }
 
-        public Range(long from, long to) {
+        public Range(String property, long from, long to) {
+            super(property, from);
             this.from = from;
             this.to = to;
         }

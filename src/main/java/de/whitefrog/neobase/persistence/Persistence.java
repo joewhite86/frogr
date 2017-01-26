@@ -3,8 +3,7 @@ package de.whitefrog.neobase.persistence;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.exception.MissingRequiredException;
-import de.whitefrog.neobase.exception.PersistException;
+import de.whitefrog.neobase.exception.*;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.Model;
@@ -168,12 +167,12 @@ public abstract class Persistence {
           
           // check uniqueness
           else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
-            T exist = context.repository().findIndexedSingle(field.getName(), value);
-            if(exist != null && model.getId() != exist.getId()) {
-              throw new ConstraintViolationException(
-                "failed to save " + model + ", a " + model.getClass().getSimpleName() + " with " +
-                  field.getName() + " \"" + value + "\" already exists: " + exist);
-            } else if(exist != null) {
+            Optional<T> exist = context.repository().findIndexed(field.getName(), value).findAny();
+            if(exist.isPresent() && model.getId() != exist.get().getId()) {
+              throw new DuplicateEntryException(
+                "A " + model.getClass().getSimpleName().toLowerCase() + " with the " +
+                  field.getName() + " \"" + value + "\" already exists", model, field);
+            } else if(exist.isPresent()) {
               logger.info("found already persisted {}, but seems to be equal to {}", exist, model);
             }
           }
@@ -308,6 +307,18 @@ public abstract class Persistence {
     TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator();
     UUID uuid = uuidGenerator.generate();
     return Long.toHexString(uuid.getMostSignificantBits()) + Long.toHexString(uuid.getLeastSignificantBits());
+  }
+  
+  public static void removeProperty(Model model, String property) {
+    Node node = getNode(model);
+    node.removeProperty(property);
+    try {
+      Field field = model.getClass().getDeclaredField(property);
+      if(!field.isAccessible()) field.setAccessible(true);
+      field.set(model, null);
+    } catch(ReflectiveOperationException e) {
+      throw new NeobaseRuntimeException("field " + property + " could not be found on " + model, e);
+    }
   }
 
   public static Node getNode(Model model) {

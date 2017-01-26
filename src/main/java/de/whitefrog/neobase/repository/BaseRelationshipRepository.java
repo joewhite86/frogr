@@ -2,13 +2,12 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.DefaultResultIterator;
-import de.whitefrog.neobase.cypher.BaseQueryBuilder;
 import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
-import de.whitefrog.neobase.helper.StreamUtils;
+import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
@@ -20,6 +19,7 @@ import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
+import de.whitefrog.neobase.service.Search;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -51,7 +51,7 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
     this.logger = LoggerFactory.getLogger(getClass());
     this.modelName = getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Repository"));
     this.service = service;
-    this.queryBuilder = new BaseQueryBuilder(this);
+    this.queryBuilder = new QueryBuilder(this);
   }
 
   public Logger logger() {
@@ -97,9 +97,9 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
   }
 
   @Override
-  public boolean filter(Node node, Collection<SearchParameter.PropertyFilter> filters) {
+  public boolean filter(Node node, Collection<Filter> filters) {
     return filters.stream().anyMatch(filter ->
-      !node.hasProperty(filter.property()) || !filter.getFilter().test(node.getProperty(filter.property())));
+      !node.hasProperty(filter.getProperty()) || !filter.test(node.getProperty(filter.getProperty())));
   }
 
   @Override
@@ -128,7 +128,7 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
 
   @Override
   public Stream<T> find(String property, Object value) {
-    return search().filter(property, new Filter.Equals(value)).stream();
+    return search().filter(new Filter.Equals(property, value)).stream();
   }
 
   @Override
@@ -138,7 +138,8 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
 
   @Override
   public T findByUuid(String uuid) {
-    return findIndexedSingle(Model.Uuid, uuid);
+    Optional<T> found = findIndexed(Model.Uuid, uuid).findFirst();
+    return found.isPresent()? found.get(): null;
   }
 
   @Override
@@ -161,34 +162,7 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
     IndexHits<org.neo4j.graphdb.Relationship> found = IndexUtils.query(index, field,
       value instanceof String? ((String) value).toLowerCase(): value.toString(),
       params.limit() * params.page());
-    return StreamUtils.get(new DefaultResultIterator<>(this, found, params));
-  }
-
-  @Override
-  public T findIndexedSingle(String field, Object value) {
-    return findIndexedSingle(field, value, new SearchParameter());
-  }
-
-  @Override
-  public T findIndexedSingle(String field, Object value, SearchParameter params) {
-    return findIndexedSingle(index(), field, value, params);
-  }
-
-  @Override
-  public T findIndexedSingle(Index<org.neo4j.graphdb.Relationship> index, String field, Object value) {
-    return findIndexedSingle(index, field, value, new SearchParameter());
-  }
-
-  @Override
-  public T findIndexedSingle(Index<org.neo4j.graphdb.Relationship> index, String field, Object value, SearchParameter params) {
-    org.neo4j.graphdb.Relationship node = IndexUtils.querySingle(index, field,
-      value instanceof String? value.toString().toLowerCase(): value);
-    return node == null? null: createModel(node, params.fieldList());
-  }
-
-  @Override
-  public T findSingle(String property, Object value) {
-    return search().filter(property, new Filter.Equals(value)).single();
+    return Streams.get(new DefaultResultIterator<>(this, found, params));
   }
   
   @Override

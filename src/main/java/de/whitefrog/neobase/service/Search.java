@@ -1,11 +1,12 @@
-package de.whitefrog.neobase.repository;
+package de.whitefrog.neobase.service;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.ExecutionResultIterator;
 import de.whitefrog.neobase.collection.RelationshipResultIterator;
 import de.whitefrog.neobase.cypher.Query;
 import de.whitefrog.neobase.exception.RepositoryInstantiationException;
-import de.whitefrog.neobase.helper.StreamUtils;
+import de.whitefrog.neobase.helper.Streams;
+import de.whitefrog.neobase.helper.TimeUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.rest.FieldList;
@@ -14,12 +15,14 @@ import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
+import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,17 +45,23 @@ public class Search {
     } else {
       query.query(query.query() + " return count(*) as c");
     }
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
+    long start = 0;
+
+    if(logger.isDebugEnabled()) {
+      start = System.nanoTime();
+    }
 
     try {
       Result result = repository.service().graph().execute(query.query(), query.params());
-
       return (long) result.columnAs("c").next();
     } catch(IllegalStateException e) {
       logger.error("On query: " + query.query(), e);
       throw e;
+    } finally {
+      if(logger.isDebugEnabled()) {
+        logger.debug("\n{}\nQuery: {}\nQueryParams: {}\ntook: {}", params, query.query(), query.params(),
+          TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+      }
     }
   }
 
@@ -63,14 +72,22 @@ public class Search {
 
   private Result execute(SearchParameter params) {
     Query query = repository.queryBuilder().build(params);
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
+    long start = 0;
+    
+    if(logger.isDebugEnabled()) {
+      start = System.nanoTime();
+    }
+    
     try {
-      return repository.service().graph().execute(query.query(), query.params());
+      return repository.service().graph().execute(query.query(), query.params());      
     } catch(IllegalStateException e) {
       logger.error("On query: " + query.query(), e);
       throw e;
+    } finally {
+      if(logger.isDebugEnabled()) {
+        logger.debug("\n{}\nQuery: {}\nQueryParams: {}\ntook: {}", params, query.query(), query.params(),
+          TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+      }
     }
   }
 
@@ -94,8 +111,8 @@ public class Search {
     return this;
   }
 
-  public Search filter(String property, Filter filter) {
-    params.filter(property, filter);
+  public Search filter(Filter filter) {
+    params.filter(filter);
     return this;
   }
 
@@ -126,26 +143,26 @@ public class Search {
         }
         else if(!CollectionUtils.isEmpty(params.uuids())) {
           return params.uuids().stream()
-            .map(uuid -> repository.findIndexedSingle(Model.Uuid, uuid, params))
+            .map(uuid -> repository.findIndexed(Model.Uuid, uuid, params).findFirst().get())
             .filter(Objects::nonNull);
         }
       }
 
       Result result = execute(params);
-      return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
+      return Streams.get(new ExecutionResultIterator<>(repository, result, params));
     } else if(params.returns().size() == 1) {
       Result result = execute(params);
       FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
       if(descriptor.isRelationship()) {
-        return StreamUtils.get(new RelationshipResultIterator<>(result, params));
+        return Streams.get(new RelationshipResultIterator<>(result, params));
       } else {
         try {
           Repository repository = service.repository(descriptor.baseClass().getSimpleName());
-          return StreamUtils.get(new ExecutionResultIterator<>(repository, result, params));
+          return Streams.get(new ExecutionResultIterator<>(repository, result, params));
         }
         catch(RepositoryInstantiationException e) {
-          return StreamUtils.get(new ExecutionResultIterator<>(service, descriptor.baseClass(), result, params));
+          return Streams.get(new ExecutionResultIterator<>(service, descriptor.baseClass(), result, params));
         }
       }
     } else {

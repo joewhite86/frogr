@@ -2,9 +2,11 @@ package de.whitefrog.neobase.model.rest;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.whitefrog.neobase.model.Base;
 
@@ -25,7 +27,7 @@ public class SearchParameter implements Serializable {
   public enum SortOrder {ASC, DESC}
 
   private static final ObjectMapper mapper = new ObjectMapper();
-
+  
   private String query;
   private Integer limit;
   private Integer page;
@@ -33,11 +35,17 @@ public class SearchParameter implements Serializable {
   private Integer depth;
   private Boolean count;
   private Locale locale;
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Set<Long> ids = new HashSet<>();
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Set<String> uuids = new HashSet<>();
-  private List<PropertyFilter> filters = new ArrayList<>();
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  private List<Filter> filters = new ArrayList<>();
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private List<OrderBy> orderBy = new ArrayList<>();
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private FieldList fields = new FieldList();
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private List<String> returns = new ArrayList<>();
   
   public SearchParameter clone() {
@@ -83,8 +91,8 @@ public class SearchParameter implements Serializable {
   }
 
   public boolean containsFilter(String property) {
-    for(PropertyFilter filter : filters()) {
-      if(filter.property().equals(property)) return true;
+    for(Filter filter : filters()) {
+      if(filter.getProperty().equals(property)) return true;
     }
     return false;
   }
@@ -156,33 +164,33 @@ public class SearchParameter implements Serializable {
     return !fields().isEmpty();
   }
 
-  public Collection<PropertyFilter> filters() {
+  public Collection<Filter> filters() {
     return filters;
   }
 
-  public PropertyFilter getFilter(String property) {
-    for(PropertyFilter filter : filters()) {
-      if(filter.property().equals(property)) return filter;
+  public Filter getFilter(String property) {
+    for(Filter filter : filters()) {
+      if(filter.getProperty().equals(property)) return filter;
     }
     return null;
   }
 
   public SearchParameter filter(String property, String value) {
-    filters.add(new PropertyFilter(property, new Filter.Equals(value)));
+    filters.add(new Filter.Equals(property, value));
     return this;
   }
 
-  public SearchParameter filter(String property, Filter filter) {
-    filters.add(new PropertyFilter(property, filter));
+  public SearchParameter filter(Filter filter) {
+    filters.add(filter);
     return this;
   }
 
   public SearchParameter removeFilter(String property) {
-    Iterator<PropertyFilter> iterator = filters().iterator();
+    Iterator<Filter> iterator = filters().iterator();
 
     while(iterator.hasNext()) {
-      PropertyFilter filter = iterator.next();
-      if(filter.property().equalsIgnoreCase(property)) iterator.remove();
+      Filter filter = iterator.next();
+      if(filter.getProperty().equalsIgnoreCase(property)) iterator.remove();
     }
 
     return this;
@@ -338,40 +346,6 @@ public class SearchParameter implements Serializable {
 
     public String dir() {
       return dir;
-    }
-  }
-
-  @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY,
-    getterVisibility = JsonAutoDetect.Visibility.NONE,
-    setterVisibility = JsonAutoDetect.Visibility.NONE)
-  public static class PropertyFilter {
-    private String property;
-    private Filter filter;
-
-    PropertyFilter(String property, Filter filter) {
-      this.property = property;
-      this.filter = filter;
-    }
-
-    public String property() {
-      return property;
-    }
-
-    public void property(String property) {
-      this.property = property;
-    }
-
-    public Filter getFilter() {
-      return filter;
-    }
-
-    public void setFilter(Filter filter) {
-      this.filter = filter;
-    }
-
-    @Override
-    public String toString() {
-      return property() + "=" + getFilter().getValue();
     }
   }
 }
