@@ -54,7 +54,7 @@ public class RepositoryFactory {
           throw new ClassNotFoundException(name + "Repository");
         }
         Class c = repositoryCache.get(name + "Repository");
-        Constructor<Repository> ctor = c.getConstructor(Service.class);
+        Constructor<Repository> ctor = c.getConstructor(service.getClass());
         repository = ctor.newInstance(service);
       } catch(ClassNotFoundException | NoSuchMethodException e) {
         try {
