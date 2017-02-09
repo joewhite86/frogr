@@ -10,6 +10,7 @@ import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
+import de.whitefrog.neobase.repository.RelationshipRepository;
 import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -240,9 +241,21 @@ public class QueryBuilder {
       }
     }
     
-    if(matches.isEmpty() && hasStart) return new StringBuilder();
-    else if(matches.isEmpty()) return new StringBuilder("match (" + id() + ":" + type + ")").append(insertNewLine? "\n": " ");
-    return new StringBuilder("match ").append(StringUtils.join(matches.values(), ", ")).append(insertNewLine? "\n": " ");
+    if(matches.isEmpty() && hasStart) {
+      return new StringBuilder();
+    } else if(matches.isEmpty()) {
+      if(repository() instanceof RelationshipRepository) {
+        return new StringBuilder("match ()-[" + id() + ":" + type + "]-()")
+          .append(insertNewLine? "\n": " ");
+      } else {
+        return new StringBuilder("match (" + id() + ":" + type + ")")
+          .append(insertNewLine? "\n": " ");
+      }
+    } else {
+      return new StringBuilder("match ")
+        .append(StringUtils.join(matches.values(), ", "))
+        .append(insertNewLine? "\n": " ");
+    }
   }
   
   private String getMatchName(String property) {

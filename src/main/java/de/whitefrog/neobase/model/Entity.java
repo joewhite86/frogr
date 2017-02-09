@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class Entity implements Model, Comparable<Base> {
+public abstract class Entity implements Model, Comparable<Base> {
   @JsonView({Views.Hidden.class})
   private String model;
   @Uuid

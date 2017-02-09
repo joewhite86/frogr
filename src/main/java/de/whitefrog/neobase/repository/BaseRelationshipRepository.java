@@ -53,6 +53,12 @@ public abstract class BaseRelationshipRepository<T extends Relationship> impleme
     this.service = service;
     this.queryBuilder = new QueryBuilder(this);
   }
+  public BaseRelationshipRepository(Service service, String modelName) {
+    this.logger = LoggerFactory.getLogger(getClass());
+    this.modelName = modelName;
+    this.service = service;
+    this.queryBuilder = new QueryBuilder(this);
+  }
 
   public Logger logger() {
     return logger;

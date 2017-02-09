@@ -131,7 +131,7 @@ public class Service implements AutoCloseable {
 
   @SuppressWarnings("unchecked")
   public <R extends Repository<T>, T extends Base> R repository(Class<T> clazz) {
-    return repository(clazz.getSimpleName());
+    return (R) repositoryFactory().get(clazz);
   }
 
   @SuppressWarnings("unchecked")
