@@ -45,24 +45,8 @@ public class Search {
     } else {
       query.query(query.query() + " return count(*) as c");
     }
-    long start = 0;
 
-    if(logger.isDebugEnabled()) {
-      start = System.nanoTime();
-    }
-
-    try {
-      Result result = repository.service().graph().execute(query.query(), query.params());
-      return (long) result.columnAs("c").next();
-    } catch(IllegalStateException e) {
-      logger.error("On query: " + query.query(), e);
-      throw e;
-    } finally {
-      if(logger.isDebugEnabled()) {
-        logger.debug("\n{}\nQuery: {}\nQueryParams: {}\ntook: {}", params, query.query(), query.params(),
-          TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS));
-      }
-    }
+    return (long) executeQuery(query).columnAs("c").next();
   }
 
   public Search depth(int depth) {
@@ -72,14 +56,16 @@ public class Search {
 
   private Result execute(SearchParameter params) {
     Query query = repository.queryBuilder().build(params);
+    return executeQuery(query);
+  }
+  
+  private Result executeQuery(Query query) {
     long start = 0;
-    
     if(logger.isDebugEnabled()) {
       start = System.nanoTime();
     }
-    
     try {
-      return repository.service().graph().execute(query.query(), query.params());      
+      return repository.service().graph().execute(query.query(), query.params());
     } catch(IllegalStateException e) {
       logger.error("On query: " + query.query(), e);
       throw e;
@@ -117,15 +103,9 @@ public class Search {
   }
 
   public Number sum(String field) {
-    Query query = repository.queryBuilder().buildSimple(params);
+    Query query = repository.queryBuilder().buildSimple(params);    
     query.query(query.query() + " return sum(" + field + ") as c");
-    logger.debug(params.toString());
-    logger.debug(query.query());
-    logger.debug(query.params().toString());
-
-    Result result = repository.service().graph().execute(query.query(), query.params());
-
-    return (Number) result.columnAs("c").next();
+    return (Number) executeQuery(query).columnAs("c").next();
   }
 
   public <T extends Base> List<T> list() {
