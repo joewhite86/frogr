@@ -1,6 +1,5 @@
 package de.whitefrog.neobase.cypher;
 
-import de.whitefrog.neobase.exception.QueryParseException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.relationship.Relationship;
@@ -16,7 +15,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.neo4j.graphdb.Direction;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -346,6 +344,18 @@ public class QueryBuilder {
             wheres.add(where);
             queryParams.put(marker, filter.getValue());
           }
+        }
+        else if(filter instanceof Filter.StartsWith) {
+          wheres.add(lookup + " starts with '{" + marker + "}'");
+          queryParams.put(marker, filter.getValue());
+        }
+        else if(filter instanceof Filter.EndsWith) {
+          wheres.add(lookup + " ends with '{" + marker + "}'");
+          queryParams.put(marker, filter.getValue());
+        }
+        else if(filter instanceof Filter.Contains) {
+          wheres.add(lookup + " contains '{" + marker + "}'");
+          queryParams.put(marker, filter.getValue());
         }
         else if(filter instanceof Filter.NotEquals) {
           if(filter.getValue() == null) {

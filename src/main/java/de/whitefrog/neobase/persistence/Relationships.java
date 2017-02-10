@@ -1,9 +1,9 @@
 package de.whitefrog.neobase.persistence;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.RelatedNotPersistedException;
+import de.whitefrog.neobase.exception.RepositoryNotFoundException;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
@@ -11,27 +11,31 @@ import de.whitefrog.neobase.model.annotation.RelatedTo;
 import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
-import de.whitefrog.neobase.repository.Repository;
+import de.whitefrog.neobase.repository.DefaultRelationshipRepository;
+import de.whitefrog.neobase.repository.ModelRepository;
+import de.whitefrog.neobase.repository.RelationshipRepository;
 import org.apache.commons.lang.Validate;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Relationships {
   private static final Logger logger = LoggerFactory.getLogger(Relationships.class);
   private static Service service;
-  private static ModelCache cache;
 
   public static void setService(Service _service) {
     service = _service;
   }
-  public static void setCache(ModelCache _cache) {
-    cache = _cache;
-  }
 
-  public static <T extends Model> Relationship addRelationship(T model, Node node, RelatedTo annotation, Model foreignModel) {
+  /**
+   * Adds a relationship to a existing node. Tests for multiple relationships and a persisted foreign node. 
+   */
+  private static <T extends Model> BaseRelationship addRelationship(
+        T model, Node node, RelatedTo annotation, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
         foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
@@ -40,115 +44,59 @@ public class Relationships {
           "the related field " + foreignModel + " is not yet persisted");
       }
     }
-    Relationship relationship = null;
     Node foreignNode = Persistence.getNode(foreignModel);
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      return getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction());
+      return Persistence.get(getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction()));
 //      throw new RelationshipExistsException("a relationship " + annotation.type() +
 //        " between " + model + " and " + foreignModel + " already exists");
     }
+    RelationshipRepository<BaseRelationship<Model, Model>> repository;
+    try {
+      repository = service.repository(relationshipType.name());
+    } catch(RepositoryNotFoundException e) {
+      repository = new DefaultRelationshipRepository<>(service, relationshipType.name());
+      service.repositoryFactory().register(relationshipType.name(), repository);
+    }
+    BaseRelationship<Model, Model> relationship = repository.createModel();
+    
     if(annotation.direction() == Direction.OUTGOING) {
-      relationship = node.createRelationshipTo(foreignNode, relationshipType);
-      logger.info("created relationship {} ({}) from {} to {}",
-        annotation.type(), relationship.getId(), model, foreignModel);
+      relationship.setFrom(model);
+      relationship.setTo(foreignModel);
     } else if(annotation.direction() == Direction.INCOMING) {
-      relationship = foreignNode.createRelationshipTo(node, relationshipType);
-      logger.info("created relationship {} ({}) from {} to {}",
-        annotation.type(), relationship.getId(), foreignModel, model);
+      relationship.setFrom(foreignModel);
+      relationship.setTo(model);
     } else if(annotation.direction() == Direction.BOTH) {
       // TODO: implement sth useful here
+      throw new IllegalArgumentException();
     }
+    repository.save(relationship);
     
-    if(relationship != null) relationship.setProperty(Base.Created, System.currentTimeMillis());
-
     return relationship;
   }
-  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel) {
-    fetch(relModel, new FieldList());
-  }
 
-  public static void fetch(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> relModel,
-                           FieldList fields) {
-    Relationship relationship = getRelationshipBetween(
-      Persistence.getNode(relModel.getFrom()), Persistence.getNode(relModel.getTo()),
-      RelationshipType.withName(relModel.getClass().getSimpleName()), Direction.OUTGOING);
-    List<String> bypass = Arrays.asList("id", "from", "to");
-
-    try {
-      for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
-        if(bypass.contains(descriptor.field().getName())) continue;
-        Persistence.fetchField(relationship, relModel, descriptor, fields, false);
-      }
-    } catch(ReflectiveOperationException e) {
-      logger.error("could not load relations for {}: {}", relModel, e.getMessage(), e);
-    }
-  }
-
-  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
-                                  Relationship relationship, Node node, FieldList fields) throws ReflectiveOperationException {
-    fetchFields(relModel, relationship, Persistence.get(node), node, fields);
-  }
-
-  private static void fetchFields(de.whitefrog.neobase.model.relationship.Relationship relModel,
-                                  Relationship relationship, Model model, Node node, FieldList fields) throws ReflectiveOperationException {
-    Node other = relationship.getOtherNode(node);
-    boolean isStart = relationship.getStartNode().equals(node);
-    String type = (String) other.getProperty(Base.Type);
-    Repository<? extends Model> repository = service.repository(type);
-    if(repository == null) throw new NullPointerException("no repository with type: " + type);
-    relModel.setId(relationship.getId());
-    relModel.setType(relationship.getType().name());
-    Persistence.fetch(model, FieldList.parseFields(Base.Type), false);
-    if(isStart) {
-      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
-      Model from = (Model) service.repository(model.getType()).createModel(node, fieldList);
-      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
-      Model to = repository.createModel(other, fieldList);
-      relModel.setFrom(from);
-      relModel.setTo(to);
-    } else {
-      FieldList fieldList = fields.containsField("from")? fields.get("from").subFields(): new FieldList();
-      Model from = repository.createModel(other, fieldList);
-      fieldList = fields.containsField("to")? fields.get("to").subFields(): new FieldList();
-      Model to = (Model) service.repository(model.getType()).createModel(node, fieldList);
-      relModel.setFrom(from);
-      relModel.setTo(to);
-    }
-
-    List<String> bypass = Arrays.asList("id", "from", "to");
-    for(FieldDescriptor descriptor: cache.fieldMap(relModel.getClass())) {
-      if(bypass.contains(descriptor.field().getName())) continue;
-      Persistence.fetchField(relationship, relModel, descriptor, fields, false);
-    }
-  }
-
-  public static <R extends de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model>> R get(
-    Node node, Node other, RelationshipType type, Direction dir) throws ReflectiveOperationException {
-    Relationship relationship = getRelationshipBetween(node, other, type, dir);
-    String className = (String) relationship.getProperty(Base.Type);
-    if(!cache.containsModel(className)) {
-      throw new ClassNotFoundException(className);
-    }
-    Class<R> clazz = (Class<R>) cache.getModel(className);
-    R model = clazz.newInstance();
-    fetchFields(model, relationship, node, new FieldList());
-    return model;
-  }
-
-  public static Relationship getRelationshipBetween(Model model, Model other, RelationshipType type, Direction dir) {
-    return getRelationshipBetween(Persistence.getNode(model), Persistence.getNode(other), type, dir);
+  public static <T extends BaseRelationship> T getRelationshipBetween(
+        Model model, Model other, RelationshipType type, Direction dir) {
+    return Persistence.get( 
+      getRelationshipBetween(Persistence.getNode(model), Persistence.getNode(other), type, dir));
   }
 
   public static Relationship getRelationshipBetween(Node node, Node other, RelationshipType type, Direction dir) {
     Iterable<Relationship> relationships = node.getRelationships(dir, type);
     for(Relationship relationship : relationships) {
-      if(relationship.getEndNode().equals(other)) return relationship;
+      if(relationship.getOtherNode(node).equals(other)) return relationship;
     }
     return null;
   }
 
-  public static Model getRelatedModel(Model model, RelatedTo annotation, FieldList fields) throws ReflectiveOperationException {
+  /**
+   * Get a single related model
+   * @param model Model that contains the relationship
+   * @param annotation RelatedTo annotation
+   * @param fields Fields that should get fetched for the related model
+   * @return The related model or null when none exists
+   */
+  static Model getRelatedModel(Model model, RelatedTo annotation, FieldList fields) {
     Validate.notNull(model);
     Validate.notNull(annotation.type());
 
@@ -159,7 +107,7 @@ public class Relationships {
         Node node = Persistence.getNode(model);
         Node other = relationship.getOtherNode(node);
         String type = (String) other.getProperty(Base.Type);
-        Repository<Model> repository = service.repository(type);
+        ModelRepository<Model> repository = service.repository(type);
         return repository.createModel(other, fields);
       }
     } catch(NotFoundException e) {
@@ -175,8 +123,8 @@ public class Relationships {
     return null;
   }
 
-  public static <M extends Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor,
-                                                                                     QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+  static <M extends Model> Set<M> getRelatedModels(Model model, FieldDescriptor descriptor,
+                                                   QueryField fieldDescriptor, FieldList fields) {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
@@ -199,19 +147,36 @@ public class Relationships {
       if(annotation.restrictType() && !type.equals(descriptor.baseClass().getSimpleName())) {
         count--; continue;
       }
-      Repository<M> repository = service.repository(type);
+      ModelRepository<M> repository = service.repository(type);
       models.add(repository.createModel(other, fields));
     }
     iterator.close();
     return models;
   }
 
-  private static <R extends de.whitefrog.neobase.model.relationship.Relationship> Relationship getRelationship(R relationship) {
+  /**
+   * Get the neo4j relationship from a model. A id has to be set.
+   * @param relationship The relationship model
+   * @return The corresponding neo4j relationship
+   */
+  public static <R extends BaseRelationship> Relationship getRelationship(R relationship) {
     return service.graph().getRelationshipById(relationship.getId());
   }
-  
-  public static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor,
-                                                                     QueryField fieldDescriptor, FieldList fields) throws ReflectiveOperationException {
+
+  /**
+   * Get all relationships matching a model's field descriptor. 
+   * For all relationships fetch the fields passed.
+   * 
+   * @param model Model that contains the relationships
+   * @param descriptor Descriptor for the relationship field
+   * @param fieldDescriptor QueryField used for paging
+   * @param fields Field list to fetch for the relationships
+   * @return Set of matching relationships
+   * descriptor could not be created
+   */
+  @SuppressWarnings("unchecked")
+  static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor,
+                                                              QueryField fieldDescriptor, FieldList fields) {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
@@ -220,7 +185,6 @@ public class Relationships {
       (ResourceIterator<Relationship>) Persistence.getNode(model).getRelationships(
         annotation.direction(), RelationshipType.withName(annotation.type())).iterator();
 
-    Node node = Persistence.getNode(model);
     Set<R> models = new HashSet<>();
     long count = 0;
     while(iterator.hasNext()) {
@@ -228,10 +192,7 @@ public class Relationships {
       if(fieldDescriptor != null && count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
 
       Relationship relationship = iterator.next();
-      R newRel = (R) descriptor.baseClass().newInstance();
-      fetchFields(newRel, relationship, model, node, fields);
-
-      models.add(newRel);
+      models.add(Persistence.get(relationship, fields));
     }
     iterator.close();
     return models;
@@ -245,10 +206,6 @@ public class Relationships {
    * @param type  The relationship type.
    * @return true if a relationship exists, otherwise false.
    */
-  public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type) {
-    return hasRelationshipTo(node, other, type, Direction.OUTGOING);
-  }
-
   public static boolean hasRelationshipTo(Node node, Node other, RelationshipType type, Direction direction) {
     Iterable<Relationship> relationships = node.getRelationships(direction, type);
     for(Relationship relationship : relationships) {
@@ -257,11 +214,59 @@ public class Relationships {
     return false;
   }
 
-  static <T extends Model> void save(SaveContext<T> context, FieldDescriptor descriptor)
+  /**
+   * Save method called from RelationshipRepository's
+   */
+  public static <T extends BaseRelationship> T save(SaveContext<T> context) {
+    T model = context.model();
+    boolean create = false;
+
+    if(!model.isPersisted()) {
+      create = true;
+      if(model.getFrom() == null ) {
+        throw new IllegalArgumentException("cannot create relationship with no \"from\" field set");
+      }
+      if(model.getTo() == null ) {
+        throw new IllegalArgumentException("cannot create relationship with no \"to\" field set");
+      }
+      Node fromNode = Persistence.getNode(model.getFrom());
+      Node toNode = Persistence.getNode(model.getTo());
+      RelationshipType relType = RelationshipType.withName(context.repository().getType());
+      Relationship relationship = fromNode.createRelationshipTo(toNode, relType);
+      if(logger.isInfoEnabled()) {
+        logger.info("created relationship {} ({}) from {} to {}",
+          relType, relationship.getId(), model.getFrom(), model.getTo());
+      }
+      context.setNode(relationship);
+      model.setId(relationship.getId());
+      model.setCreated(System.currentTimeMillis());
+      model.setType(model.getClass().getSimpleName());
+    } else {
+      if(model.getType() == null) model.setType(model.getClass().getSimpleName());
+    }
+
+    model.updateLastModified();
+
+    // clone all properties from model
+    for(FieldDescriptor field : context.fieldMap()) {
+      Persistence.saveField(context, field, create);
+    }
+    model.getCheckedFields().clear();
+
+    logger.info("{} {}", model, create? "created": "updated");
+
+    return model;
+  }
+
+  /**
+   * Used only from Persistence class with the models save context and field descriptor
+   */
+  @SuppressWarnings("unchecked")
+  static <T extends Model> void saveField(SaveContext<T> context, FieldDescriptor descriptor)
       throws IllegalAccessException {
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
-    Node node = (Node) context.node();
+    Node node = context.node();
     RelatedTo relatedTo = annotations.relatedTo;
     Object value = descriptor.field().get(model);
     // Handle single relationships
@@ -307,127 +312,44 @@ public class Relationships {
       }
       // Handle collections of relationship models
       else {
-        for(de.whitefrog.neobase.model.relationship.Relationship<Model, Model> relModel :
-          ((Collection<de.whitefrog.neobase.model.relationship.Relationship>) value)) {
+        for(BaseRelationship<Model, Model> relModel: ((Collection<BaseRelationship>) value)) {
           if(!relModel.getTo().isPersisted()) {
             throw new RelatedNotPersistedException(
               "the " + relModel.getTo() + " (" + relatedTo.type() + ") is not yet persisted");
           }
+          
+          RelationshipRepository<BaseRelationship> repository = 
+            (RelationshipRepository<BaseRelationship>) service.repository(relModel.getClass());
 
-          Model other = null;
           if(relatedTo.direction().equals(Direction.INCOMING)) {
-            other = relModel.getFrom();
             if(!relModel.getTo().equals(model)) {
               throw new PersistException(relModel + " should have " + model + " as 'to' field set");
             }
-          }
-          if(relatedTo.direction().equals(Direction.OUTGOING)) {
-            other = relModel.getTo();
+          } else if(relatedTo.direction().equals(Direction.OUTGOING)) {
             if(!relModel.getFrom().equals(model)) {
               throw new PersistException(relModel + " should have " + model + " as 'from' field set");
             }
-          }
-          if(relatedTo.direction().equals(Direction.BOTH)) {
+          } else if(relatedTo.direction().equals(Direction.BOTH)) {
             // TODO: Handle "BOTH"
             throw new UnsupportedOperationException("BOTH is not supported yet");
           }
-          Relationship relationship;
-          if(relModel.getId() <= 0) {
-            relationship = addRelationship(model, node, relatedTo, other);
-            if(relationship != null) {
-              relModel.setId(relationship.getId());
-              relModel.setCreated(System.currentTimeMillis());
-              saveFields(relationship, relModel, true);
-            }
-          } else {
-            relationship = service.graph().getRelationshipById(relModel.getId());
-            relModel.updateLastModified();
-            saveFields(relationship, relModel, false);
-          }
+          repository.save(relModel);
         }
       }
     }
   }
 
-  public static void save(de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> model) {
-    Relationship relationship;
-    if(model.getId() <= 0) {
-      Node fromNode = Persistence.getNode(model.getFrom());
-      Node toNode = Persistence.getNode(model.getTo());
-      RelationshipType type = RelationshipType.withName(model.getClass().getSimpleName());
-      relationship = getRelationshipBetween(fromNode, toNode, type, Direction.OUTGOING);
-      if(relationship == null) {
-        relationship = fromNode.createRelationshipTo(toNode, type);
-      }
-      model.setId(relationship.getId());
-      model.setCreated(System.currentTimeMillis());
-    } else {
-      relationship = service.graph().getRelationshipById(model.getId());
-      model.updateLastModified();
-    }
-    saveFields(relationship, model, false);
-  }
-
-  private static void saveFields(Relationship relationship, de.whitefrog.neobase.model.relationship.Relationship<? extends Model, ? extends Model> model, boolean created) {
-    for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
-      AnnotationDescriptor annotations = descriptor.annotations();
-      try {
-        Object value = descriptor.field().get(model);
-        // when the annotation Required is present, a value is expected
-        if(created && annotations.required && (value == null || (value instanceof String && ((String) value).isEmpty()))) {
-          throw new MissingRequiredException(model, descriptor.field());
-        }
-
-        boolean valueChanged = (value != null && !relationship.hasProperty(descriptor.getName())) ||
-          (relationship.hasProperty(descriptor.getName()) && !relationship.getProperty(descriptor.getName()).equals(value));
-
-        if(!annotations.notPersistant && !annotations.blob) {
-          if(annotations.uuid && descriptor.field().get(model) == null) {
-            String uuid = Persistence.generateUuid();
-            descriptor.field().set(model, uuid);
-            value = uuid;
-            valueChanged = true;
-          }
-
-          if(value != null) {
-            if(!(value instanceof Collection) && !(value instanceof Model)) {
-              if(value.getClass().isEnum()) {
-                if((!relationship.hasProperty(descriptor.getName()) || !((Enum<?>) value).name().equals(relationship.getProperty(descriptor.getName())))) {
-                  // store enum names
-                  relationship.setProperty(descriptor.getName(), ((Enum<?>) value).name());
-                }
-              }  else if(value instanceof Date) {
-                relationship.setProperty(descriptor.getName(), ((Date) value).getTime());
-              } else if(valueChanged) {
-                // store default values
-                relationship.setProperty(descriptor.getName(), value);
-              }
-            }
-          } else if(valueChanged && annotations.nullRemove) {
-            relationship.removeProperty(descriptor.getName());
-          }
-        }
-      } catch(ReflectiveOperationException e) {
-        logger.error("Could not get property on {}: {}", model, e.getMessage(), e);
-      } catch(IllegalArgumentException e) {
-        logger.error("Could not store property {} on {}: {}", descriptor.getName(), model, e.getMessage());
-      }
-    }
-  }
-
-  public static <R extends de.whitefrog.neobase.model.relationship.Relationship> void delete(R relationship) {
+  /**
+   * Used in BaseRelationshipRepository to delete an entire relationship
+   * @param relationship Relationship model to delete
+   */
+  public static <R extends BaseRelationship> void delete(R relationship) {
     getRelationship(relationship).delete();
     logger.info("relationship {} between {} and {} removed", 
       relationship.type(), relationship.getFrom(), relationship.getTo());
   }
 
-  public static <T extends Model> void delete(T model, RelatedTo annoation, 
-                                                                         Model foreignModel) {
-    delete(model, RelationshipType.withName(annoation.type()), annoation.direction(), foreignModel);
-  }
-
-  public static <T extends Model> void delete(T model, RelationshipType type, 
-                                              Direction direction, Model foreignModel) {
+  public static <T extends Model> void delete(T model, RelationshipType type, Direction direction, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
         foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());

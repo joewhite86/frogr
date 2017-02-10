@@ -6,7 +6,6 @@ import de.whitefrog.neobase.persistence.AnnotationDescriptor;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.repository.Repository;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
 
 import java.lang.reflect.Field;
@@ -79,11 +78,13 @@ public class SaveContext<T extends Base> {
     return model;
   }
 
+  @SuppressWarnings("unchecked")
   public Repository<T> repository() {
     return repository;
   }
 
-  public PropertyContainer node() {
+  @SuppressWarnings("unchecked")
+  public <N extends PropertyContainer> N node() {
     if(node == null && original() != null) {
       if(model instanceof Model) node = repository.graph().getNodeById(original().getId());
       else node = repository.graph().getRelationshipById(original().getId());
@@ -91,14 +92,14 @@ public class SaveContext<T extends Base> {
       if(model instanceof Model) node = repository.graph().getNodeById(model().getId());
       else node = repository.graph().getRelationshipById(model().getId());
     }
-    return node;
+    return (N) node;
   }
 
   public T original() {
     return original;
   }
 
-  public void setNode(Node node) {
+  public void setNode(PropertyContainer node) {
     this.node = node;
   }
 }

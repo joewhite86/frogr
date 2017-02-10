@@ -1,4 +1,4 @@
-package de.whitefrog.neobase;
+package de.whitefrog.neobase.test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

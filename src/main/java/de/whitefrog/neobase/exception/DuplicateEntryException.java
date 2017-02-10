@@ -1,15 +1,15 @@
 package de.whitefrog.neobase.exception;
 
-import de.whitefrog.neobase.model.Model;
+import de.whitefrog.neobase.model.Base;
 
 import java.lang.reflect.Field;
 
 public class DuplicateEntryException extends NeobaseRuntimeException {
   private String message;
-  private Model bean;
+  private Base bean;
   private Field field;
   
-  public DuplicateEntryException(String message, Model bean, Field field) {
+  public DuplicateEntryException(String message, Base bean, Field field) {
     this.message = message;
     this.bean = bean;
     this.field = field;
@@ -19,7 +19,7 @@ public class DuplicateEntryException extends NeobaseRuntimeException {
     return message;
   }
   
-  public Model getBean() {
+  public Base getBean() {
     return bean;
   }
   

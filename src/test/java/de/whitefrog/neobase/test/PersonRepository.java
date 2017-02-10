@@ -1,6 +1,5 @@
-package de.whitefrog.examples.simpsons.repository;
+package de.whitefrog.neobase.test;
 
-import de.whitefrog.examples.simpsons.model.Person;
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.repository.BaseModelRepository;
 

@@ -3,7 +3,7 @@ package de.whitefrog.neobase.rest.service;
 import com.codahale.metrics.MetricRegistry;
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.helper.ReflectionUtil;
-import de.whitefrog.neobase.model.Model;
+import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.repository.Repository;
 import org.slf4j.Logger;
@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class DefaultRestService<M extends Model> {
+public class DefaultRestService<M extends Base> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultRestService.class);
     private Repository<M> repository = null;
     private Class repositoryClass;

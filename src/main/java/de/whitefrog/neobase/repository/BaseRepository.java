@@ -6,14 +6,13 @@ import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.MissingRequiredException;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
-import de.whitefrog.neobase.exception.TypeMismatchException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
-import de.whitefrog.neobase.model.annotation.RelatedTo;
+import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
@@ -22,8 +21,8 @@ import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import de.whitefrog.neobase.service.Search;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.Validate;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.helpers.collection.MapUtil;
@@ -33,42 +32,42 @@ import org.slf4j.LoggerFactory;
 import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class BaseRepository<T extends Model> implements ModelRepository<T> {
-  private final Logger logger;
-  private static final Map<Service, Map<String, Index<Node>>> indexCache = new HashMap<>();
+public abstract class BaseRepository<T extends Base> implements Repository<T> {
+  private static final Map<Service, Map<String, Index>> indexCache = new HashMap<>();
 
-  private final Label label;
-  private Set<Label> labels;
+  private final Logger logger;
   private Service service;
-  private Class<?> modelClass;
+  private String type;
+  protected Class<?> modelClass;
 
   public BaseRepository(Service service) {
     this.logger = LoggerFactory.getLogger(getClass());
-    String modelName = getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Repository"));
-    this.label = Label.label(modelName);
-
-    Class modelClass = Persistence.cache().getModel(modelName);
-    this.labels = getModelInterfaces(modelClass).stream()
-      .map(Label::label)
-      .collect(Collectors.toSet());
     this.service = service;
+    this.type = getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Repository"));
   }
-
-  public BaseRepository(Service service, String modelName) {
+  public BaseRepository(Service service, String type) {
     this.logger = LoggerFactory.getLogger(getClass());
-    this.label = Label.label(modelName);
-
-    Class modelClass = Persistence.cache().getModel(modelName);
-    this.labels = getModelInterfaces(modelClass).stream()
-      .map(Label::label)
-      .collect(Collectors.toSet());
     this.service = service;
+    this.type = type;
   }
   
-  private Set<String> getModelInterfaces(Class<?> clazz) {
+  @Override
+  public String getType() {
+    return type;
+  }
+
+  @Override
+  public Class<?> getModelClass() {
+    if(modelClass == null) {
+      modelClass = Persistence.cache().getModel(getType());
+    }
+
+    return modelClass;
+  }
+  
+  Set<String> getModelInterfaces(Class<?> clazz) {
     Set<String> output = new HashSet<>();
     Class<?>[] interfaces = clazz.getInterfaces();
     for(Class<?> i: interfaces) {
@@ -102,19 +101,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
     return createModel(node, new FieldList());
   }
 
-  @Override
-  public T createModel(PropertyContainer node, FieldList fields) {
-    if(node instanceof Node && !checkType((Node) node)) {
-      throw new TypeMismatchException((Node) node, label());
-    }
-
-    return fetch(Persistence.get(node), false, fields);
-  }
-
-  boolean checkType(Node node) {
-    return node.hasLabel(label());
-  }
-
   public T fetch(T tag, String... fields) {
     return fetch(tag, FieldList.parseFields(fields));
   }
@@ -139,11 +125,11 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
   
   public void fetch(de.whitefrog.neobase.model.relationship.Relationship relationship, FieldList fields) {
-    Relationships.fetch(relationship, fields);
+    Persistence.fetch(relationship, fields);
   }
 
   @Override
-  public boolean filter(Node node, Collection<Filter> filters) {
+  public boolean filter(PropertyContainer node, Collection<Filter> filters) {
     return filters.stream().anyMatch(filter ->
       !node.hasProperty(filter.getProperty()) || !filter.test(node.getProperty(filter.getProperty())));
   }
@@ -157,25 +143,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   @SuppressWarnings("unchecked")
   public T find(long id, List<String> fields) {
     return find(id, FieldList.parseFields(fields));
-  }
-
-  public T find(long id, FieldList fields) {
-    try {
-      T model = createModel(graph().getNodeById(id), fields);
-      if(CollectionUtils.isNotEmpty(fields)) fetch(model, fields);
-      return model;
-    } catch(IllegalStateException e) {
-      logger.warn(e.getMessage(), e);
-      return null;
-    } catch(NotFoundException e) {
-      return null;
-    }
-  }
-
-  @Override
-  public Stream<T> find(String property, Object value) {
-    ResourceIterator<Node> found = graph().findNodes(label(), property, value);
-    return Streams.get(new DefaultResultIterator<>(this, found));
   }
 
   @Override
@@ -200,36 +167,16 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public Stream<T> findIndexed(Index<Node> index, String field, Object value) {
+  public Stream<T> findIndexed(Index index, String field, Object value) {
     return findIndexed(index, field, value, new SearchParameter());
   }
 
   @Override
-  public Stream<T> findIndexed(Index<Node> index, String field, Object value, SearchParameter params) {
-    IndexHits<Node> found = IndexUtils.query(index, field,
+  public Stream<T> findIndexed(Index index, String field, Object value, SearchParameter params) {
+    IndexHits found = IndexUtils.query(index, field,
       value instanceof String? ((String) value).toLowerCase(): value.toString(),
       params.limit() * params.page());
     return Streams.get(new DefaultResultIterator<>(this, found, params));
-  }
-  
-  @Override
-  public Class<?> getModelClass() {
-    if(modelClass == null) {
-      modelClass = Persistence.cache().getModel(label().name());
-    }
-    
-    return modelClass;
-  }
-
-  @Override
-  public Node getNode(Model model) {
-    Validate.notNull(model, "The model is null");
-    Validate.notNull(model.getId(), "ID can not be null.");
-    try {
-      return service().graph().getNodeById(model.getId());
-    } catch(NotFoundException e) {
-      throw new IllegalStateException(e.getMessage(), e);
-    }
   }
 
   @Override
@@ -238,17 +185,19 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public Index<Node> index() {
-    return index(label().name());
+  public Index index() {
+    return index(getType());
   }
 
   @Override
-  public Index<Node> index(String indexName) {
+  public Index index(String indexName) {
     if(!indexCache.containsKey(service())) {
       indexCache.put(service(), new HashMap<>());
     }
     if(!indexCache.get(service()).containsKey(indexName)) {
-      Index<Node> index = graph().index().forNodes(indexName, indexConfig(indexName));
+      Index index = Model.class.isAssignableFrom(getModelClass())? 
+        graph().index().forNodes(indexName, indexConfig(indexName)):
+        graph().index().forRelationships(indexName, indexConfig(indexName));
       indexCache.get(service()).put(indexName, index);
       logger.debug("lucene index created for \"{}\"", indexName);
     }
@@ -262,8 +211,10 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public void index(Index<Node> index, T model, String name, Object value) {
-    Node node = getNode(model);
+  @SuppressWarnings("unchecked")
+  public void index(Index index, T model, String name, Object value) {
+    PropertyContainer node = (PropertyContainer) (model instanceof Model? 
+      Persistence.getNode((Model) model): Relationships.getRelationship((BaseRelationship) model));
     index.add(node, name, value);
     if(logger.isDebugEnabled()) {
       logger.debug("added \"{}\" with value \"{}\" on \"{}\" index", name, value, index.getName());
@@ -279,17 +230,17 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public Index<Node> indexForField(String fieldName) {
+  public Index indexForField(String fieldName) {
     return index();
   }
 
   @Override
-  public void indexRemove(Node node) {
+  public void indexRemove(PropertyContainer node) {
     indexRemove(index(), node);
   }
 
   @Override
-  public void indexRemove(Index<Node> index, Node node) {
+  public void indexRemove(Index index, PropertyContainer node) {
     index.remove(node);
     if(logger.isDebugEnabled()) {
       logger.debug("{} removed from index {}", createModel(node), index.getName());
@@ -297,26 +248,16 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   }
 
   @Override
-  public void indexRemove(Node node, String field) {
+  public void indexRemove(PropertyContainer node, String field) {
     indexRemove(indexForField(field), node, field);
   }
 
   @Override
-  public void indexRemove(Index<Node> index, Node node, String field) {
+  public void indexRemove(Index index, PropertyContainer node, String field) {
     index.remove(node, field);
     if(logger.isDebugEnabled()) {
       logger.debug("{} removed field \"{}\" from index {}", createModel(node), field, index.getName());
     }
-  }
-
-  @Override
-  public Label label() {
-    return label;
-  }
-  
-  @Override
-  public Set<Label> labels() {
-    return labels;
   }
 
   @Override
@@ -326,19 +267,7 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
   
   @Override
   public String queryIdentifier() {
-    return label().name().toLowerCase();
-  }
-  
-  @Override
-  public void remove(T model) throws PersistException {
-    Validate.notNull(model.getId(), "'id' is required");
-    Persistence.delete(this, model);
-    logger.info("{} deleted", model);
-  }
-
-  public void removeRelationship(T model, String field, Model other) {
-    RelatedTo relatedTo = Persistence.cache().fieldAnnotations(model.getClass(), field).relatedTo;
-    Relationships.delete(model, relatedTo, other);
+    return getType().toLowerCase();
   }
 
   @Override
@@ -352,13 +281,6 @@ public abstract class BaseRepository<T extends Model> implements ModelRepository
     for(T entity : entities) {
       save(entity);
     }
-  }
-
-  @Override
-  public void save(SaveContext<T> context) throws PersistException {
-    validateModel(context);
-    Persistence.save(this, context);
-    logger.info("{} saved", context.model());
   }
   
   @Override

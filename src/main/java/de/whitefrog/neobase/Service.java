@@ -51,7 +51,6 @@ public class Service implements AutoCloseable {
     try {
       logger.info("connecting to cypher at {}", directory);
       this.directory = directory;
-      register("de.whitefrog");
       GraphDatabaseSettings.BoltConnector bolt = GraphDatabaseSettings.boltConnector( "0" );
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
         .newEmbeddedDatabaseBuilder(new File(directory))

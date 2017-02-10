@@ -1,5 +1,6 @@
 package de.whitefrog.neobase;
 
+import de.whitefrog.neobase.test.TemporaryService;
 import org.apache.commons.configuration.ConfigurationException;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;

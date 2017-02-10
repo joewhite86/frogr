@@ -138,11 +138,11 @@ public class Search {
         return Streams.get(new RelationshipResultIterator<>(result, params));
       } else {
         try {
-          Repository repository = service.repository(descriptor.baseClass().getSimpleName());
-          return Streams.get(new ExecutionResultIterator<>(repository, result, params));
+          Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
+          return Streams.get(new ExecutionResultIterator<>(otherRepository, result, params));
         }
         catch(RepositoryInstantiationException e) {
-          return Streams.get(new ExecutionResultIterator<>(service, descriptor.baseClass(), result, params));
+          return Streams.get(new ExecutionResultIterator<>(service, result, params));
         }
       }
     } else {

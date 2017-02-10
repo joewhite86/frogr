@@ -2,9 +2,10 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.exception.RepositoryInstantiationException;
+import de.whitefrog.neobase.exception.RepositoryNotFoundException;
 import de.whitefrog.neobase.model.relationship.Relationship;
-import de.whitefrog.neobase.persistence.ModelCache;
 import de.whitefrog.neobase.persistence.Persistence;
+import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.reflections.Reflections;
 
@@ -22,12 +23,10 @@ public class RepositoryFactory {
   
   public RepositoryFactory(Service service) {
     this.service = service;
-    if(staticCache.containsKey(service)) {
-      this.cache = staticCache.get(service);
-    } else {
+    if(!staticCache.containsKey(service)) {
       staticCache.put(service, new HashMap<>());
-      this.cache = staticCache.get(service);
     }
+    this.cache = staticCache.get(service);
     if(repositoryCache.isEmpty()) {
       for(String pkg : service.registry()) {
         Reflections reflections = new Reflections(pkg);
@@ -54,9 +53,9 @@ public class RepositoryFactory {
           throw new ClassNotFoundException(name + "Repository");
         }
         Class c = repositoryCache.get(name + "Repository");
-        Constructor<Repository> ctor = c.getConstructor(service.getClass());
+        Constructor<Repository> ctor = ConstructorUtils.getMatchingAccessibleConstructor(c, new Class[] {service.getClass()});
         repository = ctor.newInstance(service);
-      } catch(ClassNotFoundException | NoSuchMethodException e) {
+      } catch(ClassNotFoundException e) {
         try {
           if(!Relationship.class.isAssignableFrom(modelType)) {
             Constructor<DefaultRepository> ctor = 
@@ -81,11 +80,23 @@ public class RepositoryFactory {
 
   @SuppressWarnings("unchecked")
   public Repository get(String name) {
-    return get(Persistence.cache().getModel(name));
+    if(name == null) throw new NullPointerException("name cannot be null");
+    if(cache.containsKey(name.toLowerCase())) {
+      return cache.get(name.toLowerCase());
+    }
+    Class clazz = Persistence.cache().getModel(name);
+    if(clazz == null) {
+      throw new RepositoryNotFoundException(name + " not found in model cache");
+    }
+    return get(clazz);
   }
 
   public GraphDatabaseService getDatabase() {
     return service.graph();
+  }
+
+  public void register(String name, Repository repository) {
+    cache.put(name, repository);
   }
 }
 

@@ -1,12 +1,12 @@
 package de.whitefrog.neobase.exception;
 
-import de.whitefrog.neobase.model.Model;
+import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.relationship.Relationship;
 
 import java.lang.reflect.Field;
 
 public class MissingRequiredException extends RuntimeException {
-  private Model model;
+  private Base model;
   private Relationship relationship;
   private final Field field;
 
@@ -15,7 +15,7 @@ public class MissingRequiredException extends RuntimeException {
     this.model = null;
     this.field = null;
   }
-  public MissingRequiredException(Model model, Field field) {
+  public MissingRequiredException(Base model, Field field) {
     super("The value for the field \"" + field.getName() + "\" is missing on " + model);
     this.model = model;
     this.field = field;
@@ -26,13 +26,13 @@ public class MissingRequiredException extends RuntimeException {
     this.field = field;
   }
 
-  public MissingRequiredException(Model model, String field) {
+  public MissingRequiredException(Base model, String field) {
     super("The value for the field \"" + field + "\" is missing on " + model);
     this.model = model;
     this.field = null;
   }
 
-  public Model getModel() {
+  public Base getModel() {
     return model;
   }
 

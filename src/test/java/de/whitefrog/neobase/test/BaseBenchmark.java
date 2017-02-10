@@ -1,4 +1,4 @@
-package de.whitefrog.neobase;
+package de.whitefrog.neobase.test;
 
 import de.whitefrog.neobase.helper.TimeUtils;
 import junit.framework.TestCase;

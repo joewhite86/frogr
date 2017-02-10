@@ -20,7 +20,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   private final SearchParameter params;
   private Map<String, Object> next = null;
 
-  public ExecutionResultIterator(Service service, Class<T> clazz, Result results, SearchParameter params) {
+  public ExecutionResultIterator(Service service, Result results, SearchParameter params) {
     super(null, results);
     this.results = results;
     this.params = params;
