@@ -95,8 +95,8 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   @Override
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
-    // TODO: Fix
+    boolean create = !context.model().isPersisted();
     Relationships.save(context);
-    logger.info("{} saved", context.model());
+    logger().info("{} {}", context.model(), create? "created": "updated");
   }
 }

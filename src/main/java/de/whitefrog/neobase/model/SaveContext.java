@@ -24,18 +24,18 @@ public class SaveContext<T extends Base> {
     this.repository = repository;
     this.model = model;
     if(model.getId() > 0) {
-      this.original = repository.createModel(node(), FieldList.parseFields(Base.AllFields));
+      original = repository.createModel(node());
     }
     else if(model.getUuid() != null) {
-      this.original = repository.findByUuid(model.getUuid());
-      this.original = repository.fetch(original, Base.AllFields);
-      this.model.setId(this.original.getId());
+      original = repository.findByUuid(model.getUuid());
+      model.setId(original.getId());
     }
     fieldMap = Persistence.cache().fieldMap(model.getClass());
   }
 
   public List<FieldDescriptor> changedFields() {
     if(changedFields == null) {
+      if(original() != null) repository.fetch(original(), Base.AllFields);
       changedFields = fieldMap.stream()
         .filter(f-> fieldChanged(f.field()))
         .collect(Collectors.toList());
@@ -53,13 +53,13 @@ public class SaveContext<T extends Base> {
       if(!field.isAccessible()) field.setAccessible(true);
       Object value = field.get(model);
       if(value != null && !annotation.nullRemove) {
-        if(original == null) {
+        if(original() == null) {
           return true;
         }
         else {
           if(annotation.relatedTo != null && annotation.lazy) return true;
-          if(annotation.relatedTo != null) repository().fetch(original, FieldList.parseFields(field.getName()+"(max)"));
-          Object originalValue = field.get(original);
+          if(annotation.relatedTo != null) repository().fetch(original(), FieldList.parseFields(field.getName()+"(max)"));
+          Object originalValue = field.get(original());
           return !value.equals(originalValue);
         }
       }

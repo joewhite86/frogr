@@ -13,8 +13,6 @@ import java.util.*;
 
 public class Patcher {
     private static final Logger logger = LoggerFactory.getLogger(Patcher.class);
-    private static final String snapshotSuffix = "-SNAPSHOT";
-    private static String version;
 
     private static TreeMap<Version, List<Patch>> getPatches(Service service) {
         Reflections reflections = new Reflections(Patch.class.getPackage().getName());
@@ -41,24 +39,9 @@ public class Patcher {
         return patches;
     }
 
-    public synchronized static String getVersion() {
-        if(version != null) return version;
-
-        version = System.getProperty("version", Patcher.class.getPackage().getImplementationVersion());
-
-        if(version == null) {
-            version = "undefined";
-            logger.warn("No implementation version found in manifest");
-        } else {
-            if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
-        }
-
-        return version;
-    }
-
     public static void patch(Service service) {
-        String version = getVersion();
-        if(!version.equals("undefined")) patch(service, getVersion());
+        String version = service.getVersion();
+        if(!version.equals("undefined")) patch(service, service.getVersion());
     }
 
     public static void patch(Service service, String versionString) {

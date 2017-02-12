@@ -2,6 +2,7 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.model.Graph;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 
@@ -15,8 +16,7 @@ public class GraphRepository {
 
   public Graph create() {
     if(getGraph() != null) return graph;
-    graph = new Graph();
-    return graph;
+    return new Graph();
   }
 
   public Graph getGraph() {
@@ -33,12 +33,14 @@ public class GraphRepository {
   }
   
   public void save(Graph graph) {
-    Result results = service.graph().execute("match (n:Graph) return n");
-    if(results.hasNext()) {
+    if(this.graph != null) {
+      Result results = service.graph().execute("match (n:Graph) return n");
       Node node = (Node) results.next().get("n");
       node.setProperty(Graph.Version, graph.getVersion());
-      this.graph = new Graph();
-      this.graph.setVersion((String) node.getProperty(Graph.Version));
+    } else {
+      Node node = service.graph().createNode(Label.label("Graph"));
+      node.setProperty(Graph.Version, graph.getVersion());
+      this.graph = graph;
     }
   }
 }

@@ -44,6 +44,27 @@ public class TestRepositories {
   }
   
   @Test
+  public void uuid() {
+    try(Transaction tx = TestSuite.service().beginTx()) {
+      Person model = repository.createModel();
+      repository.save(model);
+      assertThat(model.getUuid()).isNotEmpty();
+    }
+  }
+  
+  @Test(expected = DuplicateEntryException.class)
+  public void uniqueConstraint() {
+    try(Transaction tx = TestSuite.service().beginTx()) {
+      Person model = repository.createModel();
+      model.setUniqueField("unique");
+      repository.save(model);
+      Person duplicate = repository.createModel();
+      duplicate.setUniqueField("unique");
+      repository.save(duplicate);
+    }
+  }
+  
+  @Test
   public void createRelationship() {
     try(Transaction tx = TestSuite.service().beginTx()) {
       Person model1 = repository.createModel();

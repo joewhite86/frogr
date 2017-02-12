@@ -135,8 +135,9 @@ public abstract class Persistence {
       throw new NullPointerException("field can not be null");
     }
     
+    Object value = null;
     try {
-      Object value = field.get(model);
+      value = field.get(model);
       
       // when the annotation @Required is present, a value is expected
       if(created && annotations.required && (value == null || (value instanceof String && ((String) value).isEmpty()))) {
@@ -162,16 +163,16 @@ public abstract class Persistence {
           }
           
           // check uniqueness
-          else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
-            Optional<T> exist = context.repository().findIndexed(field.getName(), value).findAny();
-            if(exist.isPresent() && model.getId() != exist.get().getId()) {
-              throw new DuplicateEntryException(
-                "A " + model.getClass().getSimpleName().toLowerCase() + " with the " +
-                  field.getName() + " \"" + value + "\" already exists", model, field);
-            } else if(exist.isPresent()) {
-              logger.info("found already persisted {}, but seems to be equal to {}", exist, model);
-            }
-          }
+//          else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
+//            Optional<T> exist = context.repository().findIndexed(field.getName(), value).findAny();
+//            if(exist.isPresent() && model.getId() != exist.get().getId()) {
+//              throw new DuplicateEntryException(
+//                "A " + model.getClass().getSimpleName().toLowerCase() + " with the " +
+//                  field.getName() + " \"" + value + "\" already exists", model, field);
+//            } else if(exist.isPresent()) {
+//              logger.info("found already persisted {}, but seems to be equal to {}", exist, model);
+//            }
+//          }
 
           // Handle other values
           if(!(value instanceof Collection) && !(value instanceof Model)) {
@@ -212,6 +213,9 @@ public abstract class Persistence {
       }
     } catch(ReflectiveOperationException e) {
       logger.error("Could not get property on {}: {}", model, e.getMessage(), e);
+    } catch(ConstraintViolationException e) {
+      throw new DuplicateEntryException("A " + model.getClass().getSimpleName().toLowerCase() + " with the " +
+        field.getName() + " \"" + value + "\" already exists", model, field);
     } catch(IllegalArgumentException e) {
       logger.error("Could not store property {} on {}: {}", field.getName(), model, e.getMessage());
     }
@@ -250,7 +254,7 @@ public abstract class Persistence {
         clazz = node instanceof Node? (Class<T>) Entity.class: (Class<T>) BaseRelationship.class;
       }
       T model = clazz.newInstance();
-      model.setId(node instanceof Node? ((Node)node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
+      model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
       fetch(model, fields, false);
       return model;
     } catch(IllegalStateException e) {

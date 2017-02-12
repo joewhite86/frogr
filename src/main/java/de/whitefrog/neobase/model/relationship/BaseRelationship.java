@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.annotation.Indexed;
 import de.whitefrog.neobase.model.annotation.NotPersistant;
 import de.whitefrog.neobase.model.annotation.Unique;
@@ -16,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class BaseRelationship<From extends de.whitefrog.neobase.model.Model, To extends de.whitefrog.neobase.model.Model> implements Relationship<From, To> {
+public class BaseRelationship<From extends Model, To extends Model> implements Relationship<From, To> {
   private From from;
   private To to;
   private String type;

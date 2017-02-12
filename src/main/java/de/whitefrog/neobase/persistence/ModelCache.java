@@ -86,6 +86,10 @@ public class ModelCache {
     return modelCache.containsKey(name);
   }
 
+  public Collection<Class> getAllModels() {
+    return modelCache.values();
+  }
+  
   public Class getModel(String name) {
     return modelCache.get(name);
   }

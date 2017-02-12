@@ -99,7 +99,8 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
+    boolean create = !context.model().isPersisted();
     Persistence.save(this, context);
-    logger().info("{} saved", context.model());
+    logger().info("{} {}", context.model(), create? "created": "updated");
   }
 }
