@@ -24,9 +24,13 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   public BaseModelRepository(Service service) {
     super(service);
     this.label = Label.label(getType());
-    this.labels = getModelInterfaces(getModelClass()).stream()
-      .map(Label::label)
-      .collect(Collectors.toSet());
+    if(getModelClass() != null) {
+      this.labels = getModelInterfaces(getModelClass()).stream()
+        .map(Label::label)
+        .collect(Collectors.toSet());
+    } else {
+      logger().warn("no model class found for {}", getClass());
+    }
   }
   public BaseModelRepository(Service service, String modelName) {
     super(service, modelName);

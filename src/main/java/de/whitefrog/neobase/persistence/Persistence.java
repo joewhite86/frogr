@@ -58,20 +58,6 @@ public abstract class Persistence {
    */
   public static <T extends Model> void delete(ModelRepository<T> repository, T model) {
     Node node = getNode(model);
-    // check fields for bulk or indexed
-    List<FieldDescriptor> fieldMap = cache.fieldMap(model.getClass());
-    for(FieldDescriptor descriptor : fieldMap) {
-      AnnotationDescriptor annotations = descriptor.annotations();
-      if(annotations.indexed != null || annotations.unique) {
-        // delete node from index
-        repository.indexRemove(node);
-//      } else if(annotations.relatedTo != null) {
-//        for(Relationship relationship : node.getRelationships(
-//          annotations.relatedTo.direction(), RelationshipType.withName(annotations.relatedTo.type()))) {
-//          relationship.delete();
-//        }
-      }
-    }
     for(org.neo4j.graphdb.Relationship relationship: node.getRelationships()) {
       relationship.delete();
     }
@@ -195,20 +181,11 @@ public abstract class Persistence {
               logger.info("{}: set value for \"{}\" to \"{}\"", model, field.getName(), value);
             }
           }
-          // if the value has changed and the field is indexed, we need to add the value to the index
-          if(valueChanged && (annotations.indexed != null || annotations.unique)) {
-            if(!created) repository.indexRemove(node, field.getName());
-            repository.index(model, field.getName(),
-              value instanceof String? ((String) value).toLowerCase(): value);
-          }
         } 
         // if the new value is null and @NullRemove is set on the field,
         // we need to remove the property from the node and the index
         else if(valueChanged && annotations.nullRemove) {
           node.removeProperty(field.getName());
-          if((annotations.indexed != null || annotations.unique)) {
-            repository.indexRemove(node, field.getName());
-          }
         }
       }
     } catch(ReflectiveOperationException e) {

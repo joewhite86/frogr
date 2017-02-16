@@ -37,6 +37,10 @@ public class RepositoryFactory {
     }
   }
   
+  public Collection<Class> repositoryClasses() {
+    return repositoryCache.values();
+  }
+  
   public Collection<Repository> cache() {
     return cache.values();
   }

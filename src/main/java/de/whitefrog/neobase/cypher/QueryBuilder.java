@@ -13,25 +13,19 @@ import de.whitefrog.neobase.repository.RelationshipRepository;
 import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.neo4j.graphdb.Direction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class QueryBuilder {
   private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
   private static final boolean insertNewLine = false;
   
   private Repository repository;
-  private boolean hasStart = false;
   private final Map<String, Object> queryParams = new HashMap<>();
-  private final List<String> queryFields = new ArrayList<>();
-  private final List<String> usedInStart = new ArrayList<>();
   private SearchParameter params;
   private final String type;
   private final Map<String, String> matches = new HashMap<>();
@@ -39,119 +33,6 @@ public class QueryBuilder {
   public QueryBuilder(Repository repository) {
     this.repository = repository;
     this.type = repository.getModelClass().getSimpleName();
-    Persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
-      if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
-        queryFields.add(descriptor.field().getName());
-      }
-    });
-  }
-
-  private String escape(String query) {
-    return QueryParser.escape(query)
-      .replace(" ", "\\ ")
-      .replace("\\*", "*");
-  }
-  
-  public StringBuilder start() {
-    StringBuilder query = new StringBuilder();
-    if(CollectionUtils.isNotEmpty(params.ids())) {
-      query.append(id()).append("=node(").append(StringUtils.join(params.ids(), ",")).append(")");
-      hasStart = true;
-    }
-    else if(CollectionUtils.isNotEmpty(params.uuids())) {
-      query.append(id()).append("=node:").append(type).append("({query})");
-      queryParams.put("query", "uuid:" + StringUtils.join(params.uuids(), " uuid:"));
-      hasStart = true;
-    }
-    else if(params.query() != null) {
-      if(params.query().trim().isEmpty()) {
-        throw new IllegalArgumentException("empty query is not allowed");
-      }
-      hasStart = true;
-      query.append(id()).append("=node:").append(type).append("({query})");
-      if(params.query().contains(":")) {
-        String[] split = params.query().split(":", 2);
-        if(split[1].isEmpty()) {
-          throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
-        }
-        queryParams.put("query", split[0] + ":" + QueryParser.escape(split[1])
-          .replace(" ", "\\ ")
-          .replace("\\*", "*"));
-      } else {
-        List<String> queryStrings = queryFields.stream()
-          .map(field -> field + ": " + escape(params.query().toLowerCase()))
-          .collect(Collectors.toList());
-        queryParams.put("query", StringUtils.join(queryStrings, " OR "));
-      }
-    }
-    if(params.isFiltered()) {
-      Map<String, List<String>> queryStrings = new HashMap<>();
-      Map<String, String> starts = new HashMap<>();
-      
-      for(Filter filter: params.filters()) {
-        if(!(filter instanceof Filter.Equals) || filter.getValue() == null || 
-            filter.getValue() instanceof Boolean ) continue;
-        getStartSub(starts, queryStrings, filter, repository.getModelClass(), filter.getProperty());
-      }
-      if(!queryStrings.isEmpty()) {
-        for(String id: starts.keySet()) {
-          if(query.length() != 0) query.append(", ");
-          if(id.equals(id())) hasStart = true;
-          query.append(id).append("=node:").append(starts.get(id)).append("({query_").append(id).append("})");
-          queryParams.put("query_" + id, StringUtils.join(queryStrings.get(id), " OR "));
-        }
-      }
-    }
-    
-    return query.length() == 0? query: new StringBuilder("start ").append(query).append(insertNewLine? "\n": " ");
-  }
-  
-  private void getStartSub(Map<String, String> starts, Map<String, List<String>> queryStrings, 
-                                    Filter filter, Class<?> modelClass, String path) {
-    // loop until correct search is reached
-    String fieldName = path.contains(".")? path.substring(0, path.indexOf(".")): path;
-    FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(modelClass, fieldName);
-    if(descriptor == null) {
-      for(Class sub: Persistence.cache().subTypesOf(modelClass)) {
-        descriptor = Persistence.cache().fieldDescriptor(sub, fieldName);
-        if(descriptor != null) break;
-      }
-      if(descriptor == null) {
-        logger.warn("field {} not found in {}", fieldName, modelClass);
-        return;
-      }
-    }
-    AnnotationDescriptor annotations = descriptor.annotations();
-    
-    if(path.contains(".") && path.substring(fieldName.length() + 1).contains(".")) {
-      getStartSub(starts, queryStrings, filter, descriptor.baseClass(), path.substring(path.indexOf(".") + 1));
-      return;
-    }
-
-    if(!path.contains(".")) {
-      if(annotations.indexed != null || annotations.unique) {
-        if(!starts.containsKey(id())) starts.put(id(), type);
-        if(!queryStrings.containsKey(id())) queryStrings.put(id(), new ArrayList<>());
-        usedInStart.add(filter.getProperty());
-        queryStrings.get(id()).add(filter.getProperty() + ":" +
-          escape(filter.getValue().toString().toLowerCase()));
-      }
-    } else if(annotations.relatedTo != null) {
-      String queryField = path.substring(path.indexOf(".") + 1);
-      Class clazz = descriptor.baseClass();
-      if(descriptor.isRelationship()) {
-        ParameterizedType type = (ParameterizedType) descriptor.field().getGenericType();
-        clazz = (Class<?>) type.getActualTypeArguments()[1];
-      }
-      FieldDescriptor subDescriptor = Persistence.cache().fieldDescriptor(clazz, queryField);
-      if(subDescriptor == null || 
-          (subDescriptor.annotations().indexed == null && !subDescriptor.annotations().unique)) return;
-      if(!starts.containsKey(fieldName)) starts.put(fieldName, clazz.getSimpleName());
-      if(!queryStrings.containsKey(fieldName)) queryStrings.put(fieldName, new ArrayList<>());
-      usedInStart.add(filter.getProperty());
-      queryStrings.get(fieldName).add(queryField + ":" +
-        escape(filter.getValue().toString().toLowerCase()));
-    }
   }
 
   public Repository repository() {
@@ -163,12 +44,8 @@ public class QueryBuilder {
   }
   
   public StringBuilder match() {
-    StringBuilder match = new StringBuilder("(").append(id());
-    // only append label if there is no legacy index lookup
-    if(!hasStart && usedInStart.isEmpty()) {
-      match.append(":").append(type);
-    }
-    match.append(")");
+    StringBuilder match = new StringBuilder("(").append(id())
+      .append(":").append(type).append(")");
 
     // add required matches for ordered fields when counted
     for(SearchParameter.OrderBy order : params.orderBy()) {
@@ -239,9 +116,7 @@ public class QueryBuilder {
       }
     }
     
-    if(matches.isEmpty() && hasStart) {
-      return new StringBuilder();
-    } else if(matches.isEmpty()) {
+    if(matches.isEmpty()) {
       if(repository() instanceof RelationshipRepository) {
         return new StringBuilder("match ()-[" + id() + ":" + type + "]-()")
           .append(insertNewLine? "\n": " ");
@@ -256,16 +131,10 @@ public class QueryBuilder {
     }
   }
   
-  private String getMatchName(String property) {
-    String matchName = property.replace(".to", "");
-    return matchName.contains(".")?
-      matchName.substring(0, matchName.lastIndexOf(".")): matchName;
-  }
-  
   private void generateFilterMatch(Filter filter, Class<?> clazz, String id, String fieldName) {
     StringBuilder match = new StringBuilder("(").append(id);
     // only append label if there is no legacy index lookup
-    if(!hasStart && id.equals(id())) {
+    if(id.equals(id())) {
       match.append(":").append(type);
     }
     match.append(")");
@@ -293,7 +162,7 @@ public class QueryBuilder {
         newMatch.append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
         newMatch.append("(").append(fieldName);
         // if the filter is already used as start clause, we don't need to append the class name
-        if(!usedInStart.contains(filter.getProperty())) newMatch.append(":").append(className);
+        newMatch.append(":").append(className);
         newMatch.append(")");
       } else {
         newMatch.append(annotations.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
@@ -316,7 +185,6 @@ public class QueryBuilder {
       List<String> wheres = new ArrayList<>(3);
       int i = 0;
       for(Filter filter : params.filters()) {
-        if(usedInStart.contains(filter.getProperty())) continue;
         String lookup = filter.getProperty();
         if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null && 
             lookup.contains(".to.")) lookup = lookup.replace(".to", "_to");
@@ -346,15 +214,15 @@ public class QueryBuilder {
           }
         }
         else if(filter instanceof Filter.StartsWith) {
-          wheres.add(lookup + " starts with '{" + marker + "}'");
+          wheres.add(lookup + " starts with {" + marker + "}");
           queryParams.put(marker, filter.getValue());
         }
         else if(filter instanceof Filter.EndsWith) {
-          wheres.add(lookup + " ends with '{" + marker + "}'");
+          wheres.add(lookup + " ends with {" + marker + "}");
           queryParams.put(marker, filter.getValue());
         }
         else if(filter instanceof Filter.Contains) {
-          wheres.add(lookup + " contains '{" + marker + "}'");
+          wheres.add(lookup + " contains {" + marker + "}");
           queryParams.put(marker, filter.getValue());
         }
         else if(filter instanceof Filter.NotEquals) {
@@ -467,8 +335,7 @@ public class QueryBuilder {
 
   public Query build(SearchParameter params) {
     this.params = params;
-    StringBuilder query = start()
-      .append(match())
+    StringBuilder query = match()
       .append(where())
       .append(returns())
       .append(orderBy())
@@ -479,8 +346,7 @@ public class QueryBuilder {
 
   public Query buildSimple(SearchParameter params) {
     this.params = params;
-    StringBuilder query = start()
-      .append(match())
+    StringBuilder query = match()
       .append(where());
 
     return new Query(query.toString(), queryParams);

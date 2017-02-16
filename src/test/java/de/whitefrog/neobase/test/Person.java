@@ -1,10 +1,7 @@
 package de.whitefrog.neobase.test;
 
 import de.whitefrog.neobase.model.Entity;
-import de.whitefrog.neobase.model.annotation.Lazy;
-import de.whitefrog.neobase.model.annotation.RelatedTo;
-import de.whitefrog.neobase.model.annotation.Unique;
-import de.whitefrog.neobase.model.annotation.Uuid;
+import de.whitefrog.neobase.model.annotation.*;
 import org.neo4j.graphdb.Direction;
 
 import java.util.List;

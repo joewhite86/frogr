@@ -61,20 +61,6 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   }
 
   @Override
-  public Stream<T> findIndexed(Index index, String field, Object value) {
-    return findIndexed(index, field, value, new SearchParameter());
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public Stream<T> findIndexed(Index index, String field, Object value, SearchParameter params) {
-    IndexHits<org.neo4j.graphdb.Relationship> found = IndexUtils.query(index, field,
-      value instanceof String? ((String) value).toLowerCase(): value.toString(),
-      params.limit() * params.page());
-    return Streams.get(new DefaultResultIterator<>(this, found, params));
-  }
-
-  @Override
   public org.neo4j.graphdb.Relationship getRelationship(Relationship model) {
     Validate.notNull(model, "The model is null");
     Validate.notNull(model.getId(), "ID can not be null.");

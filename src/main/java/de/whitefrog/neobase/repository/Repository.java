@@ -34,8 +34,6 @@ public interface Repository<T extends Base> {
 
   T fetch(T model, boolean refetch, FieldList fields);
 
-  boolean filter(PropertyContainer node, Collection<Filter> filters);
-
   /**
    * Get a node by id
    *
@@ -50,16 +48,6 @@ public interface Repository<T extends Base> {
 
   Stream<T> find(String property, Object value);
 
-  Stream<T> find(SearchParameter params);
-  
-  Stream<T> findIndexed(String field, Object value);
-
-  Stream<T> findIndexed(String field, Object value, SearchParameter params);
-
-  Stream<T> findIndexed(Index index, String field, Object value);
-
-  Stream<T> findIndexed(Index index, String field, Object value, SearchParameter params);
-  
   T findByUuid(String uuid);
 
   String getType();
@@ -76,28 +64,6 @@ public interface Repository<T extends Base> {
   QueryBuilder queryBuilder();
 
   String queryIdentifier();
-
-  
-
-  Index index();
-
-  Index index(String indexPropertyContainerame);
-
-  void index(T model, String name, Object value);
-
-  void index(Index index, T model, String name, Object value);
-
-  Map<String, String> indexConfig(String index);
-
-  Index indexForField(String fieldPropertyContainerame);
-
-  void indexRemove(Index index, PropertyContainer node);
-
-  void indexRemove(PropertyContainer node, String field);
-
-  void indexRemove(PropertyContainer node);
-
-  void indexRemove(Index index, PropertyContainer node, String field);
 
   /**
    * Delete a model

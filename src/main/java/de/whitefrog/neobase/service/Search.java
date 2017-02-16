@@ -8,7 +8,6 @@ import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.helper.TimeUtils;
 import de.whitefrog.neobase.model.Base;
-import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.QueryField;
@@ -21,7 +20,10 @@ import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -115,19 +117,6 @@ public class Search {
   private Stream<? extends Base> search(SearchParameter params) {
     if(CollectionUtils.isEmpty(params.returns()) || 
         (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
-      if(!params.isFiltered() && !params.isOrdered() && params.returns() == null && params.page() == 1) {
-        if(!CollectionUtils.isEmpty(params.ids())) {
-          return params.ids().stream()
-            .map(id -> repository.find(id, params.fields()))
-            .filter(Objects::nonNull);
-        }
-        else if(!CollectionUtils.isEmpty(params.uuids())) {
-          return params.uuids().stream()
-            .map(uuid -> repository.findIndexed(Model.Uuid, uuid, params).findFirst().get())
-            .filter(Objects::nonNull);
-        }
-      }
-
       Result result = execute(params);
       return Streams.get(new ExecutionResultIterator<>(repository, result, params));
     } else if(params.returns().size() == 1) {

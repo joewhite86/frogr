@@ -1,7 +1,11 @@
 package de.whitefrog.neobase;
 
 import de.whitefrog.neobase.exception.DuplicateEntryException;
+import de.whitefrog.neobase.exception.NeobaseRuntimeException;
+import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.rest.Filter;
+import de.whitefrog.neobase.repository.BaseModelRepository;
+import de.whitefrog.neobase.repository.ModelRepository;
 import de.whitefrog.neobase.repository.RelationshipRepository;
 import de.whitefrog.neobase.test.Likes;
 import de.whitefrog.neobase.test.Person;
@@ -127,10 +131,23 @@ public class TestRepositories {
   }
   
   @Test
+  public void findByUuid() {
+    try(Transaction tx = TestSuite.service().beginTx()) {
+      Person person = repository.createModel();
+      repository.save(person);
+      assertThat(person.getUuid()).isNotEmpty();
+      Person found = repository.findByUuid(person.getUuid());
+      assertThat(found).isEqualTo(person);
+    }
+  }
+  
+  @Test
   public void search() {
     try(Transaction tx = TestSuite.service().beginTx()) {
       Person person1 = repository.createModel();
+      person1.setField("test1");
       Person person2 = repository.createModel();
+      person2.setField("test2");
       repository.save(person1, person2);
 
       Likes likes1 = new Likes();
@@ -145,6 +162,8 @@ public class TestRepositories {
       List<Person> persons = repository.search()
         .filter(new Filter.StartsWith("field", "test"))
         .list();
+      
+      assertThat(persons).hasSize(2);
     }
   }
 }
