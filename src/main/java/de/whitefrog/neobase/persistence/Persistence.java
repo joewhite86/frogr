@@ -311,10 +311,11 @@ public abstract class Persistence {
     fetch(model, fields, false);
   }
   public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
-    if(model.getId() < 0) return;
+    if(!model.isPersisted()) return;
     PropertyContainer node;
 
     try {
+      List<String> ignoredFields = Arrays.asList("id");
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
         node = Relationships.getRelationship(relModel);
@@ -329,11 +330,11 @@ public abstract class Persistence {
             relationship.getEndNode(), fields.containsField("to")? fields.get("to").subFields(): new FieldList()
           ));
         }
+        ignoredFields = Arrays.asList("id", "from", "to");
       } else {
         node = Persistence.getNode((de.whitefrog.neobase.model.Model) model);
       }
       
-      List<String> ignoredFields = Arrays.asList("id", "from", "to");
       for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
         if(CollectionUtils.isEmpty(fields) && descriptor.annotations().notPersistant) continue;
         if(ignoredFields.contains(descriptor.field().getName())) continue;
