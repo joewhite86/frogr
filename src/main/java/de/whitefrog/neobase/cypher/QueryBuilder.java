@@ -168,7 +168,8 @@ public class QueryBuilder {
         newMatch.append(annotations.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
         newMatch.append("[").append(fieldName).append(":").append(annotations.relatedTo.type()).append("]");
         newMatch.append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-        newMatch.append("(").append(fieldName).append("_to").append(")");
+        newMatch.append("(").append(fieldName)
+          .append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "_from": "_to").append(")");
       }
       String sub = filter.getProperty().substring(fieldName.length() + filter.getProperty().indexOf(fieldName) + 1);
       if(sub.contains(".")) {
@@ -181,13 +182,15 @@ public class QueryBuilder {
 
   public StringBuilder where() {
     StringBuilder query = new StringBuilder();
+    List<String> wheres = new ArrayList<>(params.filters().size() + params.uuids().size() + params.ids().size());
     if(params.isFiltered()) {
-      List<String> wheres = new ArrayList<>(3);
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null && 
-            lookup.contains(".to.")) lookup = lookup.replace(".to", "_to");
+        if(lookup.contains(".to.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
+          lookup = lookup.replace(".to", "_to");
+        if(lookup.contains(".from.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
+          lookup = lookup.replace(".from", "_from");
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
@@ -259,9 +262,27 @@ public class QueryBuilder {
         }
         i++;
       }
-      if(!wheres.isEmpty()) {
-        query.append("where ").append(StringUtils.join(wheres, " AND ")).append(insertNewLine? "\n": " ");
+    }
+    if(!CollectionUtils.isEmpty(params.ids())) {
+      List<String> queries = new ArrayList<>(params.ids().size());
+      int index = 1;
+      for(Long id: params.ids()) {
+        queries.add("id(" + id() + ") = {id_" + index + "}");
+        queryParams.put("id_" + (index++), id);
       }
+      wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
+    }
+    if(!CollectionUtils.isEmpty(params.uuids())) {
+      List<String> queries = new ArrayList<>(params.uuids().size());
+      int index = 1;
+      for(String uuid: params.uuids()) {
+        queries.add(id() + ".uuid = {uuid_" + index + "}");
+        queryParams.put("uuid_" + (index++), uuid);
+      }
+      wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
+    }
+    if(!wheres.isEmpty()) {
+      query.append("where ").append(StringUtils.join(wheres, " AND ")).append(insertNewLine? "\n": " ");
     }
     return query;
   }
