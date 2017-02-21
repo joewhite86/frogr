@@ -27,6 +27,7 @@ public class WrappingWriterInterceptor implements ContainerResponseFilter, Conta
     final Object entity = containerResponse.getEntity();
 
     if(entity instanceof String || entity instanceof File || entity instanceof StreamingOutput) {
+      containerResponse.getHeaders().add("Cache-Control", "no-cache");
       return;
     } else if(entity instanceof Response) {
       return;
