@@ -152,6 +152,26 @@ public class Search {
     Optional<T> optional = (Optional<T>) search(params.limit(1)).findFirst();
     return optional.isPresent()? optional.get(): null;
   }
+  
+  public Long toLong() {
+    Query query = repository.queryBuilder().buildSimple(params);
+    if(params.returns().size() > 1) {
+      throw new UnsupportedOperationException("more than one return parameter is not supported");
+    }
+    query.query(query.query() + " return " + params.returns().get(0) + " as c");
+    Result result = executeQuery(query);
+    return result.hasNext()? (Long) result.columnAs("c").next(): null;
+  }
+
+  public Integer toInt() {
+    Query query = repository.queryBuilder().buildSimple(params);
+    if(params.returns().size() > 1) {
+      throw new UnsupportedOperationException("more than one return parameter is not supported");
+    }
+    query.query(query.query() + " return " + params.returns().get(0) + " as c");
+    Result result = executeQuery(query);
+    return result.hasNext()? (Integer) result.columnAs("c").next(): null;
+  }
 
   public Search params(SearchParameter params) {
     this.params = params;
