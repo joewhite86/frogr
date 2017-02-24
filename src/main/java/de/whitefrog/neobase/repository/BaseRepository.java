@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.validation.ConstraintViolation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -75,14 +76,6 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   public boolean contains(T model) {
     return model.getId() != -1 && find(model.getId()) != null;
   }
-
-  public T createModel() {
-    try {
-      return (T) getModelClass().newInstance();
-    } catch(ReflectiveOperationException e) {
-      throw new NeobaseRuntimeException(e.getMessage(), e);
-    }
-  }
   
   @Override
   public T createModel(PropertyContainer node) {
@@ -129,7 +122,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   @Override
   public T findByUuid(String uuid) {
-    return search().filter(Model.Uuid, uuid).single();
+    return search().filter(Base.Companion.getUuid(), uuid).single();
   }
 
   @Override

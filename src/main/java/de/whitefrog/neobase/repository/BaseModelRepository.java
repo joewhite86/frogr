@@ -2,6 +2,7 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.DefaultResultIterator;
+import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.TypeMismatchException;
 import de.whitefrog.neobase.helper.Streams;
@@ -38,6 +39,15 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
     this.labels = getModelInterfaces(getModelClass()).stream()
       .map(Label::label)
       .collect(Collectors.toSet());
+  }
+
+  @Override
+  public T createModel() {
+    try {
+      return (T) getModelClass().newInstance();
+    } catch(ReflectiveOperationException e) {
+      throw new NeobaseRuntimeException(e.getMessage(), e);
+    }
   }
 
   @Override

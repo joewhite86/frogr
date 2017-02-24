@@ -87,7 +87,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       }
 
       if(params.fields().isEmpty()) {
-        params.fields(Base.AllFields);
+        params.fields(Base.Companion.getAllFields());
       }
 
       // preceed language header, if set

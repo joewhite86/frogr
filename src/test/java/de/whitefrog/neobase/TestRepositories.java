@@ -77,9 +77,7 @@ public class TestRepositories {
       model2.setField("test2");
       repository.save(model1, model2);
       
-      Likes likes = new Likes();
-      likes.setFrom(model1);
-      likes.setTo(model2);
+      Likes likes = new Likes(model1, model2);
       likes.setField("test");
       relationships.save(likes);
       likes = relationships.find(likes.getId(), "from", "to", "field");
@@ -122,9 +120,7 @@ public class TestRepositories {
       model1.getLikes().add(model2);
       repository.save(model1);
 
-      Likes duplicate = new Likes();
-      duplicate.setFrom(model1);
-      duplicate.setTo(model2);
+      Likes duplicate = new Likes(model1, model2);
       duplicate.setField("test");
       relationships.save(duplicate);
     }
@@ -150,13 +146,9 @@ public class TestRepositories {
       person2.setField("test2");
       repository.save(person1, person2);
 
-      Likes likes1 = new Likes();
-      likes1.setFrom(person1);
-      likes1.setTo(person2);
+      Likes likes1 = new Likes(person1, person2);
       
-      Likes likes2 = new Likes();
-      likes2.setFrom(person2);
-      likes2.setTo(person1);
+      Likes likes2 = new Likes(person2, person1);
       relationships.save(likes1, likes2);
       
       List<Person> persons = repository.search()

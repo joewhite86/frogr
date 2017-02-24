@@ -10,7 +10,8 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  TestRepositories.class
+  TestRepositories.class,
+  TestModels.class
 })
 public class TestSuite {
   private static final Logger logger = LoggerFactory.getLogger(TestSuite.class);

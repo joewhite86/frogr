@@ -20,8 +20,6 @@ import java.util.stream.Stream;
 public interface Repository<T extends Base> {
   boolean contains(T entity);
 
-  T createModel();
-
   T createModel(PropertyContainer node);
 
   T createModel(PropertyContainer node, FieldList fields);

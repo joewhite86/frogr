@@ -2,9 +2,11 @@ package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.DefaultResultIterator;
+import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.index.IndexUtils;
+import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.relationship.Relationship;
@@ -14,6 +16,7 @@ import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
@@ -22,6 +25,7 @@ import org.neo4j.graphdb.index.IndexHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.stream.Stream;
 
 public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
@@ -36,7 +40,18 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
     super(service, modelName);
     this.logger = LoggerFactory.getLogger(getClass());
   }
-  
+
+  @Override
+  public T createModel(Model from, Model to) {
+    try {
+      Constructor constructor = ConstructorUtils.getMatchingAccessibleConstructor(getModelClass(),
+        new Class[] {from.getClass(), to.getClass()});
+      return (T) constructor.newInstance(from, to);
+    } catch(ReflectiveOperationException e) {
+      throw new NeobaseRuntimeException(e.getMessage(), e);
+    }
+  }
+
   @Override
   public T createModel(PropertyContainer node, FieldList fields) {
     return fetch(Persistence.get(node), false, fields);

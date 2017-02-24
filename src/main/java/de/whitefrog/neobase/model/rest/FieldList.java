@@ -44,11 +44,11 @@ public class FieldList extends HashSet<QueryField> {
         return parseFields(field.substring(1, field.length() - 1).split(";"));
       }
       QueryField queryField = new QueryField(field, addAll);
-      if(addAll) queryField.subFields(new QueryField(Base.AllFields));
+      if(addAll) queryField.subFields(new QueryField(Base.Companion.getAllFields()));
       fieldList.add(queryField);
     }
 
-    if(addAll) fieldList.add(new QueryField(Base.AllFields));
+    if(addAll) fieldList.add(new QueryField(Base.Companion.getAllFields()));
     return fieldList;
   }
 

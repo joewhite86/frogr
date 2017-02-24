@@ -35,7 +35,7 @@ public class SaveContext<T extends Base> {
 
   public List<FieldDescriptor> changedFields() {
     if(changedFields == null) {
-      if(original() != null) repository.fetch(original(), Base.AllFields);
+      if(original() != null) repository.fetch(original(), Base.Companion.getAllFields());
       changedFields = fieldMap.stream()
         .filter(f-> fieldChanged(f.field()))
         .collect(Collectors.toList());

@@ -7,6 +7,8 @@ import org.neo4j.graphdb.Node;
 import java.util.Set;
 
 public interface ModelRepository<T extends Model> extends Repository<T> {
+  T createModel();
+
   Node getNode(Model model);
   /**
    * Get the main label

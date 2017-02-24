@@ -21,11 +21,13 @@ import de.whitefrog.neobase.repository.ModelRepository;
 import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.neo4j.graphdb.*;
 import org.neo4j.helpers.collection.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -92,9 +94,8 @@ public abstract class Persistence {
       model.setType(label.name());
     } else {
       if(model.getType() == null) model.setType(label.name());
+      model.updateLastModified();
     }
-
-    model.updateLastModified();
 
     // clone all properties from model
     for(FieldDescriptor field : context.fieldMap()) {
@@ -197,12 +198,6 @@ public abstract class Persistence {
       logger.error("Could not store property {} on {}: {}", field.getName(), model, e.getMessage());
     }
   }
-  
-  private static <T extends Model> T createRepositoryModel(Node node, FieldList fields) {
-    String type = (String) node.getProperty(Base.Type);
-    BaseModelRepository<T> repository = service.repository(type);
-    return repository.createModel(node, fields);
-  }
 
   /**
    * Get a model instance from a neo node.
@@ -230,7 +225,18 @@ public abstract class Persistence {
         // choose basic classes when there is none defined
         clazz = node instanceof Node? (Class<T>) Entity.class: (Class<T>) BaseRelationship.class;
       }
-      T model = clazz.newInstance();
+      T model;
+      if(node instanceof Node) {
+        model = clazz.newInstance();
+        model.setId(((Node) node).getId());
+      } else {
+        org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
+        Model from = get(rel.getStartNode());
+        Model to = get(rel.getEndNode());
+        Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
+        model = constructor.newInstance(from, to);
+        model.setId(rel.getId());
+      }
       model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
       fetch(model, fields, false);
       return model;
@@ -247,7 +253,7 @@ public abstract class Persistence {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
     } else {
       className = (String) node.getProperty(
-        node.hasProperty(Entity.Model)? Entity.Model: Base.Type);
+        node.hasProperty(Model.Companion.getModel())? Model.Companion.getModel(): Base.Companion.getType());
     }
     return cache().getModel(className);
   }
@@ -288,6 +294,7 @@ public abstract class Persistence {
     fetch(model, fields, false);
   }
   public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
+    Validate.notNull(model, "model cannot be null");
     if(!model.isPersisted()) return;
     PropertyContainer node;
 
@@ -296,17 +303,17 @@ public abstract class Persistence {
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
         node = Relationships.getRelationship(relModel);
-        org.neo4j.graphdb.Relationship relationship = Relationships.getRelationship(relModel);
-        if((fields.containsField("from") || fields.containsField(Base.AllFields)) && (relModel.getFrom() == null || refetch)) {
-          ((Relationship) model).setFrom(createRepositoryModel(
-            relationship.getStartNode(), fields.containsField("from")? fields.get("from").subFields(): new FieldList()
-          ));
-        }
-        if((fields.containsField("to") || fields.containsField(Base.AllFields)) && (relModel.getTo() == null || refetch)) {
-          ((Relationship) model).setTo(createRepositoryModel(
-            relationship.getEndNode(), fields.containsField("to")? fields.get("to").subFields(): new FieldList()
-          ));
-        }
+//        org.neo4j.graphdb.Relationship relationship = (org.neo4j.graphdb.Relationship) node;
+//        if((fields.containsField("from") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getFrom() == null || refetch)) {
+//          ((Relationship) model).setFrom(createRepositoryModel(
+//            relationship.getStartNode(), fields.containsField("from")? fields.get("from").subFields(): new FieldList()
+//          ));
+//        }
+//        if((fields.containsField("to") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getTo() == null || refetch)) {
+//          ((Relationship) model).setTo(createRepositoryModel(
+//            relationship.getEndNode(), fields.containsField("to")? fields.get("to").subFields(): new FieldList()
+//          ));
+//        }
         ignoredFields = Arrays.asList("id", "from", "to");
       } else {
         node = Persistence.getNode((de.whitefrog.neobase.model.Model) model);
@@ -315,11 +322,9 @@ public abstract class Persistence {
       for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
         if(CollectionUtils.isEmpty(fields) && descriptor.annotations().notPersistant) continue;
         if(ignoredFields.contains(descriptor.field().getName())) continue;
-        if(descriptor.annotations().relatedTo != null) {
-          boolean fetch = descriptor.annotations().fetch ||
-            fields.containsField(Base.AllFields) || fields.containsField(descriptor.field().getName());
-          if(!fetch) continue;
-        }
+        boolean fetch = descriptor.annotations().fetch ||
+          fields.containsField(Base.Companion.getAllFields()) || fields.containsField(descriptor.field().getName());
+        if(!fetch) continue;
         fetchField(node, model, descriptor, fields, refetch);
       }
     } catch(ReflectiveOperationException e) {
@@ -332,8 +337,8 @@ public abstract class Persistence {
     if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
     AnnotationDescriptor annotations = descriptor.annotations();
     java.lang.reflect.Field field = descriptor.field();
-    if(!field.getName().equals(Base.Type) && !annotations.fetch && !field.getName().equals(Base.Uuid) &&
-      !fields.containsField(Base.AllFields) && !fields.containsField(field.getName())) return;
+    if(!field.getName().equals(Base.Companion.getType()) && !annotations.fetch && !field.getName().equals(Base.Companion.getUuid()) &&
+      !fields.containsField(Base.Companion.getAllFields()) && !fields.containsField(field.getName())) return;
     field.setAccessible(true);
     
     // fetch relationship count only
@@ -380,7 +385,7 @@ public abstract class Persistence {
   
   public static <T extends Model> T findByUuid(String label, String uuid) {
     ResourceIterator<? extends PropertyContainer> iterator = 
-      service.graph().findNodes(Label.label(label), Model.Uuid, uuid);
+      service.graph().findNodes(Label.label(label), Base.Companion.getUuid(), uuid);
     return iterator.hasNext()? get(iterator.next()): null;
   }
 }

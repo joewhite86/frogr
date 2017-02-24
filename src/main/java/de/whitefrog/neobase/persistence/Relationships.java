@@ -58,15 +58,13 @@ public class Relationships {
       repository = new DefaultRelationshipRepository<>(service, relationshipType.name());
       service.repositoryFactory().register(relationshipType.name(), repository);
     }
-    BaseRelationship<Model, Model> relationship = repository.createModel();
+    BaseRelationship<Model, Model> relationship;
     
     if(annotation.direction() == Direction.OUTGOING) {
-      relationship.setFrom(model);
-      relationship.setTo(foreignModel);
+      relationship = repository.createModel(model, foreignModel);
     } else if(annotation.direction() == Direction.INCOMING) {
-      relationship.setFrom(foreignModel);
-      relationship.setTo(model);
-    } else if(annotation.direction() == Direction.BOTH) {
+      relationship = repository.createModel(foreignModel, model);
+    } else {
       // TODO: implement sth useful here
       throw new IllegalArgumentException();
     }
@@ -106,7 +104,7 @@ public class Relationships {
       if(relationship != null) {
         Node node = Persistence.getNode(model);
         Node other = relationship.getOtherNode(node);
-        String type = (String) other.getProperty(Base.Type);
+        String type = (String) other.getProperty(Base.Companion.getType());
         ModelRepository<Model> repository = service.repository(type);
         return repository.createModel(other, fields);
       }
@@ -143,7 +141,7 @@ public class Relationships {
 
       Relationship relationship = iterator.next();
       Node other = relationship.getOtherNode(node);
-      String type = (String) other.getProperty(Base.Type);
+      String type = (String) other.getProperty(Base.Companion.getType());
       if(annotation.restrictType() && !type.equals(descriptor.baseClass().getSimpleName())) {
         count--; continue;
       }
@@ -169,14 +167,14 @@ public class Relationships {
    * 
    * @param model Model that contains the relationships
    * @param descriptor Descriptor for the relationship field
-   * @param fieldDescriptor QueryField used for paging
+   * @param queryField QueryField used for paging
    * @param fields Field list to fetch for the relationships
    * @return Set of matching relationships
    * descriptor could not be created
    */
   @SuppressWarnings("unchecked")
   static <R extends BaseRelationship> Set<R> getRelationships(Model model, FieldDescriptor descriptor,
-                                                              QueryField fieldDescriptor, FieldList fields) {
+                                                              QueryField queryField, FieldList fields) {
     RelatedTo annotation = descriptor.annotations().relatedTo;
     Validate.notNull(model);
     Validate.notNull(annotation.type());
@@ -188,8 +186,8 @@ public class Relationships {
     Set<R> models = new HashSet<>();
     long count = 0;
     while(iterator.hasNext()) {
-      if(fieldDescriptor != null && count < fieldDescriptor.skip()) { iterator.next(); count++; continue; }
-      if(fieldDescriptor != null && count++ == fieldDescriptor.skip() + fieldDescriptor.limit()) break;
+      if(queryField != null && count < queryField.skip()) { iterator.next(); count++; continue; }
+      if(queryField != null && count++ == queryField.skip() + queryField.limit()) break;
 
       Relationship relationship = iterator.next();
       models.add(Persistence.get(relationship, fields));
@@ -233,19 +231,14 @@ public class Relationships {
       Node toNode = Persistence.getNode(model.getTo());
       RelationshipType relType = RelationshipType.withName(context.repository().getType());
       Relationship relationship = fromNode.createRelationshipTo(toNode, relType);
-      if(logger.isInfoEnabled()) {
-        logger.info("created relationship {} ({}) from {} to {}",
-          relType, relationship.getId(), model.getFrom(), model.getTo());
-      }
       context.setNode(relationship);
       model.setId(relationship.getId());
       model.setCreated(System.currentTimeMillis());
       model.setType(model.getClass().getSimpleName());
     } else {
-      if(model.getType() == null) model.setType(model.getClass().getSimpleName());
+      if(model.getType() == null) model.setType(context.repository().getType());
+      model.updateLastModified();
     }
-
-    model.updateLastModified();
 
     // clone all properties from model
     for(FieldDescriptor field : context.fieldMap()) {
@@ -253,7 +246,10 @@ public class Relationships {
     }
     model.getCheckedFields().clear();
 
-    logger.info("{} {}", model, create? "created": "updated");
+    if(logger.isInfoEnabled()) {
+      logger.info("Relationship {}({}, {}) {}", model.getType(), model.getFrom(), model.getTo(), 
+        create? "created": "updated");
+    }
 
     return model;
   }

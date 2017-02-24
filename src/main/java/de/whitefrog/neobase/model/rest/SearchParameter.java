@@ -214,7 +214,7 @@ public class SearchParameter implements Serializable {
    * Only request the id field
    */
   public SearchParameter idOnly() {
-    fields(Base.IdProperty);
+    fields(Base.Companion.getIdProperty());
     return this;
   }
 

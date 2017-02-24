@@ -35,7 +35,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   }
 
   private Repository repository(Node node) {
-    return service.repository((String) node.getProperty(Base.Type));
+    return service.repository((String) node.getProperty(Base.Companion.getType()));
   }
 
   @Override
@@ -64,7 +64,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
             PropertyContainer item = (PropertyContainer) next.get(fieldName);
             if(!map.containsKey(fieldName)) map.put(fieldName, new ArrayList<>());
             FieldList fields = params.fieldList().containsField(fieldName)?
-              params.fieldList().get(fieldName).subFields(): FieldList.parseFields(Base.AllFields);
+              params.fieldList().get(fieldName).subFields(): FieldList.parseFields(Base.Companion.getAllFields());
             Base base = Persistence.get(item, fields);
             map.get(fieldName).add(base);
           }
