@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.model.rest.SearchParameter;
@@ -87,7 +88,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       }
 
       if(params.fields().isEmpty()) {
-        params.fields(Base.Companion.getAllFields());
+        params.fields(Entity.AllFields);
       }
 
       // preceed language header, if set

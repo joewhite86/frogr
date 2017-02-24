@@ -16,7 +16,6 @@ import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
-import de.whitefrog.neobase.repository.BaseModelRepository;
 import de.whitefrog.neobase.repository.ModelRepository;
 import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
@@ -223,7 +222,7 @@ public abstract class Persistence {
       Class<T> clazz = (Class<T>) getClass(node);
       if(clazz == null) {
         // choose basic classes when there is none defined
-        clazz = node instanceof Node? (Class<T>) Entity.class: (Class<T>) BaseRelationship.class;
+        clazz = node instanceof Node? (Class<T>) Model.class: (Class<T>) BaseRelationship.class;
       }
       T model;
       if(node instanceof Node) {
@@ -253,7 +252,7 @@ public abstract class Persistence {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
     } else {
       className = (String) node.getProperty(
-        node.hasProperty(Model.Companion.getModel())? Model.Companion.getModel(): Base.Companion.getType());
+        node.hasProperty(Model.Companion.getModel())? Entity.Model: Entity.Type);
     }
     return cache().getModel(className);
   }
@@ -323,7 +322,7 @@ public abstract class Persistence {
         if(CollectionUtils.isEmpty(fields) && descriptor.annotations().notPersistant) continue;
         if(ignoredFields.contains(descriptor.field().getName())) continue;
         boolean fetch = descriptor.annotations().fetch ||
-          fields.containsField(Base.Companion.getAllFields()) || fields.containsField(descriptor.field().getName());
+          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.field().getName());
         if(!fetch) continue;
         fetchField(node, model, descriptor, fields, refetch);
       }
@@ -337,8 +336,8 @@ public abstract class Persistence {
     if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
     AnnotationDescriptor annotations = descriptor.annotations();
     java.lang.reflect.Field field = descriptor.field();
-    if(!field.getName().equals(Base.Companion.getType()) && !annotations.fetch && !field.getName().equals(Base.Companion.getUuid()) &&
-      !fields.containsField(Base.Companion.getAllFields()) && !fields.containsField(field.getName())) return;
+    if(!field.getName().equals(Entity.Type) && !annotations.fetch && !field.getName().equals(Entity.Uuid) &&
+      !fields.containsField(Entity.AllFields) && !fields.containsField(field.getName())) return;
     field.setAccessible(true);
     
     // fetch relationship count only
@@ -385,7 +384,7 @@ public abstract class Persistence {
   
   public static <T extends Model> T findByUuid(String label, String uuid) {
     ResourceIterator<? extends PropertyContainer> iterator = 
-      service.graph().findNodes(Label.label(label), Base.Companion.getUuid(), uuid);
+      service.graph().findNodes(Label.label(label), Entity.Uuid, uuid);
     return iterator.hasNext()? get(iterator.next()): null;
   }
 }

@@ -1,7 +1,7 @@
 package de.whitefrog.neobase.model.rest;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Entity;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,6 +18,8 @@ public class FieldList extends HashSet<QueryField> {
     super();
   }
 
+  public static FieldList All = FieldList.parseFields(Entity.AllFields);
+  
   public static FieldList create(QueryField... fields) {
     FieldList list = new FieldList();
     list.addAll(Arrays.asList(fields));
@@ -44,11 +46,11 @@ public class FieldList extends HashSet<QueryField> {
         return parseFields(field.substring(1, field.length() - 1).split(";"));
       }
       QueryField queryField = new QueryField(field, addAll);
-      if(addAll) queryField.subFields(new QueryField(Base.Companion.getAllFields()));
+      if(addAll) queryField.subFields(new QueryField(Entity.AllFields));
       fieldList.add(queryField);
     }
 
-    if(addAll) fieldList.add(new QueryField(Base.Companion.getAllFields()));
+    if(addAll) fieldList.add(new QueryField(Entity.AllFields));
     return fieldList;
   }
 

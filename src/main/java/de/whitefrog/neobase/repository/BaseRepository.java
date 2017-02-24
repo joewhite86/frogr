@@ -3,10 +3,10 @@ package de.whitefrog.neobase.repository;
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.cypher.QueryBuilder;
 import de.whitefrog.neobase.exception.MissingRequiredException;
-import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.helper.ReflectionUtil;
 import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.rest.FieldList;
@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.validation.ConstraintViolation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -122,7 +121,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   @Override
   public T findByUuid(String uuid) {
-    return search().filter(Base.Companion.getUuid(), uuid).single();
+    return search().filter(Entity.Uuid, uuid).single();
   }
 
   @Override

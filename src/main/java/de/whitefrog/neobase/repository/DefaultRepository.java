@@ -1,7 +1,6 @@
 package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.persistence.Persistence;
 
@@ -17,7 +16,7 @@ public class DefaultRepository<T extends Model> extends BaseModelRepository<T> {
   public Class<?> getModelClass() {
     if(modelClass == null) {
       modelClass = Persistence.cache().getModel(getType());
-      if(modelClass == null) modelClass = Entity.class;
+      if(modelClass == null) modelClass = Model.class;
     }
 
     return modelClass;

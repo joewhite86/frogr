@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.neobase.exception.NeobaseRuntimeException
 import de.whitefrog.neobase.model.Base
 import de.whitefrog.neobase.model.Model
-import de.whitefrog.neobase.model.annotation.Indexed
 import de.whitefrog.neobase.model.annotation.NotPersistant
 import de.whitefrog.neobase.model.annotation.Unique
 import de.whitefrog.neobase.model.annotation.Uuid
@@ -25,7 +24,6 @@ open class BaseRelationship<From:Model, To:Model>(override val from:From, overri
         }
     @Uuid
     @Unique
-    @Indexed
     override var uuid: String? = null
     @NotPersistant
     override var type: String? = null
@@ -80,7 +78,7 @@ open class BaseRelationship<From:Model, To:Model>(override val from:From, overri
         }
 
         base.type = type()
-        if (fields.isEmpty() || fields.contains(Base.Companion.IdProperty) && id > 0) base.id = id
+        if (fields.isEmpty() || fields.contains(IdProperty) && id > 0) base.id = id
         return base
     }
 
@@ -113,6 +111,13 @@ open class BaseRelationship<From:Model, To:Model>(override val from:From, overri
     }
 
     companion object {
+        @JvmField val AllFields = "all"
+        @JvmField val IdProperty = "id"
+        @JvmField val ModifiedBy = "modifiedBy"
+        @JvmField val LastModified = "lastModified"
+        @JvmField val Created = "created"
+        @JvmField val Type = "type"
+        @JvmField val Uuid = "uuid"
         private val random = Random()
     }
 }

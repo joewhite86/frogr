@@ -5,6 +5,7 @@ import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.RelatedNotPersistedException;
 import de.whitefrog.neobase.exception.RepositoryNotFoundException;
 import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.annotation.RelatedTo;
@@ -104,7 +105,7 @@ public class Relationships {
       if(relationship != null) {
         Node node = Persistence.getNode(model);
         Node other = relationship.getOtherNode(node);
-        String type = (String) other.getProperty(Base.Companion.getType());
+        String type = (String) other.getProperty(Entity.Type);
         ModelRepository<Model> repository = service.repository(type);
         return repository.createModel(other, fields);
       }
@@ -141,7 +142,7 @@ public class Relationships {
 
       Relationship relationship = iterator.next();
       Node other = relationship.getOtherNode(node);
-      String type = (String) other.getProperty(Base.Companion.getType());
+      String type = (String) other.getProperty(Entity.Type);
       if(annotation.restrictType() && !type.equals(descriptor.baseClass().getSimpleName())) {
         count--; continue;
       }

@@ -1,6 +1,7 @@
 package de.whitefrog.examples.simpsons.model;
 
 import de.whitefrog.neobase.model.Entity;
+import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.annotation.Unique;
 
 public class Person extends Entity {

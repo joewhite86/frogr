@@ -3,15 +3,14 @@ package de.whitefrog.neobase.model
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.neobase.exception.NeobaseRuntimeException
-import de.whitefrog.neobase.model.annotation.*
-import de.whitefrog.neobase.persistence.FieldDescriptor
+import de.whitefrog.neobase.model.annotation.Fetch
+import de.whitefrog.neobase.model.annotation.NotPersistant
+import de.whitefrog.neobase.model.annotation.Unique
+import de.whitefrog.neobase.model.annotation.Uuid
 import de.whitefrog.neobase.persistence.Persistence
 import de.whitefrog.neobase.rest.Views
 import org.apache.commons.lang3.builder.HashCodeBuilder
-
-import java.util.ArrayList
-import java.util.Arrays
-import java.util.Random
+import java.util.*
 
 abstract class Entity : Model, Comparable<Base> {
     @JsonView(Views.Hidden::class)
@@ -26,7 +25,6 @@ abstract class Entity : Model, Comparable<Base> {
     @Uuid
     @Fetch
     @Unique
-    @Indexed
     override var uuid: String? = null
     override var type: String? = null
     @JsonView(Views.Hidden::class)
@@ -62,7 +60,7 @@ abstract class Entity : Model, Comparable<Base> {
             base.id = id
             base.uuid = uuid
             for (descriptor in Persistence.cache().fieldMap(javaClass)) {
-                if (fields.contains(descriptor.name) || descriptor.annotations().relatedTo == null && fields.contains(Base.AllFields)) {
+                if (fields.contains(descriptor.name) || descriptor.annotations().relatedTo == null && fields.contains(Entity.AllFields)) {
                     descriptor.field().isAccessible = true
                     descriptor.field().set(base, descriptor.field().get(this))
                 }
@@ -101,15 +99,15 @@ abstract class Entity : Model, Comparable<Base> {
     override val isPersisted: Boolean
         get() = id > 0 || uuid != null
 
-    override fun compareTo(o: Base): Int {
-        return java.lang.Long.compare(id, o.id)
+    override fun compareTo(other: Base): Int {
+        return java.lang.Long.compare(id, other.id)
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o !is Entity) return false
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Entity) return false
 
-        val base = o
+        val base = other
 
         if (uuid != null && base.uuid != null) {
             if (uuid != base.uuid) return false
@@ -134,6 +132,14 @@ abstract class Entity : Model, Comparable<Base> {
     }
 
     companion object {
+        @JvmField val AllFields = "all"
+        @JvmField val IdProperty = "id"
+        @JvmField val ModifiedBy = "modifiedBy"
+        @JvmField val LastModified = "lastModified"
+        @JvmField val Created = "created"
+        @JvmField val Type = "type"
+        @JvmField val Model = "model"
+        @JvmField val Uuid = "uuid"
         private val random = Random()
     }
 }

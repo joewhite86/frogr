@@ -1,11 +1,7 @@
 package de.whitefrog.neobase;
 
 import de.whitefrog.neobase.exception.DuplicateEntryException;
-import de.whitefrog.neobase.exception.NeobaseRuntimeException;
-import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.rest.Filter;
-import de.whitefrog.neobase.repository.BaseModelRepository;
-import de.whitefrog.neobase.repository.ModelRepository;
 import de.whitefrog.neobase.repository.RelationshipRepository;
 import de.whitefrog.neobase.test.Likes;
 import de.whitefrog.neobase.test.Person;

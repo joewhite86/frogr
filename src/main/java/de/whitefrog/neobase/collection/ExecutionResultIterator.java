@@ -2,6 +2,7 @@ package de.whitefrog.neobase.collection;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.model.Base;
+import de.whitefrog.neobase.model.Entity;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.FieldDescriptor;
@@ -35,7 +36,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   }
 
   private Repository repository(Node node) {
-    return service.repository((String) node.getProperty(Base.Companion.getType()));
+    return service.repository((String) node.getProperty(Entity.Type));
   }
 
   @Override
@@ -64,7 +65,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
             PropertyContainer item = (PropertyContainer) next.get(fieldName);
             if(!map.containsKey(fieldName)) map.put(fieldName, new ArrayList<>());
             FieldList fields = params.fieldList().containsField(fieldName)?
-              params.fieldList().get(fieldName).subFields(): FieldList.parseFields(Base.Companion.getAllFields());
+              params.fieldList().get(fieldName).subFields(): FieldList.parseFields(Entity.AllFields);
             Base base = Persistence.get(item, fields);
             map.get(fieldName).add(base);
           }
