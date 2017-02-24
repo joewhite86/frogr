@@ -41,6 +41,7 @@ public class Service implements AutoCloseable {
   private static final String neo4jConfig = "config/neo4j.properties";
   private static final String snapshotSuffix = "-SNAPSHOT";
   private static String version;
+  protected enum State { Started, Running, ShuttingDown }
   
   private GraphDatabaseService graphDb;
   private String directory;
@@ -51,6 +52,7 @@ public class Service implements AutoCloseable {
   private Validator validator;
   private boolean connected = false;
   private boolean useBolt = true;
+  private State state = State.Started;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -104,6 +106,7 @@ public class Service implements AutoCloseable {
 
       registerShutdownHook(this);
       connected = true;
+      state = State.Running;
     } catch (ConfigurationException e) {
       logger.error("Could not read cypher.properties", e);
     }
@@ -133,6 +136,10 @@ public class Service implements AutoCloseable {
   public void setVersion(String version) {
     graph.setVersion(version);
     graphRepository.save(graph);
+  }
+  
+  public State getState() {
+    return state;
   }
   
   public Set<String> registry() {
@@ -257,6 +264,7 @@ public class Service implements AutoCloseable {
   }
 
   public void shutdown() {
+    state = State.ShuttingDown;
     repositoryFactory().cache().forEach(Repository::dispose);
     if(graphDb != null) graphDb.shutdown();
   }
