@@ -67,4 +67,9 @@ public class FieldDescriptor<T extends Base> {
   public boolean isRelationship() {
     return relationship;
   }
+
+  @Override
+  public String toString() {
+    return "Field: \"" + getName() + "\"";
+  }
 }
