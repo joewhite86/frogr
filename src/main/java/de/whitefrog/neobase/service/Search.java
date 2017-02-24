@@ -20,6 +20,7 @@ import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class Search {
   private final Service service;
   private final Repository<? extends Base> repository;
   private SearchParameter params;
+  private boolean debugQuery = false;
   
   public Search(Repository<? extends Base> repository) {
     this.repository = repository;
@@ -50,6 +52,11 @@ public class Search {
 
     return (long) executeQuery(query).columnAs("c").next();
   }
+  
+  public Search debug() {
+    debugQuery = true;
+    return this;
+  }
 
   public Search depth(int depth) {
     params.depth(depth);
@@ -63,7 +70,7 @@ public class Search {
   
   private Result executeQuery(Query query) {
     long start = 0;
-    if(logger.isDebugEnabled()) {
+    if(logger.isDebugEnabled() || debugQuery) {
       start = System.nanoTime();
     }
     try {
@@ -73,8 +80,12 @@ public class Search {
       throw e;
     } finally {
       if(logger.isDebugEnabled()) {
-        logger.debug("\n{}\nQuery: {}\nQueryParams: {}\ntook: {}", params, query.query(), query.params(),
+        logger.debug("\n{}\nQuery: {}\nQueryParams: {}\nTime: {}", params, query.query(), query.params(),
           TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS));
+      } else if(debugQuery) {
+        System.out.println(MessageFormat.format("{0}\nQuery: {1}\nQueryParams: {2}\nTime: {3}", 
+          params, query.query(), query.params(),
+          TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS)));
       }
     }
   }

@@ -18,21 +18,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class QueryBuilder {
   private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
-  private static final boolean insertNewLine = false;
   
   private Repository repository;
   private final Map<String, Object> queryParams = new HashMap<>();
   private SearchParameter params;
   private final String type;
   private final Map<String, String> matches = new HashMap<>();
+  private final List<String> queryFields = new ArrayList<>();
 
   public QueryBuilder(Repository repository) {
     this.repository = repository;
     this.type = repository.getModelClass().getSimpleName();
+    Persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
+      if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
+        queryFields.add(descriptor.field().getName());
+      }
+    });
   }
 
   public Repository repository() {
@@ -42,28 +49,28 @@ public class QueryBuilder {
   public String id() {
     return repository().queryIdentifier();
   }
-  
-  public StringBuilder match() {
-    StringBuilder match = new StringBuilder("(").append(id())
-      .append(":").append(type).append(")");
 
+  public StringBuilder match() {
     // add required matches for ordered fields when counted
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".") && !matches.keySet().contains(order.field())) {
         AnnotationDescriptor descriptor =
           Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
         if(descriptor.relationshipCount != null) {
-          StringBuilder newMatch = new StringBuilder(match);
-          newMatch.append(descriptor.relationshipCount.direction().equals(Direction.OUTGOING)? "-": "<-");
-          newMatch.append("[").append(order.field()).append(":").append(descriptor.relationshipCount.type()).append("]");
-          newMatch.append(descriptor.relationshipCount.direction().equals(Direction.INCOMING)? "-": "->");
-          if(!descriptor.relationshipCount.otherModel().equals(Model.class)) {
-            newMatch.append("(:").append(descriptor.relationshipCount.otherModel().getSimpleName()).append(")");
+          MatchBuilder match = new MatchBuilder()
+            .relationship(order.field())
+            .relationshipType(descriptor.relationshipCount.type());
+          
+          if(descriptor.relationshipCount.direction().equals(Direction.OUTGOING)) {
+            match.from(id()).fromLabel(type);
+            if(!descriptor.relationshipCount.otherModel().equals(Model.class)) 
+              match.toLabel(descriptor.relationshipCount.otherModel().getSimpleName());
+          } else {
+            match.to(id()).toLabel(type);
+            if(!descriptor.relationshipCount.otherModel().equals(Model.class))
+              match.fromLabel(descriptor.relationshipCount.otherModel().getSimpleName());
           }
-          else {
-            newMatch.append("()");
-          }
-          matches.put(order.field(), newMatch.toString());
+          matches.put(order.field(), match.build());
         }
       }
     }
@@ -99,45 +106,35 @@ public class QueryBuilder {
             logger.error(e.getMessage(), e);
           }
 
-          StringBuilder newMatch = new StringBuilder(match);
-          newMatch.append(descriptor.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
-          if(isRelationship) {
-            newMatch.append("[").append(returnsKey).append(":").append(descriptor.relatedTo.type()).append("]");
-            newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-            newMatch.append("()");
+          MatchBuilder match = new MatchBuilder()
+            .relationshipType(descriptor.relatedTo.type());
+          if(isRelationship) match.relationship(returnsKey);
+          if(descriptor.relatedTo.direction().equals(Direction.OUTGOING)) {
+            match.from(id()).fromLabel(type);
+            if(!isRelationship) match.to(returnsKey);
+          } else {
+            match.to(id()).toLabel(type);
+            if(!isRelationship) match.from(returnsKey);
           }
-          else {
-            newMatch.append("[:").append(descriptor.relatedTo.type()).append("]");
-            newMatch.append(descriptor.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-            newMatch.append("(").append(returnsKey).append(")");
-          }
-          matches.put(returnsKey, newMatch.toString());
+          matches.put(returnsKey, match.build());
         }
       }
     }
     
     if(matches.isEmpty()) {
       if(repository() instanceof RelationshipRepository) {
-        return new StringBuilder("match ()-[" + id() + ":" + type + "]-()")
-          .append(insertNewLine? "\n": " ");
+        return new StringBuilder("match ()-[" + id() + ":" + type + "]-() ");
       } else {
-        return new StringBuilder("match (" + id() + ":" + type + ")")
-          .append(insertNewLine? "\n": " ");
+        return new StringBuilder("match (" + id() + ":" + type + ") ");
       }
     } else {
       return new StringBuilder("match ")
-        .append(StringUtils.join(matches.values(), ", "))
-        .append(insertNewLine? "\n": " ");
+        .append(StringUtils.join(matches.values(), ", ")).append(" ");
     }
   }
   
   private void generateFilterMatch(Filter filter, Class<?> clazz, String id, String fieldName) {
-    StringBuilder match = new StringBuilder("(").append(id);
-    // only append label if there is no legacy index lookup
-    if(id.equals(id())) {
-      match.append(":").append(type);
-    }
-    match.append(")");
+    MatchBuilder match = new MatchBuilder();
     
     FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(clazz, fieldName);
     if(descriptor == null) {
@@ -155,34 +152,41 @@ public class QueryBuilder {
     String className = descriptor.baseClass().getSimpleName();
 
     if(annotations.relatedTo != null) {
-      StringBuilder newMatch = new StringBuilder(match);
-      if(!descriptor.isRelationship()) {
-        newMatch.append(annotations.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
-        newMatch.append("[:").append(annotations.relatedTo.type()).append("]");
-        newMatch.append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-        newMatch.append("(").append(fieldName);
-        // if the filter is already used as start clause, we don't need to append the class name
-        newMatch.append(":").append(className);
-        newMatch.append(")");
+      if(annotations.relatedTo.direction().equals(Direction.OUTGOING)) {
+        match.from(id);
+        if(id.equals(id())) {
+          match.fromLabel(type);
+        }
+        if(descriptor.isRelationship()) {
+          match.to(fieldName + "_to"); 
+        } else {
+          match.to(fieldName).toLabel(className);
+        }
       } else {
-        newMatch.append(annotations.relatedTo.direction().equals(Direction.OUTGOING)? "-": "<-");
-        newMatch.append("[").append(fieldName).append(":").append(annotations.relatedTo.type()).append("]");
-        newMatch.append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "-": "->");
-        newMatch.append("(").append(fieldName)
-          .append(annotations.relatedTo.direction().equals(Direction.INCOMING)? "_from": "_to").append(")");
+        match.to(id);
+        if(id.equals(id())) {
+          match.toLabel(type);
+        }
+        if(descriptor.isRelationship()) {
+          match.from(fieldName + "_from");
+        } else {
+          match.from(fieldName).fromLabel(className);
+        }
       }
+      match.relationshipType(annotations.relatedTo.type());
+      if(descriptor.isRelationship()) match.relationship(fieldName);
+      
       String sub = filter.getProperty().substring(fieldName.length() + filter.getProperty().indexOf(fieldName) + 1);
       if(sub.contains(".")) {
         generateFilterMatch(filter, descriptor.baseClass(), fieldName, sub.substring(0, sub.indexOf(".")));
       }
 //      matches.put(getMatchName(filter.getProperty()), newMatch.toString());
-      matches.put(fieldName, newMatch.toString());
+      matches.put(fieldName, match.build());
     }
   }
 
   public StringBuilder where() {
-    StringBuilder query = new StringBuilder();
-    List<String> wheres = new ArrayList<>(params.filters().size() + params.uuids().size() + params.ids().size());
+    List<String> wheres = new LinkedList<>();
     if(params.isFiltered()) {
       int i = 0;
       for(Filter filter : params.filters()) {
@@ -201,16 +205,16 @@ public class QueryBuilder {
             wheres.add(lookup + " IS NULL");
           }
           else {
-            String where = "";
+            String where = "(";
             if(filter.getValue() instanceof Boolean) {
               if(filter.getValue() == Boolean.TRUE) {
-                where = lookup + " IS NOT NULL AND ";
+                where+= lookup + " IS NOT NULL AND ";
               }
               else {
-                where = lookup + " IS NULL OR ";
+                where+= lookup + " IS NULL OR ";
               }
             }
-            where += lookup + " = {" + marker + "}";
+            where += lookup + " = {" + marker + "})";
 
             wheres.add(where);
             queryParams.put(marker, filter.getValue());
@@ -233,12 +237,12 @@ public class QueryBuilder {
             wheres.add(lookup + " IS NOT NULL");
           }
           else {
-            String where = lookup + " <> {" + marker + "}";
+            String where = "(" + lookup + " <> {" + marker + "}";
             if(filter.getValue() instanceof Boolean) {
               where += "OR " + lookup + " IS " +
                 (filter.getValue() == Boolean.FALSE? "NOT": "") + " NULL";
             }
-            wheres.add(where);
+            wheres.add(where + ")");
             queryParams.put(marker, filter.getValue());
           }
         }
@@ -263,8 +267,33 @@ public class QueryBuilder {
         i++;
       }
     }
+
+    if(params.query() != null) {
+      if(params.query().contains(":")) {
+        String[] split = params.query().split(":", 2);
+        String field = split[0].trim();
+        String query = split[1].trim();
+        if(query.isEmpty()) {
+          throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
+        }
+        String comparator = getQueryComparator(query);
+        wheres.add(MessageFormat.format("{0}.{1} {2} '{'query'}'", id(), field, comparator));
+        queryParams.put("query", query.replaceAll("\\*", ""));
+      } else {
+        if(params.query().isEmpty()) {
+          throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
+        }
+        String comparator = getQueryComparator(params.query());
+        List<String> queries = new LinkedList<>();  
+        for(String queryField: queryFields) {
+          queries.add(MessageFormat.format("{0}.{1} {2} '{'query'}'", id(), queryField, comparator));
+        }
+        wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
+        queryParams.put("query", params.query().replaceAll("\\*", ""));
+      }
+    }
     if(!CollectionUtils.isEmpty(params.ids())) {
-      List<String> queries = new ArrayList<>(params.ids().size());
+      List<String> queries = new LinkedList<>();
       int index = 1;
       for(Long id: params.ids()) {
         queries.add("id(" + id() + ") = {id_" + index + "}");
@@ -273,7 +302,7 @@ public class QueryBuilder {
       wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
     }
     if(!CollectionUtils.isEmpty(params.uuids())) {
-      List<String> queries = new ArrayList<>(params.uuids().size());
+      List<String> queries = new LinkedList<>();
       int index = 1;
       for(String uuid: params.uuids()) {
         queries.add(id() + ".uuid = {uuid_" + index + "}");
@@ -281,17 +310,32 @@ public class QueryBuilder {
       }
       wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
     }
+    
     if(!wheres.isEmpty()) {
-      query.append("where ").append(StringUtils.join(wheres, " AND ")).append(insertNewLine? "\n": " ");
+      return new StringBuilder("where ")
+        .append(StringUtils.join(wheres, " AND ")).append(" ");
+    } else {
+      return new StringBuilder();
     }
-    return query;
+  }
+
+  private String getQueryComparator(String query) {
+    if(query.startsWith("*") && !query.endsWith("*")) {
+      return "startswith";
+    } else if(query.startsWith("*") && query.endsWith("*")) {
+      return "contains";
+    } else if(query.endsWith("*")) {
+      return "endswith";
+    } else {
+      return  "=";
+    }
   }
 
   public StringBuilder orderBy() {
     StringBuilder query = new StringBuilder();
     
     if(!params.orderBy().isEmpty()) {
-      List<String> orders = new ArrayList<>(params.orderBy().size());
+      List<String> orders = new LinkedList<>();
       for(SearchParameter.OrderBy order : params.orderBy()) {
         if(!order.field().contains(".") && Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field()).relationshipCount != null) {
           orders.add("count(" + order.field() + ") " + order.dir());
@@ -303,23 +347,24 @@ public class QueryBuilder {
           orders.add(id() + "." + order.field() + " " + order.dir());
         }
       }
-      query.append(" order by ").append(StringUtils.join(orders, ", ")).append(insertNewLine? "\n": " ");
+      query.append(" order by ").append(StringUtils.join(orders, ", ")).append(" ");
     }
     
     return query;
   }
 
   public StringBuilder returns() {
-    List<String> ret = new ArrayList<>();
+    List<String> ret = new LinkedList<>();
     
     if(CollectionUtils.isEmpty(params.returns())) {
       ret.add(id());
     } else {
       List<String> returns = new ArrayList<>(params.returns());
       if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
-        returns.forEach(r -> {
-          if(r.contains(".to")) r = r.replace(".to", "_to");
-        });
+        returns = returns.stream().map(r -> {
+          if(r.contains(".to")) return r.replace(".to", "_to");
+          else return r;
+        }).collect(Collectors.toList());
       }
       ret.add(StringUtils.join(returns, ","));
     }
@@ -335,7 +380,7 @@ public class QueryBuilder {
       }
     }
     
-    return new StringBuilder("return ").append(StringUtils.join(ret, ", ")).append(insertNewLine? "\n": " ");
+    return new StringBuilder("return ").append(StringUtils.join(ret, ", ")).append(" ");
   }
   
   public StringBuilder paging() {
