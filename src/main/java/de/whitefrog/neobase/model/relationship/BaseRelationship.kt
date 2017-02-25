@@ -12,7 +12,7 @@ import de.whitefrog.neobase.rest.Views
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.util.*
 
-open class BaseRelationship<From:Model, To:Model>(override val from:From, override val to:To) : Relationship<From, To> {
+open class BaseRelationship<out From:Model, out To:Model>(override val from:From, override val to:To) : Relationship<From, To> {
     @JsonView(Views.Hidden::class)
     override var id = random.nextLong()
         get() {
