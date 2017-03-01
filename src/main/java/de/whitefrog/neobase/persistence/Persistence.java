@@ -112,7 +112,6 @@ public abstract class Persistence {
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
     PropertyContainer node = context.node();
-    Repository<T> repository = context.repository();
     
     if(node == null) {
       throw new NullPointerException("node can not be null");

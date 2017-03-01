@@ -20,13 +20,6 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
   private final Result results;
   private final SearchParameter params;
   private Map<String, Object> next = null;
-
-  public ExecutionResultIterator(Service service, Result results, SearchParameter params) {
-    super(null, results);
-    this.results = results;
-    this.params = params;
-    this.service = service;
-  }
   @SuppressWarnings("unchecked")
   public ExecutionResultIterator(Repository<T> repository, Result results, SearchParameter params) {
     super(repository, results);
@@ -35,7 +28,7 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
     this.service = repository.service();
   }
 
-  private Repository repository(Node node) {
+  private Repository repository(PropertyContainer node) {
     return service.repository((String) node.getProperty(Entity.Type));
   }
 
@@ -50,15 +43,17 @@ public class ExecutionResultIterator<T extends Base> extends ResultIterator<T> {
     Map<String, Object> result = next != null? next: results.next();
     String identifier = CollectionUtils.isEmpty(params.returns())? 
       repository().queryIdentifier(): params.returns().get(0);
-    Node node = (Node) result.get(identifier);
+    PropertyContainer node = (PropertyContainer) result.get(identifier);
     T model = (T) (repository() != null? repository(): repository(node))
       .createModel(node, params.fieldList());
+    
+    // when some fields are fetched in query result already they will be added to the model
     if(result.size() > 1) {
       Map<String, List<Base>> map = new HashMap<>();
       boolean nextFound = false;
       while(!nextFound && results.hasNext()) {
         next = results.next();
-        Node nextNode = (Node) next.get(identifier);
+        PropertyContainer nextNode = (PropertyContainer) next.get(identifier);
         if(node.equals(nextNode)) {
           for(String fieldName: next.keySet()) {
             if(fieldName.equals(identifier)) continue;

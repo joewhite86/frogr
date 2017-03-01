@@ -58,7 +58,7 @@ public class SaveContext<T extends Base> {
         }
         else {
           if(annotation.relatedTo != null && annotation.lazy) return true;
-          if(annotation.relatedTo != null) repository().fetch(original(), FieldList.parseFields(field.getName()+"(max)"));
+          if(annotation.relatedTo != null) repository().fetch(original(), FieldList.Companion.parseFields(field.getName()+"(max)"));
           Object originalValue = field.get(original());
           return !value.equals(originalValue);
         }

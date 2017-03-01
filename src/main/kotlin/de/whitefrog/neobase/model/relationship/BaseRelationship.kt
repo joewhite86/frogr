@@ -82,11 +82,11 @@ open class BaseRelationship<out From:Model, out To:Model>(override val from:From
         return base
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o !is Relationship<*, *>) return false
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Relationship<*, *>) return false
 
-        val base = o as BaseRelationship<*, *>? ?: return false
+        val base = other as BaseRelationship<*, *>? ?: return false
         
         if (uuid != null && base.uuid != null) {
             if (uuid != base.uuid) return false

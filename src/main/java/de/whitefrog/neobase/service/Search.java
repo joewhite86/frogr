@@ -2,9 +2,7 @@ package de.whitefrog.neobase.service;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.collection.ExecutionResultIterator;
-import de.whitefrog.neobase.collection.RelationshipResultIterator;
 import de.whitefrog.neobase.cypher.Query;
-import de.whitefrog.neobase.exception.RepositoryInstantiationException;
 import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.helper.TimeUtils;
 import de.whitefrog.neobase.model.Base;
@@ -134,17 +132,8 @@ public class Search {
       Result result = execute(params);
       FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
-      if(descriptor.isRelationship()) {
-        return Streams.get(new RelationshipResultIterator<>(result, params));
-      } else {
-        try {
-          Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
-          return Streams.get(new ExecutionResultIterator<>(otherRepository, result, params));
-        }
-        catch(RepositoryInstantiationException e) {
-          return Streams.get(new ExecutionResultIterator<>(service, result, params));
-        }
-      }
+      Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
+      return Streams.get(new ExecutionResultIterator<>(otherRepository, result, params));
     } else {
       // TODO: Handle correctly
       throw new UnsupportedOperationException();

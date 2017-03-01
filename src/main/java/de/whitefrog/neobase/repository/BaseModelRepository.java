@@ -79,7 +79,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public Stream<T> find(String property, Object value) {
     ResourceIterator<Node> found = graph().findNodes(label(), property, value);
-    return Streams.get(new DefaultResultIterator<>(this, found));
+    return found.stream().map(this::createModel);
   }
 
   @Override
