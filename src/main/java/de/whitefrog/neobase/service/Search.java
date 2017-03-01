@@ -2,7 +2,6 @@ package de.whitefrog.neobase.service;
 
 import de.whitefrog.neobase.Service;
 import de.whitefrog.neobase.cypher.Query;
-import de.whitefrog.neobase.cypher.ResultMapper;
 import de.whitefrog.neobase.helper.TimeUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.rest.FieldList;
@@ -13,16 +12,15 @@ import de.whitefrog.neobase.persistence.FieldDescriptor;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.MessageFormat;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,32 +38,95 @@ public class Search {
   }
 
   public long count() {
+    String id = CollectionUtils.isEmpty(params.returns())? "*": params.returns().get(0);
+    return count(id);
+  }
+  public long count(String id) {
     Query query = repository.queryBuilder().buildSimple(params);
-    if(!CollectionUtils.isEmpty(params.returns())) {
-      query.query(query.query() + " return count(" + params.returns().get(0) + ") as c");
+    query.query(query.query() + " return count(" + id + ") as c");
+
+    Result result = execute(query);
+    long count = (long) result.columnAs("c").next();
+    result.close();
+    return count;
+  }
+  
+  public Number sum(String field) {
+    Query query = repository.queryBuilder().buildSimple(params);
+    query.query(query.query() + " return sum(" + field + ") as c");
+    Result result = execute(query);
+    long sum = (long) result.columnAs("c").next();
+    result.close();
+    return sum;
+  }
+
+  public <T extends Base> List<T> list() {
+    Stream<T> stream = (Stream<T>) search(params);
+    List<T> list = stream.collect(Collectors.toList());
+    stream.close();
+    return list;
+  }
+
+  public <T extends Base> Set<T> set() {
+    Stream<T> stream = (Stream<T>) search(params);
+    Set<T> set = stream.collect(Collectors.toSet());
+    stream.close();
+    return set;
+  }
+
+  public <T extends Base> T single() {
+    Stream<T> result = (Stream<T>) search(params.limit(1));
+    Optional<T> optional = result.findFirst();
+    result.close();
+    return optional.isPresent()? optional.get(): null;
+  }
+
+  public Long toLong() {
+    Query query = repository.queryBuilder().buildSimple(params);
+    if(params.returns().size() > 1) {
+      throw new UnsupportedOperationException("more than one return parameter is not supported");
+    }
+    query.query(query.query() + " return " + params.returns().get(0) + " as c");
+    Result result = execute(query);
+    Long l = result.hasNext()? (Long) result.columnAs("c").next(): null;
+    result.close();
+    return l;
+  }
+
+  public Integer toInt() {
+    Query query = repository.queryBuilder().buildSimple(params);
+    if(params.returns().size() > 1) {
+      throw new UnsupportedOperationException("more than one return parameter is not supported");
+    }
+    query.query(query.query() + " return " + params.returns().get(0) + " as c");
+    Result result = execute(query);
+    Integer i = result.hasNext()? (Integer) result.columnAs("c").next(): null;
+    result.close();
+    return i;
+  }
+
+  private Stream<? extends Base> search(SearchParameter params) {
+    Stream<? extends Base> stream;
+    Query query = repository.queryBuilder().build(params);
+    Result result = execute(query);
+
+    if(CollectionUtils.isEmpty(params.returns()) ||
+      (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
+      stream = result.stream().map(new ResultMapper<>(repository, params));
+    } else if(params.returns().size() == 1) {
+      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
+        params.returns().get(0));
+      Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
+      stream = result.stream().map(new ResultMapper<>(otherRepository, params));
     } else {
-      query.query(query.query() + " return count(*) as c");
+      // TODO: Handle correctly
+      throw new UnsupportedOperationException();
     }
 
-    return (long) executeQuery(query).columnAs("c").next();
+    return stream.onClose(result::close);
   }
   
-  public Search debug() {
-    debugQuery = true;
-    return this;
-  }
-
-  public Search depth(int depth) {
-    params.depth(depth);
-    return this;
-  }
-
-  private Result execute(SearchParameter params) {
-    Query query = repository.queryBuilder().build(params);
-    return executeQuery(query);
-  }
-  
-  private Result executeQuery(Query query) {
+  private Result execute(Query query) {
     long start = 0;
     if(logger.isDebugEnabled() || debugQuery) {
       start = System.nanoTime();
@@ -85,6 +146,18 @@ public class Search {
           TimeUtils.formatInterval(System.nanoTime() - start, TimeUnit.NANOSECONDS)));
       }
     }
+  }
+  
+  
+
+  public Search debug() {
+    debugQuery = true;
+    return this;
+  }
+
+  public Search depth(int depth) {
+    params.depth(depth);
+    return this;
   }
 
   public Search fields(String... fields) {
@@ -110,69 +183,6 @@ public class Search {
   public Search filter(Filter filter) {
     params.filter(filter);
     return this;
-  }
-
-  public Number sum(String field) {
-    Query query = repository.queryBuilder().buildSimple(params);    
-    query.query(query.query() + " return sum(" + field + ") as c");
-    return (Number) executeQuery(query).columnAs("c").next();
-  }
-
-  public <T extends Base> List<T> list() {
-    return ((Stream<T>) search(params)).collect(Collectors.toList());
-  }
-
-  private Stream<? extends Base> search(SearchParameter params) {
-    Stream<? extends Base> stream;
-    Result result = execute(params);
-    
-    if(CollectionUtils.isEmpty(params.returns()) || 
-        (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
-      stream = result.stream().map(new ResultMapper<>(repository, params));
-    } else if(params.returns().size() == 1) {
-      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
-        params.returns().get(0));
-      Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
-      stream = result.stream().map(new ResultMapper<>(otherRepository, params));
-    } else {
-      // TODO: Handle correctly
-      throw new UnsupportedOperationException();
-    }
-    
-    return stream.onClose(result::close);
-  }
-
-  public <T extends Base> Set<T> set() {
-    return ((Stream<T>) search(params)).collect(Collectors.toSet());
-  }
-
-  public <T extends Base> Stream<T> stream() {
-    return (Stream<T>) search(params);
-  }
-
-  public <T extends Base> T single() {
-    Optional<T> optional = (Optional<T>) search(params.limit(1)).findFirst();
-    return optional.isPresent()? optional.get(): null;
-  }
-  
-  public Long toLong() {
-    Query query = repository.queryBuilder().buildSimple(params);
-    if(params.returns().size() > 1) {
-      throw new UnsupportedOperationException("more than one return parameter is not supported");
-    }
-    query.query(query.query() + " return " + params.returns().get(0) + " as c");
-    Result result = executeQuery(query);
-    return result.hasNext()? (Long) result.columnAs("c").next(): null;
-  }
-
-  public Integer toInt() {
-    Query query = repository.queryBuilder().buildSimple(params);
-    if(params.returns().size() > 1) {
-      throw new UnsupportedOperationException("more than one return parameter is not supported");
-    }
-    query.query(query.query() + " return " + params.returns().get(0) + " as c");
-    Result result = executeQuery(query);
-    return result.hasNext()? (Integer) result.columnAs("c").next(): null;
   }
 
   public Search params(SearchParameter params) {
@@ -243,5 +253,28 @@ public class Search {
   public Search returns(String... fields) {
     params.returns(fields);
     return this;
+  }
+
+  static class ResultMapper<T extends Base> implements Function<Map<String, Object>, T> {
+    private final SearchParameter params;
+    private final Repository<T> repository;
+    
+    ResultMapper(Repository<T> repository, SearchParameter params) {
+      this.repository = repository;
+      this.params = params;
+    }
+    @Override
+    public T apply(Map<String, Object> result) {
+      String identifier = CollectionUtils.isEmpty(params.returns())?
+        repository.queryIdentifier(): params.returns().get(0);
+      PropertyContainer node = (PropertyContainer) result.get(identifier);
+      T model = repository.createModel(node, params.fieldList());
+  
+      // when some fields are fetched in query result already they will be added to the model
+      if(result.size() > 1) {
+        // TODO
+      }
+      return model;
+    }
   }
 }

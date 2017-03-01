@@ -75,12 +75,6 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   }
 
   @Override
-  public Stream<T> find(String property, Object value) {
-    ResourceIterator<Node> found = graph().findNodes(label(), property, value);
-    return found.stream().map(this::createModel);
-  }
-
-  @Override
   public Node getNode(Model model) {
     Validate.notNull(model, "The model is null");
     Validate.notNull(model.getId(), "ID can not be null.");

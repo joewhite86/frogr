@@ -65,11 +65,6 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   }
 
   @Override
-  public Stream<T> find(String property, Object value) {
-    return search().filter(new Filter.Equals(property, value)).stream();
-  }
-
-  @Override
   public org.neo4j.graphdb.Relationship getRelationship(Relationship model) {
     Validate.notNull(model, "The model is null");
     Validate.notNull(model.getId(), "ID can not be null.");

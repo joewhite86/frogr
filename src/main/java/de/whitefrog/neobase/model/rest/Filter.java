@@ -20,7 +20,6 @@ public interface Filter extends Predicate<Object> {
   String getProperty();
   void setProperty(String property);
   
-  
   abstract class Default implements Filter {
     private Object value;
     private String property;
@@ -31,10 +30,11 @@ public interface Filter extends Predicate<Object> {
       this.value = value;
     }
 
+    @Override
     public String getProperty() {
       return property;
     }
-
+    @Override
     public void setProperty(String property) {
       this.property = property;
     }
@@ -43,7 +43,6 @@ public interface Filter extends Predicate<Object> {
     public Object getValue() {
       return value;
     }
-
     @Override
     public void setValue(Object value) {
       this.value = value;

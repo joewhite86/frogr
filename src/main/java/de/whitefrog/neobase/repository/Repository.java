@@ -44,8 +44,6 @@ public interface Repository<T extends Base> {
 
   T find(long id, FieldList fields);
 
-  Stream<T> find(String property, Object value);
-
   T findByUuid(String uuid);
 
   String getType();
