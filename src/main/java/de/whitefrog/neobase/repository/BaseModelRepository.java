@@ -1,11 +1,9 @@
 package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.collection.DefaultResultIterator;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
 import de.whitefrog.neobase.exception.TypeMismatchException;
-import de.whitefrog.neobase.helper.Streams;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.rest.FieldList;

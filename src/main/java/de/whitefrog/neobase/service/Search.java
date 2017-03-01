@@ -1,9 +1,8 @@
 package de.whitefrog.neobase.service;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.collection.ExecutionResultIterator;
 import de.whitefrog.neobase.cypher.Query;
-import de.whitefrog.neobase.helper.Streams;
+import de.whitefrog.neobase.cypher.ResultMapper;
 import de.whitefrog.neobase.helper.TimeUtils;
 import de.whitefrog.neobase.model.Base;
 import de.whitefrog.neobase.model.rest.FieldList;
@@ -124,20 +123,23 @@ public class Search {
   }
 
   private Stream<? extends Base> search(SearchParameter params) {
+    Stream<? extends Base> stream;
+    Result result = execute(params);
+    
     if(CollectionUtils.isEmpty(params.returns()) || 
         (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
-      Result result = execute(params);
-      return Streams.get(new ExecutionResultIterator<>(repository, result, params));
+      stream = result.stream().map(new ResultMapper<>(repository, params));
     } else if(params.returns().size() == 1) {
-      Result result = execute(params);
       FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
       Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
-      return Streams.get(new ExecutionResultIterator<>(otherRepository, result, params));
+      stream = result.stream().map(new ResultMapper<>(otherRepository, params));
     } else {
       // TODO: Handle correctly
       throw new UnsupportedOperationException();
     }
+    
+    return stream.onClose(result::close);
   }
 
   public <T extends Base> Set<T> set() {

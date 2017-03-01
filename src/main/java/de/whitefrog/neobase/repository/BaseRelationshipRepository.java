@@ -1,18 +1,14 @@
 package de.whitefrog.neobase.repository;
 
 import de.whitefrog.neobase.Service;
-import de.whitefrog.neobase.collection.DefaultResultIterator;
 import de.whitefrog.neobase.exception.NeobaseRuntimeException;
 import de.whitefrog.neobase.exception.PersistException;
-import de.whitefrog.neobase.helper.Streams;
-import de.whitefrog.neobase.index.IndexUtils;
 import de.whitefrog.neobase.model.Model;
 import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.Filter;
-import de.whitefrog.neobase.model.rest.SearchParameter;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;
@@ -20,8 +16,6 @@ import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
-import org.neo4j.graphdb.index.Index;
-import org.neo4j.graphdb.index.IndexHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
