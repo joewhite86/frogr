@@ -221,7 +221,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     context.fieldMap().forEach(f -> {
       if(context.model().getCheckedFields().contains(f.getName())) return;
       AnnotationDescriptor annotations = Persistence.cache().fieldAnnotations(context.model().getClass(), f.getName());
-      if(!context.model().isPersisted() && annotations.required) {
+      if(!context.model().getPersisted() && annotations.required) {
         try {
           Object value = f.field().get(context.model());
           if(value == null || (value instanceof String && ((String) value).isEmpty())) {

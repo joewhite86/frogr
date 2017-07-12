@@ -62,7 +62,7 @@ open class BaseRelationship<out From:Model, out To:Model>(override val from:From
         this.lastModified = System.currentTimeMillis()
     }
 
-    override val isPersisted: Boolean
+    override val persisted: Boolean
         get() = id > 0 || uuid != null
 
     override fun <T : Base> clone(vararg fields: String): T {

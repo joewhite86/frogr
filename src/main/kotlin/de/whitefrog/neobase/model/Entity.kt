@@ -47,6 +47,8 @@ abstract class Entity : Model, Comparable<Base> {
     @NotPersistant
     @JsonIgnore
     override var fetchedFields: MutableList<String> = ArrayList()
+    override val persisted: Boolean
+        get() = id > 0 || uuid != null
 
     override fun <T : Base> clone(vararg fields: String): T {
         return clone(Arrays.asList(*fields))
@@ -95,9 +97,6 @@ abstract class Entity : Model, Comparable<Base> {
         id = random.nextLong()
         initialId = true
     }
-
-    override val isPersisted: Boolean
-        get() = id > 0 || uuid != null
 
     override fun compareTo(other: Base): Int {
         return java.lang.Long.compare(id, other.id)

@@ -8,7 +8,6 @@ import de.whitefrog.neobase.model.SaveContext;
 import de.whitefrog.neobase.model.relationship.BaseRelationship;
 import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
-import de.whitefrog.neobase.model.rest.Filter;
 import de.whitefrog.neobase.persistence.Persistence;
 import de.whitefrog.neobase.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.util.stream.Stream;
 
 public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
     extends BaseRepository<T> implements RelationshipRepository<T> {
@@ -85,7 +83,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   @Override
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
-    boolean create = !context.model().isPersisted();
+    boolean create = !context.model().getPersisted();
     Relationships.save(context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }

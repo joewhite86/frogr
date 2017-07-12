@@ -14,7 +14,6 @@ import org.neo4j.graphdb.*;
 
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class BaseModelRepository<T extends Model> extends BaseRepository<T> implements ModelRepository<T> {
   private final Label label;
@@ -105,7 +104,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
-    boolean create = !context.model().isPersisted();
+    boolean create = !context.model().getPersisted();
     Persistence.save(this, context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }

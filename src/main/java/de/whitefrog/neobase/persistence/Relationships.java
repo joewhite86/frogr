@@ -220,7 +220,7 @@ public class Relationships {
     T model = context.model();
     boolean create = false;
 
-    if(!model.isPersisted()) {
+    if(!model.getPersisted()) {
       create = true;
       if(model.getFrom() == null ) {
         throw new IllegalArgumentException("cannot create relationship with no \"from\" field set");
@@ -310,7 +310,7 @@ public class Relationships {
       // Handle collections of relationship models
       else {
         for(BaseRelationship<Model, Model> relModel: ((Collection<BaseRelationship>) value)) {
-          if(!relModel.getTo().isPersisted()) {
+          if(!relModel.getTo().getPersisted()) {
             throw new RelatedNotPersistedException(
               "the " + relModel.getTo() + " (" + relatedTo.type() + ") is not yet persisted");
           }

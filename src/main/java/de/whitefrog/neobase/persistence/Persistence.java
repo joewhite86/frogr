@@ -80,7 +80,7 @@ public abstract class Persistence {
     Label label = repository.label();
     boolean create = false;
 
-    if(!model.isPersisted()) {
+    if(!model.getPersisted()) {
       create = true;
       Node node = service.graph().createNode(label);
       context.setNode(node);
@@ -293,7 +293,7 @@ public abstract class Persistence {
   }
   public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
-    if(!model.isPersisted()) return;
+    if(!model.getPersisted()) return;
     PropertyContainer node;
 
     try {

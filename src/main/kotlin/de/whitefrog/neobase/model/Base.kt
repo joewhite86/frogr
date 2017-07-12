@@ -1,7 +1,10 @@
 package de.whitefrog.neobase.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonView
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import de.whitefrog.neobase.rest.Views
 import java.io.Serializable
 import javax.xml.bind.annotation.XmlRootElement
 
@@ -16,7 +19,7 @@ interface Base : Serializable {
     var checkedFields: MutableList<String>
     var fetchedFields: MutableList<String>
     var modifiedBy: String?
-    val isPersisted: Boolean
+    val persisted: Boolean
     var created: Long?
     
     fun addCheckedField(field: String)
