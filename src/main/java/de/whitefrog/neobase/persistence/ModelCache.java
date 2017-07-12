@@ -38,10 +38,19 @@ public class ModelCache {
   }
   
   public FieldDescriptor fieldDescriptor(Class clazz, String fieldName) {
-    for(FieldDescriptor descriptor: fieldMap(clazz)) {
-      if(fieldName.equals(descriptor.field().getName())) return descriptor; 
+    String firstField = fieldName.contains(".")? fieldName.substring(0, fieldName.indexOf(".")): fieldName;
+    FieldDescriptor descriptor = null;
+    for(FieldDescriptor subDescriptor: fieldMap(clazz)) {
+      if(firstField.equals(subDescriptor.field().getName())) {
+        descriptor = subDescriptor;
+        break;
+      } 
     }
-    return null;
+    if(descriptor != null && firstField.length() < fieldName.length()) {
+      return fieldDescriptor(descriptor.baseClass(), 
+        fieldName.substring(fieldName.indexOf(".") + 1, fieldName.length()));
+    }
+    return descriptor;
   }
   
   public FieldDescriptor fieldDescriptor(Field field) {
@@ -58,7 +67,7 @@ public class ModelCache {
       for(Field field : traverse.getDeclaredFields()) {
         if(!ignoreFields.contains(field.getName()) &&
            !Modifier.isStatic(field.getModifiers())) {
-          descriptors.add(new FieldDescriptor<>(field));
+          descriptors.add(new FieldDescriptor<>(clazz, field));
         }
       }
       traverse = traverse.getSuperclass();

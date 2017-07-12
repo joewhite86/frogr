@@ -360,12 +360,16 @@ public class QueryBuilder {
       ret.add(id());
     } else {
       List<String> returns = new ArrayList<>(params.returns());
-      if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
-        returns = returns.stream().map(r -> {
-          if(r.contains(".to")) return r.replace(".to", "_to");
-          else return r;
-        }).collect(Collectors.toList());
-      }
+//      if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
+//        returns = returns.stream().map(r -> {
+//          if(r.contains(".to")) return r.replace(".to", "_to");
+//          else return r;
+//        }).collect(Collectors.toList());
+//      }
+      returns = returns.stream().map(r -> {
+        if(r.contains(".")) return r.replace(".", "_");
+        return r; 
+      }).collect(Collectors.toList());
       ret.add(StringUtils.join(returns, ","));
     }
     

@@ -17,7 +17,6 @@ import de.whitefrog.neobase.model.relationship.Relationship;
 import de.whitefrog.neobase.model.rest.FieldList;
 import de.whitefrog.neobase.model.rest.QueryField;
 import de.whitefrog.neobase.repository.ModelRepository;
-import de.whitefrog.neobase.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.reflect.ConstructorUtils;
@@ -217,6 +216,7 @@ public abstract class Persistence {
    */
   @SuppressWarnings("unchecked")
   public static <T extends Base> T get(PropertyContainer node, FieldList fields) throws PersistException {
+    Validate.notNull(node, "node can't be null");
     try {
       Class<T> clazz = (Class<T>) getClass(node);
       if(clazz == null) {
@@ -230,7 +230,11 @@ public abstract class Persistence {
       } else {
         org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
         Model from = get(rel.getStartNode());
+        if(fields.get("from") != null && fields.get("from").subFields() != null) 
+          fetch(from, fields.get("from").subFields());
         Model to = get(rel.getEndNode());
+        if(fields.get("to") != null && fields.get("to").subFields() != null)
+          fetch(to, fields.get("to").subFields());
         Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
         model = constructor.newInstance(from, to);
         model.setId(rel.getId());

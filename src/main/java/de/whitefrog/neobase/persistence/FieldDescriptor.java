@@ -7,6 +7,9 @@ import de.whitefrog.neobase.model.annotation.*;
 import de.whitefrog.neobase.model.relationship.Relationship;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class FieldDescriptor<T extends Base> {
@@ -17,7 +20,7 @@ public class FieldDescriptor<T extends Base> {
   private boolean relationship;
   private Class<T> baseClass;
 
-  public FieldDescriptor(Field field) {
+  public FieldDescriptor(Class<T> clazz, Field field) {
     field.setAccessible(true);
     AnnotationDescriptor descriptor = new AnnotationDescriptor();
     descriptor.indexed = field.getAnnotation(Indexed.class);
@@ -35,13 +38,24 @@ public class FieldDescriptor<T extends Base> {
     this.field = field;
     this.annotations = descriptor;
     this.collection = Collection.class.isAssignableFrom(field.getType());
+    
     if(this.collection) {
       this.baseClass = (Class<T>) ReflectionUtil.getGenericClass(field);
+    } else if(Arrays.asList("from", "to").contains(field.getName()) && Relationship.class.isAssignableFrom(clazz)) {
+      if(field.getName().equals("from")) {
+        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[0];
+        this.baseClass = (Class<T>) type;
+      }
+      else if(field.getName().equals("to")) {
+        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[1];
+        this.baseClass = (Class<T>) type;
+      }
     } else {
       this.baseClass = (Class<T>) field.getType();
     }
-    model = Model.class.isAssignableFrom(baseClass);
-    relationship = Relationship.class.isAssignableFrom(baseClass);
+    
+    this.model = Model.class.isAssignableFrom(baseClass);
+    this.relationship = Relationship.class.isAssignableFrom(baseClass);
   }
   
   public AnnotationDescriptor annotations() {

@@ -267,6 +267,7 @@ public class Search {
     public T apply(Map<String, Object> result) {
       String identifier = CollectionUtils.isEmpty(params.returns())?
         repository.queryIdentifier(): params.returns().get(0);
+      if(identifier.contains(".")) identifier = identifier.replace(".", "_");
       PropertyContainer node = (PropertyContainer) result.get(identifier);
       T model = repository.createModel(node, params.fieldList());
   
