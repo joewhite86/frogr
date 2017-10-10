@@ -41,15 +41,15 @@ public class FieldDescriptor<T extends Base> {
     
     if(this.collection) {
       this.baseClass = (Class<T>) ReflectionUtil.getGenericClass(field);
-    } else if(Arrays.asList("from", "to").contains(field.getName()) && Relationship.class.isAssignableFrom(clazz)) {
-      if(field.getName().equals("from")) {
-        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[0];
-        this.baseClass = (Class<T>) type;
-      }
-      else if(field.getName().equals("to")) {
-        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[1];
-        this.baseClass = (Class<T>) type;
-      }
+//    } else if(Arrays.asList("from", "to").contains(field.getName()) && Relationship.class.isAssignableFrom(clazz)) {
+//      if(field.getName().equals("from")) {
+//        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[0];
+//        this.baseClass = (Class<T>) type;
+//      }
+//      else if(field.getName().equals("to")) {
+//        Type type = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[1];
+//        this.baseClass = (Class<T>) type;
+//      }
     } else {
       this.baseClass = (Class<T>) field.getType();
     }

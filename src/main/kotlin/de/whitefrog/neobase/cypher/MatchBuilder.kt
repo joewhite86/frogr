@@ -1,5 +1,9 @@
 package de.whitefrog.neobase.cypher
 
+/**
+ * Builds the MATCH part of a neo4j cypher query.
+ * Brings labels, relationship type names and variables in the correct form.
+ */
 class MatchBuilder {
   private var from: String = ""
   private var fromLabel: String = ""

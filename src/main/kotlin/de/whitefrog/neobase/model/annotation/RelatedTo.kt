@@ -2,6 +2,9 @@ package de.whitefrog.neobase.model.annotation
 
 import org.neo4j.graphdb.Direction
 
+/**
+ * Indicates a property is a set of related entities.
+ */
 @MustBeDocumented
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
