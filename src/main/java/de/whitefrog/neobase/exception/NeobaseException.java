@@ -1,6 +1,6 @@
 package de.whitefrog.neobase.exception;
 
-public class NeobaseException extends Exception {
+public abstract class NeobaseException extends Exception {
     public NeobaseException() {
         super();
     }

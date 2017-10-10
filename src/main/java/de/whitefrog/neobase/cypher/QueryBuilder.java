@@ -22,6 +22,10 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Builds neo4j cypher queries using SearchParameter instances.
+ * Adds the required labels and builds the correct match and where clauses.
+ */
 public class QueryBuilder {
   private static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
   
@@ -46,11 +50,11 @@ public class QueryBuilder {
     return repository;
   }
 
-  public String id() {
+  private String id() {
     return repository().queryIdentifier();
   }
 
-  public StringBuilder match() {
+  private StringBuilder match() {
     // add required matches for ordered fields when counted
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".") && !matches.keySet().contains(order.field())) {
@@ -185,7 +189,7 @@ public class QueryBuilder {
     }
   }
 
-  public StringBuilder where() {
+  private StringBuilder where() {
     List<String> wheres = new LinkedList<>();
     if(params.isFiltered()) {
       int i = 0;
@@ -331,7 +335,7 @@ public class QueryBuilder {
     }
   }
 
-  public StringBuilder orderBy() {
+  private StringBuilder orderBy() {
     StringBuilder query = new StringBuilder();
     
     if(!params.orderBy().isEmpty()) {
@@ -353,7 +357,7 @@ public class QueryBuilder {
     return query;
   }
 
-  public StringBuilder returns() {
+  private StringBuilder returns() {
     List<String> ret = new LinkedList<>();
     
     if(CollectionUtils.isEmpty(params.returns())) {
@@ -387,7 +391,7 @@ public class QueryBuilder {
     return new StringBuilder("return ").append(StringUtils.join(ret, ", ")).append(" ");
   }
   
-  public StringBuilder paging() {
+  private StringBuilder paging() {
     StringBuilder query = new StringBuilder();
     
     if(params.page() > 1) {
