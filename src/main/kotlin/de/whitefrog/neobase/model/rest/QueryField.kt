@@ -7,6 +7,9 @@ import org.apache.commons.lang.builder.HashCodeBuilder
 
 import java.util.Arrays
 
+/**
+ * Single query field used in rest queries. Can have sub-fields and limit and skip values.
+ */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 class QueryField @JvmOverloads constructor(field: String, addAll: Boolean = false) {
   private var field: String? = null

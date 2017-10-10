@@ -7,7 +7,7 @@ import java.util.Arrays
 import java.util.HashSet
 
 /**
- * Created by jochen on 12/01/16.
+ * Field list used in rest queries. Contains multiple QueryField instances.
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 class FieldList : HashSet<QueryField>() {

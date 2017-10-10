@@ -1,10 +1,13 @@
 package de.whitefrog.neobase.model
 
+/**
+ * Base interface for all model entities.
+ */
 interface Model : Base {
 
-    var model: String?
+  var model: String?
 
-    companion object {
-        val Model = "model"
-    }
+  companion object {
+    val Model = "model"
+  }
 }
