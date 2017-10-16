@@ -1,6 +1,5 @@
-package de.whitefrog.examples.simpsons.repository;
+package de.whitefrog.froggy.test;
 
-import de.whitefrog.examples.simpsons.model.Person;
 import de.whitefrog.froggy.Service;
 import de.whitefrog.froggy.repository.BaseModelRepository;
 

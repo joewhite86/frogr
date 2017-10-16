@@ -1,6 +1,6 @@
 package de.whitefrog.examples.simpsons;
 
-import de.whitefrog.neobase.Application;
+import de.whitefrog.froggy.Application;
 import io.dropwizard.Configuration;
 
 public class Simpsons extends Application<Configuration> {

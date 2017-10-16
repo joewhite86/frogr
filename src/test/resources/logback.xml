@@ -6,8 +6,8 @@
         </encoder>
     </appender>
 
-    <logger name="de.whitefrog.neobase.cypher" level="debug" />
-    <logger name="de.whitefrog.neobase.service.Search" level="debug" />
+    <logger name="de.whitefrog.froggy.cypher" level="debug" />
+    <logger name="de.whitefrog.froggy.service.Search" level="debug" />
 
     <root level="warn">
         <appender-ref ref="STDOUT" />
