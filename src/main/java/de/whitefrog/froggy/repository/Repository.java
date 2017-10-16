@@ -12,66 +12,145 @@ import org.neo4j.graphdb.PropertyContainer;
 
 import java.util.List;
 
+/**
+ * A Repository acts as a link between the models and the database. 
+ * It handles all persistent data operations and is easily extensible.
+ * @param <T>
+ */
 public interface Repository<T extends Base> {
   boolean contains(T entity);
 
+  /**
+   * Create appropriate the model for a neo4j property container.
+   * @param node The property container to use
+   * @return The model for the property container
+   */
   T createModel(PropertyContainer node);
 
+  /**
+   * Create appropriate the model for a neo4j property container and fetch some fields.
+   * @param node The property container to use
+   * @param fields Field list to fetch from property container
+   * @return The model for the property container
+   */
   T createModel(PropertyContainer node, FieldList fields);
 
+  /**
+   * Dispose method, will be called by the owning service on shutdown.
+   */
   void dispose();
 
+  /**
+   * Fetch fields from database for a model.
+   * @param model The model to use
+   * @param fields The fields to fetch
+   * @return Updated model instance
+   */
   T fetch(T model, String... fields);
-
+  
+  /**
+   * Fetch fields from database for a model.
+   * @param model The model to use
+   * @param fields The fields to fetch as FieldList
+   * @return Updated model instance
+   */
   T fetch(T model, FieldList fields);
 
+  /**
+   * Fetch fields from database for a model.
+   * @param model The model to use
+   * @param refetch If true, fields will be fetched, even if they were already before
+   * @param fields The fields to fetch as FieldList
+   * @return Updated model instance
+   */
   T fetch(T model, boolean refetch, FieldList fields);
 
   /**
-   * Get a node by id
-   *
-   * @param id PropertyContainerode id
-   * @return The node if found, otherwise a Exception will be thrown
+   * Find a entity by ID.
+   * @param id The id of the entity to look for
+   * @param fields Fields to fetch, not required
+   * @return The entity if found, otherwise null
    */
   T find(long id, String... fields);
 
-  T find(long id, List<String> fields);
+  /**
+   * Find a entity by UUID
+   * @param uuid The uuid of the entity to look for
+   * @param fields Fields to fetch, not required
+   * @return The entity if found, otherwise null
+   */
+  T findByUuid(String uuid, String... fields);
 
-  T find(long id, FieldList fields);
-
-  T findByUuid(String uuid);
-
+  /**
+   * Get the type name for the model class.
+   * @return The type name for the used model class
+   */
   String getType();
 
+  /**
+   * Get the model class
+   * @return Model class
+   */
   Class<?> getModelClass();
   
   /**
    * Get the database instance associated with the controller
-   *
    * @return Database instance
    */
   GraphDatabaseService graph();
 
+  /**
+   * Query builder instance to use.
+   * @return New query builder instance
+   */
   QueryBuilder queryBuilder();
 
+  /**
+   * Identifier used in queries.
+   * @return The query identifier used for this repository
+   */
   String queryIdentifier();
 
   /**
    * Delete a model
-   *
    * @param model Model to delete
    */
   void remove(T model);
 
+  /**
+   * Save a model
+   * @param model model to save
+   */
   void save(T model);
 
+  /**
+   * Save some entities.
+   * @param entities Entities to save.
+   */
   void save(T... entities);
 
+  /**
+   * Save the model inside the passed SaveContext.
+   * @param context Must contain the model to save
+   */
   void save(SaveContext<T> context);
 
+  /**
+   * Get a search provider. Use its methods to filter and return the reusults.
+   * @return Search provider
+   */
   Search search();
 
+  /**
+   * Reference to the service the repository is assigned to.
+   * @return Service instance
+   */
   Service service();
 
+  /**
+   * Sort a list like you would in a database call.
+   * @param list List of models to sort
+   * @param orderBy Sorting conditions
+   */
   void sort(List<T> list, List<SearchParameter.OrderBy> orderBy);
 }

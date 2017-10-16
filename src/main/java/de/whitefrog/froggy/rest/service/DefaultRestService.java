@@ -46,8 +46,4 @@ public class DefaultRestService<M extends Base> {
         }
         return modelClass;
     }
-
-    protected void sort(List<M> list, SearchParameter params) {
-        repository().sort(list, params.orderBy());
-    }
 }

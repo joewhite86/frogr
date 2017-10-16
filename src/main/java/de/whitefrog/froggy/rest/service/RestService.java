@@ -54,8 +54,4 @@ public class RestService<Repo extends Repository<M>, M extends Model> {
         }
         return repositoryClass;
     }
-
-    protected void sort(List<M> list, SearchParameter params) {
-        repository().sort(list, params.orderBy());
-    }
 }

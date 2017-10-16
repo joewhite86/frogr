@@ -110,18 +110,12 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   @Override
   public T find(long id, String... fields) {
-    return find(id, Arrays.asList(fields));
+    return search().ids(id).fields(fields).single();
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public T find(long id, List<String> fields) {
-    return find(id, FieldList.parseFields(fields));
-  }
-
-  @Override
-  public T findByUuid(String uuid) {
-    return search().filter(Entity.Uuid, uuid).single();
+  public T findByUuid(String uuid, String... fields) {
+    return search().filter(Entity.Uuid, uuid).fields(fields).single();
   }
 
   @Override
