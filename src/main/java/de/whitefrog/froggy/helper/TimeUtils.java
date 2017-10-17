@@ -3,10 +3,26 @@ package de.whitefrog.froggy.helper;
 import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 
-public class TimeUtils {
+/**
+ * Abstract helper class for time based calculations.
+ */
+public abstract class TimeUtils {
+  /**
+   * Format a time interval in milliseconds into a human readable form.
+   * Automatically detects the required format to use.
+   * @param i Time in milliseconds
+   * @return The formatted time interval
+   */
   public static String formatInterval(long i) {
     return formatInterval(i, TimeUnit.MILLISECONDS);
   }
+  /**
+   * Format a time interval into a human readable form.
+   * Automatically detects the required format to use.
+   * @param i Time
+   * @param timeUnit TimeUnit to use for the calculation 
+   * @return The formatted time interval
+   */
   public static String formatInterval(long i, TimeUnit timeUnit) {
     if(!timeUnit.equals(TimeUnit.NANOSECONDS)) i = timeUnit.toNanos(i);
     final long days = TimeUnit.NANOSECONDS.toDays(i);
@@ -46,15 +62,24 @@ public class TimeUtils {
     }
   }
 
-  public static String perSecond(long time, int count) {
-    return perSecond(time, (long) count);
-  }
+  /**
+   * Calculates how many operations where done per second.
+   * @param time Time in milliseconds
+   * @param count Operation count
+   * @return Operations per second as formatted string
+   */
   public static String perSecond(long time, long count) {
     if(count == 0) return "0/s";
     return perSecond(time / count);
   }
-  public static String perSecond(long time) {
-    final double after = TimeUnit.SECONDS.toNanos(1) / (double) time;
+  /**
+   * Calculates how many operations where done per second.
+   * The calculation is done in double precision.
+   * @param divisor Time divided by operation count
+   * @return Operations per second as formatted string
+   */
+  public static String perSecond(double divisor) {
+    final double after = TimeUnit.SECONDS.toNanos(1) / divisor;
     return String.format("%.2f/s", after);
   }
 }

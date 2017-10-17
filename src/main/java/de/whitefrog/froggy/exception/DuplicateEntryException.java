@@ -4,7 +4,10 @@ import de.whitefrog.froggy.model.Base;
 
 import java.lang.reflect.Field;
 
-public class DuplicateEntryException extends NeobaseRuntimeException {
+/**
+ * Thrown when a duplicate entry would be generated during persistence.
+ */
+public class DuplicateEntryException extends PersistException {
   private Base bean;
   private Field field;
   

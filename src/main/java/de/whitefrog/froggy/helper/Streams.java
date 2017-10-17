@@ -1,12 +1,20 @@
 package de.whitefrog.froggy.helper;
 
-import de.whitefrog.froggy.model.Base;
+import de.whitefrog.froggy.model.Model;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class Streams {  
-  public static <T extends Base> T single(Stream<T> stream) {
+/**
+ * Abstract helper class for streams.
+ */
+public class Streams {
+  /**
+   * Get a single model from a stream
+   * @param stream Stream to use
+   * @return The first model inside a stream
+   */
+  public static <T extends Model> T single(Stream<T> stream) {
     Optional<T> optional = stream.findFirst();
     return optional.isPresent()? optional.get(): null;
   }

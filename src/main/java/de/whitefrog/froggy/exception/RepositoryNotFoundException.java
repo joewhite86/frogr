@@ -1,6 +1,9 @@
 package de.whitefrog.froggy.exception;
 
-public class RepositoryNotFoundException extends RuntimeException {
+/**
+ * Thrown when a repository could not be found.
+ */
+public class RepositoryNotFoundException extends RepositoryInstantiationException {
   private final String name;
 
   public RepositoryNotFoundException(String name) {

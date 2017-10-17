@@ -3,6 +3,9 @@ package de.whitefrog.froggy.exception;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 
+/**
+ * Thrown when a model is passed with the wrong type information.
+ */
 public class TypeMismatchException extends RuntimeException {
   Node node;
   Label label;

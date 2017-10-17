@@ -5,7 +5,10 @@ import de.whitefrog.froggy.model.relationship.Relationship;
 
 import java.lang.reflect.Field;
 
-public class MissingRequiredException extends RuntimeException {
+/**
+ * Thrown when a required field is missing on a model during persistence.
+ */
+public class MissingRequiredException extends PersistException {
   private Base model;
   private Relationship relationship;
   private final Field field;

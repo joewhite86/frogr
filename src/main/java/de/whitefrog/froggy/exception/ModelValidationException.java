@@ -1,6 +1,6 @@
 package de.whitefrog.froggy.exception;
 
-public class ModelValidationException extends NeobaseRuntimeException {
+public class ModelValidationException extends PersistException {
   private final String field;
   public ModelValidationException(String message, String field) {
     super(message);
