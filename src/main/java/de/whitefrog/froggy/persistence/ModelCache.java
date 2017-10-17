@@ -7,6 +7,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
+/**
+ * Model cache to reduce reflection usage for models to a minimum.
+ */
 public class ModelCache {
   private Map<Class, List<FieldDescriptor>> cache = new HashMap<>();
   private Map<String, Class> modelCache = new HashMap<>();

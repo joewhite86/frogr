@@ -10,7 +10,10 @@ import de.whitefrog.froggy.model.rest.FieldList;
 import de.whitefrog.froggy.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.NotFoundException;
+import org.neo4j.graphdb.PropertyContainer;
 
 import java.util.Set;
 import java.util.stream.Collectors;

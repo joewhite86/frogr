@@ -9,6 +9,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Import a dumped database.
+ */
 public class Import {
   public static void main(String[] args) throws Exception {
     try(Service service = new Service()) {

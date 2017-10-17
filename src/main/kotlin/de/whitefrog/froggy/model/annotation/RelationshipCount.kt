@@ -4,6 +4,10 @@ import de.whitefrog.froggy.model.Model
 import org.neo4j.graphdb.Direction
 import kotlin.reflect.KClass
 
+/**
+ * Indicates that the field should contain the relationship count for a specified relationship type when fetched.
+ * Will not be persisted.
+ */
 @MustBeDocumented
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)

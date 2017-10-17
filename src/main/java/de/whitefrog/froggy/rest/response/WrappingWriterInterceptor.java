@@ -14,6 +14,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Response and request filter. Primarily used to format responses. 
+ */
 @Provider
 public class WrappingWriterInterceptor implements ContainerResponseFilter, ContainerRequestFilter {
 

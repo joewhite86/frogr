@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+/**
+ * The base REST application entry point. Starts up a service instance and some settings required for REST.
+ */
 @Path("/")
 @Singleton
 public abstract class Application<C extends io.dropwizard.Configuration> extends io.dropwizard.Application<C> {

@@ -4,6 +4,10 @@ import de.whitefrog.froggy.model.annotation.Indexed;
 import de.whitefrog.froggy.model.annotation.RelatedTo;
 import de.whitefrog.froggy.model.annotation.RelationshipCount;
 
+/**
+ * Helper class to quickly cache important model annotations.
+ * Helps to reduce reflection usage to a single time on bootstrap.
+ */
 public class AnnotationDescriptor {
   public Indexed indexed = null;
   public boolean unique = false;

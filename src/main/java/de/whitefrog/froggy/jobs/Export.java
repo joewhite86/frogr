@@ -9,6 +9,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Export a databdase to dump file.
+ */
 public class Export {
   static final String path = "src/main/resources/test-data";
   public static void main(String[] args) throws Exception {

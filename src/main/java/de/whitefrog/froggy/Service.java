@@ -35,6 +35,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Provides a service that handles the communication with froggy repositories and models.
+ * Uses a embedded graph database and properties to set it up.
+ * Automatically applies patches to the database if required, creates a new database
+ * instance or uses an existing one and sets up the database scheme if required.
+ */
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String neo4jConfig = "config/neo4j.properties";

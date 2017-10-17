@@ -29,6 +29,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
+/**
+ * Primarily the link between the models and repositories and neo4j itself.
+ * Handles every persitent operation required for neo4j to deal with the models and relationships
+ * used in froggy. For Relationships the operations are moved to the Relationships class but 
+ * some operations common to nodes and relationships are kept here.
+ */
 @SuppressWarnings("unchecked")
 public abstract class Persistence {
   private static final Logger logger = LoggerFactory.getLogger(Persistence.class);

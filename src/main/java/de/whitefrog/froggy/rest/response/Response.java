@@ -6,6 +6,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Model to format responses in a unified way.
+ */
 public class Response<T> implements Serializable {
   private boolean success;
   private Long total;

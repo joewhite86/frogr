@@ -15,6 +15,9 @@ import javax.ws.rs.ext.Provider;
 import java.security.InvalidParameterException;
 import java.util.Map;
 
+/**
+ * Re-maps exceptions to be more meaningful.
+ */
 @Provider
 public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
   private static final Logger logger = LoggerFactory.getLogger(ExceptionMapper.class);

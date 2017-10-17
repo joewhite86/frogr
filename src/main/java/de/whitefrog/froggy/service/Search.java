@@ -24,6 +24,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Provides search filtering, counting, fetching, ordering and paging.
+ * Can return results in different formats.
+ */
 public class Search {
   private static final Logger logger = LoggerFactory.getLogger(Search.class);
   private final Service service;

@@ -24,6 +24,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Handles most persistent operations required for neo4j to deal with froggy relationships.
+ * Some relationship operations are kept in the Persistence class.
+ */
 public class Relationships {
   private static final Logger logger = LoggerFactory.getLogger(Relationships.class);
   private static Service service;

@@ -6,7 +6,6 @@ import de.whitefrog.froggy.exception.RepositoryNotFoundException;
 import de.whitefrog.froggy.model.relationship.Relationship;
 import de.whitefrog.froggy.persistence.Persistence;
 import org.apache.commons.lang.reflect.ConstructorUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Constructor;
