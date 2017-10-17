@@ -20,6 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 
+/**
+ * Base repository for relationships.
+ * Provides some basic functionality like model creation and persistance.
+ */
 public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
     extends BaseRepository<T> implements RelationshipRepository<T> {
   private final Logger logger;

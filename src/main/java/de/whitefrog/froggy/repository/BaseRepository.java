@@ -24,6 +24,10 @@ import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
 import java.util.*;
 
+/**
+ * Base repository for relationship and entities.
+ * Provides most basic functionality like searching and saving.
+ */
 public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private final Logger logger;
   private Service service;

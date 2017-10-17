@@ -15,6 +15,10 @@ import org.neo4j.graphdb.*;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Base repository for models.
+ * Provides basic functionality like model creation and persistence.
+ */
 public abstract class BaseModelRepository<T extends Model> extends BaseRepository<T> implements ModelRepository<T> {
   private final Label label;
   private Set<Label> labels;

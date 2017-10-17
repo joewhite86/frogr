@@ -56,6 +56,10 @@ public class Relationships {
     try {
       repository = service.repository(relationshipType.name());
     } catch(RepositoryNotFoundException e) {
+      // if no repository is found in the RepositoryFactory, create a new one here
+      // TODO: this should be handled inside of RepositoryFactory but then it would  
+      // TODO: create a DefaultRealtionshipRepository for each unknown type name passed 
+      // TODO: and i haven't found a solution yet
       repository = new DefaultRelationshipRepository<>(service, relationshipType.name());
       service.repositoryFactory().register(relationshipType.name(), repository);
     }
