@@ -119,7 +119,7 @@ public class Service implements AutoCloseable {
 
   public void connect() {
     try {
-      Configuration properties = new PropertiesConfiguration("config/myband.properties");
+      Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
       String directory = properties.getString("graph.location");
       connect(directory);
     } catch (ConfigurationException e) {

@@ -22,7 +22,7 @@ public class Response<T> implements Serializable {
   }
   
   public Object singleton() {
-    return data.get(0);
+    return data.isEmpty()? null: data.get(0);
   }
 
   public boolean isSuccess() {

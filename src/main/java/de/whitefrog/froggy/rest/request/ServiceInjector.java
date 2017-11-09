@@ -8,6 +8,10 @@ import javax.ws.rs.ext.Provider;
 @Provider
 public class ServiceInjector implements Factory<Service> {
   private Service service = new Service();
+  
+  public Service service() {
+    return service;
+  }
 
   @Override
   public Service provide() {

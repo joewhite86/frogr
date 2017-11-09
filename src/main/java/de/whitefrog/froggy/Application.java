@@ -43,6 +43,7 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
   public ServiceInjector serviceInjector() {
     if(serviceInjector == null) {
       serviceInjector = new ServiceInjector();
+      serviceInjector.service().registry().addAll(packages);
     }
     return serviceInjector;
   }
