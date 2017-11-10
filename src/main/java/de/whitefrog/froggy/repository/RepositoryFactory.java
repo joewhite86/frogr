@@ -7,11 +7,20 @@ import de.whitefrog.froggy.model.relationship.Relationship;
 import de.whitefrog.froggy.persistence.Persistence;
 import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Factory to build repository instances.
@@ -19,6 +28,8 @@ import java.util.Map;
  * Works in a multi-thread environment with different services running at the same time.
  */
 public class RepositoryFactory {
+  
+  private static final Logger logger = LoggerFactory.getLogger(RepositoryFactory.class);
   /**
    * Static repository cache by name and service.
    */
@@ -44,9 +55,13 @@ public class RepositoryFactory {
     }
     this.cache = staticCache.get(service);
     if(repositoryCache.isEmpty()) {
-      for(String pkg : service.registry()) {
-        Reflections reflections = new Reflections(pkg);
-        for(Class clazz : reflections.getSubTypesOf(Repository.class)) {
+      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+        .setScanners(new SubTypesScanner());
+      service.registry()
+        .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
+      Reflections reflections = new Reflections(configurationBuilder);
+      for(Class clazz : reflections.getSubTypesOf(Repository.class)) {
+        if (!Modifier.isAbstract(clazz.getModifiers()) && !Modifier.isInterface(clazz.getModifiers())) {
           repositoryCache.put(clazz.getSimpleName(), clazz);
         }
       }
@@ -87,9 +102,14 @@ public class RepositoryFactory {
         }
         Class c = repositoryCache.get(name + "Repository");
         Constructor<Repository> ctor = ConstructorUtils.getMatchingAccessibleConstructor(c, new Class[] {service.getClass()});
+        if (ctor == null) {
+          throw new RepositoryInstantiationException("No constructor " + name + "Repository(" 
+            + service.getClass().getName() + ") found in " + c.getName());
+        }
         repository = ctor.newInstance(service);
       } catch(ClassNotFoundException e) {
         try {
+          logger.debug("No repository found for " + modelClass.getSimpleName() + ", creating a default one");
           if(!Relationship.class.isAssignableFrom(modelClass)) {
             Constructor<DefaultRepository> ctor = 
               DefaultRepository.class.getConstructor(Service.class, String.class);
@@ -105,6 +125,7 @@ public class RepositoryFactory {
       } catch(ReflectiveOperationException e) {
         throw new RepositoryInstantiationException(e.getCause());
       }
+      logger.debug("registering " + repository.getClass().getSimpleName() + " for " + name);
       cache.put(name.toLowerCase(), repository);
     }
 

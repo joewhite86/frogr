@@ -10,9 +10,8 @@ import javax.ws.rs.Path;
 @Singleton
 public class Simpsons extends Application<Configuration> {
   public Simpsons() {
-    register("de.whitefrog");
-//      "de.whitefrog.examples.simpsons", 
-//      "de.whitefrog.examples.simpsons.rest");
+    register("de.whitefrog.examples.simpsons");
+    serviceInjector().service().register("de.whitefrog");
   }
   
   public static void main(String[] args) throws Exception {

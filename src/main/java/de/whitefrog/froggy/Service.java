@@ -55,12 +55,13 @@ public class Service implements AutoCloseable {
   private RepositoryFactory repositoryFactory;
   private Set<String> packageRegistry = new HashSet<>();
   private Validator validator;
-  private boolean connected = false;
   private boolean useBolt = true;
   private State state = State.Started;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
+    register("de.whitefrog.froggy.model");
+    register("de.whitefrog.froggy.repository");
   }
 
   public Transaction beginTx() {
@@ -99,7 +100,7 @@ public class Service implements AutoCloseable {
           graph.setVersion(getManifestVersion());
           graphRepository.save(graph);
           logger.info("--------------------------------------------");
-          logger.info("---   starting database instance {}   ---", graph.getVersion());
+          logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "x.x.x");
           logger.info("---   {}   ---", directory);
           logger.info("--------------------------------------------");
         }
@@ -110,7 +111,6 @@ public class Service implements AutoCloseable {
       initializeSchema();
 
       registerShutdownHook(this);
-      connected = true;
       state = State.Running;
     } catch (ConfigurationException e) {
       logger.error("Could not read cypher.properties", e);
@@ -128,7 +128,7 @@ public class Service implements AutoCloseable {
   }
   
   public boolean isConnected() {
-    return connected;
+    return state.equals(State.Running);
   }
   
   public String directory() {

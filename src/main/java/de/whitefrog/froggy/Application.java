@@ -17,7 +17,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Singleton;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -27,6 +30,8 @@ import java.util.List;
  * The base REST application entry point. Starts up a service instance and some settings required for REST.
  */
 @Path("/")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @Singleton
 public abstract class Application<C extends io.dropwizard.Configuration> extends io.dropwizard.Application<C> {
   private static final String AllowedMethods = "OPTIONS,GET,PUT,POST,DELETE,HEAD";
@@ -43,7 +48,6 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
   public ServiceInjector serviceInjector() {
     if(serviceInjector == null) {
       serviceInjector = new ServiceInjector();
-      serviceInjector.service().registry().addAll(packages);
     }
     return serviceInjector;
   }

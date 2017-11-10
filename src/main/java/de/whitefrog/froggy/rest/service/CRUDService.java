@@ -1,14 +1,14 @@
-package de.whitefrog.froggy.model.rest;
+package de.whitefrog.froggy.rest.service;
 
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.whitefrog.froggy.model.Model;
 import de.whitefrog.froggy.model.SaveContext;
+import de.whitefrog.froggy.model.rest.SearchParameter;
 import de.whitefrog.froggy.repository.Repository;
 import de.whitefrog.froggy.rest.Views;
 import de.whitefrog.froggy.rest.request.SearchParam;
 import de.whitefrog.froggy.rest.response.Response;
-import de.whitefrog.froggy.rest.service.RestService;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import java.util.List;
 
-public class CRUDService<R extends Repository<M>, M extends Model> extends RestService<R, M> {
+public abstract class CRUDService<R extends Repository<M>, M extends Model> extends RestService<R, M> {
   private static final Logger logger = LoggerFactory.getLogger(CRUDService.class);
   @POST
   public List<M> create(List<M> models) {

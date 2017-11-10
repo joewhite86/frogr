@@ -15,7 +15,7 @@ import java.lang.reflect.Type;
  * Provides basic REST service functionality common to most services.
  * Works without a repositry.
  */
-public class DefaultRestService<M extends Base> {
+public abstract class DefaultRestService<M extends Base> {
   private static final Logger logger = LoggerFactory.getLogger(DefaultRestService.class);
   private Repository<M> repository = null;
   private Class repositoryClass;

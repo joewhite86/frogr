@@ -1,7 +1,11 @@
 package de.whitefrog.froggy.persistence;
 
 import de.whitefrog.froggy.model.Base;
+import de.whitefrog.froggy.repository.Repository;
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -15,24 +19,23 @@ public class ModelCache {
   private Map<String, Class> modelCache = new HashMap<>();
   private List<String> ignoreFields = Arrays.asList(
     "id", "initialId", "checkedFields", "fetchedFields");
-  private List<Reflections> reflections = new ArrayList<>();
+  private Reflections reflections;
 
   public ModelCache(Collection<String> packages) {
-    for(String pkg: packages) {
-      Reflections reflections = new Reflections(pkg);
-      this.reflections.add(reflections);
-      for(Class clazz: reflections.getSubTypesOf(Base.class)) {
+    ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+      .setScanners(new SubTypesScanner());
+    packages
+      .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
+    reflections = new Reflections(configurationBuilder);
+    for(Class clazz : reflections.getSubTypesOf(Base.class)) {
+      if (!Modifier.isAbstract(clazz.getModifiers()) && !Modifier.isInterface(clazz.getModifiers())) {
         modelCache.put(clazz.getSimpleName(), clazz);
       }
     }
   }
   
   public List<Class> subTypesOf(Class<?> baseClass) {
-    List<Class> subTypes = new ArrayList<>();
-    for(Reflections reflection: reflections) {
-      subTypes.addAll(reflection.getSubTypesOf(baseClass));
-    }
-    return subTypes;
+    return new ArrayList<>(reflections.getSubTypesOf(baseClass));
   }
 
   public AnnotationDescriptor fieldAnnotations(Class clazz, String fieldName) {

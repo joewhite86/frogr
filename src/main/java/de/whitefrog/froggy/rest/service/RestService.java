@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
@@ -17,7 +18,8 @@ import java.lang.reflect.Type;
  * Provides basic REST service functionality common to most services.
  */
 @Produces(MediaType.APPLICATION_JSON)
-public class RestService<Repo extends Repository<M>, M extends Model> {
+@Consumes(MediaType.APPLICATION_JSON)
+public abstract class RestService<Repo extends Repository<M>, M extends Model> {
   private static final Logger logger = LoggerFactory.getLogger(RestService.class);
   private Repo repository = null;
   private Class repositoryClass;

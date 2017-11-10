@@ -6,7 +6,6 @@ import de.whitefrog.froggy.model.annotation.RelatedTo;
 import de.whitefrog.froggy.model.annotation.Unique;
 import org.neo4j.graphdb.Direction;
 
-import javax.validation.constraints.Max;
 import java.util.List;
 
 public class Character extends Entity {
