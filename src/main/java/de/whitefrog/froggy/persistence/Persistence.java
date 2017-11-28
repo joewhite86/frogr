@@ -214,7 +214,7 @@ public abstract class Persistence {
   }
 
   /**
-   * Get a model instance from a neo node.
+   * Get a model instance from a neo4j node.
    *
    * @param node Node to create the model from
    * @return The created model
@@ -255,6 +255,14 @@ public abstract class Persistence {
     }
   }
 
+  /**
+   * Get the model class for a node or relationship.
+   * The "model" property will be preferred, else "type" will be taken for evaluation.
+   * 
+   * @param node Node or relationship to get the corresponding class for
+   * @return The correct model class for the node or relationship passed
+   * @throws ClassNotFoundException If no model was found for the particular class name
+   */
   private static Class getClass(PropertyContainer node) throws ClassNotFoundException {
     String className;
     if(node instanceof org.neo4j.graphdb.Relationship) {
@@ -276,7 +284,13 @@ public abstract class Persistence {
     UUID uuid = uuidGenerator.generate();
     return Long.toHexString(uuid.getMostSignificantBits()) + Long.toHexString(uuid.getLeastSignificantBits());
   }
-  
+
+  /**
+   * Removes a property inside the graph and on the model.
+   * 
+   * @param model Model to remove the property from
+   * @param property Property name to remove
+   */
   public static void removeProperty(Model model, String property) {
     Node node = getNode(model);
     node.removeProperty(property);
@@ -289,18 +303,48 @@ public abstract class Persistence {
     }
   }
 
+  /**
+   * Get the neo4j node for a particular model using its id.
+   * 
+   * @param model Model to search inside the graph
+   * @return The neo4j node equivalent for the passed model
+   */
   public static Node getNode(Model model) {
     Validate.notNull(model);
     Validate.notNull(model.getId(), "ID can not be null.");
     return service.graph().getNodeById(model.getId());
   }
 
+  /**
+   * Fetch properties for the passed model from database.
+   * This can be either normal properties or relationships if annotated correctly.
+   * 
+   * @param model The model to fetch the properties for
+   * @param fields List of fields to fetch
+   */
   public static <T extends Base> void fetch(T model, String... fields) {
     fetch(model, FieldList.parseFields(Arrays.asList(fields)), false);
   }
+  
+  /**
+   * Fetch properties for the passed model from database.
+   * This can be either normal properties or relationships if annotated correctly.
+   *
+   * @param model The model to fetch the properties for
+   * @param fields List of fields to fetch as FieldList
+   */
   public static <T extends Base> void fetch(T model, FieldList fields) {
     fetch(model, fields, false);
   }
+  
+  /**
+   * Fetch properties for the passed model from database.
+   * This can be either normal properties or relationships if annotated correctly.
+   *
+   * @param model The model to fetch the properties for
+   * @param fields List of fields to fetch as FieldList
+   * @param refetch Fetch even if the field was already fetched before
+   */
   public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
     if(!model.getPersisted()) return;
@@ -390,7 +434,14 @@ public abstract class Persistence {
     }
     model.getFetchedFields().add(field.getName());
   }
-  
+
+  /**
+   * Get a model by label and uuid.
+   * 
+   * @param label The label/type to look for
+   * @param uuid The uuid for the model
+   * @return The found model or null if none was found
+   */
   public static <T extends Model> T findByUuid(String label, String uuid) {
     ResourceIterator<? extends PropertyContainer> iterator = 
       service.graph().findNodes(Label.label(label), Entity.Uuid, uuid);
