@@ -145,7 +145,7 @@ public class RepositoryFactory {
     }
     Class clazz = Persistence.cache().getModel(name);
     if(clazz == null) {
-      throw new RepositoryNotFoundException(name + " not found in model cache");
+      throw new RepositoryNotFoundException(name);
     }
     return get(clazz);
   }
