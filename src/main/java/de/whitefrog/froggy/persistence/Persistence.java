@@ -101,6 +101,9 @@ public abstract class Persistence {
       model.updateLastModified();
     }
 
+    for(String property: context.model().getRemoveProperties()) {
+      removeProperty(context.model(), property);
+    }
     // clone all properties from model
     for(FieldDescriptor field : context.fieldMap()) {
       saveField(context, field, create);

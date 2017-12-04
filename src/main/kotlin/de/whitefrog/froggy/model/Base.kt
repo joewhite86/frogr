@@ -18,11 +18,13 @@ interface Base : Serializable {
   var type: String?
   var checkedFields: MutableList<String>
   var fetchedFields: MutableList<String>
+  var removeProperties: MutableList<String>
   var modifiedBy: String?
   val persisted: Boolean
   var created: Long?
 
   fun addCheckedField(field: String)
+  fun removeProperty(property: String)
 
   fun <T : Base> clone(vararg fields: String): T
   fun <T : Base> clone(fields: List<String>): T

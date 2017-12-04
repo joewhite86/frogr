@@ -15,7 +15,7 @@ import java.util.*
 /**
  * Base class for all relationships between entities.
  */
-open class BaseRelationship<out From : Model, out To : Model>(override val from: From, override val to: To) : Relationship<From, To> {
+abstract class BaseRelationship<out From : Model, out To : Model>(override val from: From, override val to: To) : Relationship<From, To> {
   @JsonView(Views.Hidden::class)
   override var id = random.nextLong()
     get() {
@@ -44,6 +44,9 @@ open class BaseRelationship<out From : Model, out To : Model>(override val from:
   @NotPersistant
   @JsonIgnore
   override var fetchedFields: MutableList<String> = ArrayList()
+  @NotPersistant
+  @JsonIgnore
+  override var removeProperties: MutableList<String> = ArrayList()
 
   override fun resetId() {
     id = random.nextLong()
@@ -56,6 +59,10 @@ open class BaseRelationship<out From : Model, out To : Model>(override val from:
 
   override fun addCheckedField(field: String) {
     checkedFields.add(field)
+  }
+  
+  override fun removeProperty(property: String) {
+    removeProperties.add(property)
   }
 
   override fun getLastModified(): Long? {

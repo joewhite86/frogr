@@ -85,6 +85,15 @@ abstract class Entity : Model, Comparable<Base> {
   @NotPersistant
   @JsonIgnore
   override var fetchedFields: MutableList<String> = ArrayList()
+
+  @NotPersistant
+  @JsonIgnore
+  override var removeProperties: MutableList<String> = ArrayList()
+
+  override fun removeProperty(property: String) {
+    removeProperties.add(property)
+  }
+  
   /**
    * True, if the entity was already persisted.
    */

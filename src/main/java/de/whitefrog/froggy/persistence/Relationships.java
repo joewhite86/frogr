@@ -1,6 +1,7 @@
 package de.whitefrog.froggy.persistence;
 
 import de.whitefrog.froggy.Service;
+import de.whitefrog.froggy.exception.NeobaseRuntimeException;
 import de.whitefrog.froggy.exception.PersistException;
 import de.whitefrog.froggy.exception.RelatedNotPersistedException;
 import de.whitefrog.froggy.exception.RepositoryNotFoundException;
@@ -20,6 +21,7 @@ import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -166,7 +168,7 @@ public class Relationships {
    * @param relationship The relationship model
    * @return The corresponding neo4j relationship
    */
-  public static <R extends BaseRelationship> Relationship getRelationship(R relationship) {
+  public static <R extends de.whitefrog.froggy.model.relationship.Relationship> Relationship getRelationship(R relationship) {
     return service.graph().getRelationshipById(relationship.getId());
   }
 
@@ -224,18 +226,12 @@ public class Relationships {
   /**
    * Save method called from RelationshipRepository's
    */
-  public static <T extends BaseRelationship> T save(SaveContext<T> context) {
+  public static <T extends de.whitefrog.froggy.model.relationship.Relationship> T save(SaveContext<T> context) {
     T model = context.model();
     boolean create = false;
 
     if(!model.getPersisted()) {
       create = true;
-      if(model.getFrom() == null ) {
-        throw new IllegalArgumentException("cannot create relationship with no \"from\" field set");
-      }
-      if(model.getTo() == null ) {
-        throw new IllegalArgumentException("cannot create relationship with no \"to\" field set");
-      }
       Node fromNode = Persistence.getNode(model.getFrom());
       Node toNode = Persistence.getNode(model.getTo());
       RelationshipType relType = RelationshipType.withName(context.repository().getType());
@@ -249,6 +245,9 @@ public class Relationships {
       model.updateLastModified();
     }
 
+    for(String property: model.getRemoveProperties()) {
+      Relationships.removeProperty(model, property);
+    }
     // clone all properties from model
     for(FieldDescriptor field : context.fieldMap()) {
       Persistence.saveField(context, field, create);
@@ -341,6 +340,24 @@ public class Relationships {
           repository.save(relModel);
         }
       }
+    }
+  }
+
+  /**
+   * Removes a property inside the graph and on the model.
+   *
+   * @param model Model to remove the property from
+   * @param property Property name to remove
+   */
+  public static void removeProperty(de.whitefrog.froggy.model.relationship.Relationship model, String property) {
+    Relationship node = getRelationship(model);
+    node.removeProperty(property);
+    try {
+      Field field = model.getClass().getDeclaredField(property);
+      if(!field.isAccessible()) field.setAccessible(true);
+      field.set(model, null);
+    } catch(ReflectiveOperationException e) {
+      throw new NeobaseRuntimeException("field " + property + " could not be found on " + model, e);
     }
   }
 
