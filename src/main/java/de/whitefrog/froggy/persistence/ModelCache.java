@@ -28,9 +28,7 @@ public class ModelCache {
       .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
     reflections = new Reflections(configurationBuilder);
     for(Class clazz : reflections.getSubTypesOf(Base.class)) {
-      if (!Modifier.isAbstract(clazz.getModifiers()) && !Modifier.isInterface(clazz.getModifiers())) {
-        modelCache.put(clazz.getSimpleName(), clazz);
-      }
+      modelCache.put(clazz.getSimpleName(), clazz);
     }
   }
   
