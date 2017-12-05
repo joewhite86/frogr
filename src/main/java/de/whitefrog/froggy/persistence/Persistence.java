@@ -5,7 +5,7 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.froggy.Service;
 import de.whitefrog.froggy.exception.DuplicateEntryException;
 import de.whitefrog.froggy.exception.MissingRequiredException;
-import de.whitefrog.froggy.exception.NeobaseRuntimeException;
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.exception.PersistException;
 import de.whitefrog.froggy.model.Base;
 import de.whitefrog.froggy.model.Entity;
@@ -154,18 +154,6 @@ public abstract class Persistence {
             Relationships.saveField((SaveContext<? extends Model>) context, descriptor);
             logger.info("{}: updated relationships for \"{}\"", model, field.getName());
           }
-          
-          // check uniqueness
-//          else if(valueChanged && annotations.unique && !model.getCheckedFields().contains(field.getName())) {
-//            Optional<T> exist = context.repository().findIndexed(field.getName(), value).findAny();
-//            if(exist.isPresent() && model.getId() != exist.get().getId()) {
-//              throw new DuplicateEntryException(
-//                "A " + model.getClass().getSimpleName().toLowerCase() + " with the " +
-//                  field.getName() + " \"" + value + "\" already exists", model, field);
-//            } else if(exist.isPresent()) {
-//              logger.info("found already persisted {}, but seems to be equal to {}", exist, model);
-//            }
-//          }
 
           // Handle other values
           if(!(value instanceof Collection) && !(value instanceof Model)) {
@@ -302,7 +290,7 @@ public abstract class Persistence {
       if(!field.isAccessible()) field.setAccessible(true);
       field.set(model, null);
     } catch(ReflectiveOperationException e) {
-      throw new NeobaseRuntimeException("field " + property + " could not be found on " + model, e);
+      throw new FroggyException("field " + property + " could not be found on " + model, e);
     }
   }
 
@@ -314,8 +302,13 @@ public abstract class Persistence {
    */
   public static Node getNode(Model model) {
     Validate.notNull(model);
-    Validate.notNull(model.getId(), "ID can not be null.");
-    return service.graph().getNodeById(model.getId());
+    if(model.getId() > 0) {
+      return service.graph().getNodeById(model.getId());
+    } else if(model.getUuid() != null && model.getType() != null) {
+      return service.graph().findNode(Label.label(model.getType()), Entity.Uuid, model.getUuid());
+    } else {
+      throw new UnsupportedOperationException("cant get a node without id or uuid");
+    }
   }
 
   /**

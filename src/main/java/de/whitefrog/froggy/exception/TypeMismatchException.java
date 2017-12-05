@@ -6,7 +6,7 @@ import org.neo4j.graphdb.Node;
 /**
  * Thrown when a model is passed with the wrong type information.
  */
-public class TypeMismatchException extends RuntimeException {
+public class TypeMismatchException extends FroggyException {
   Node node;
   Label label;
 

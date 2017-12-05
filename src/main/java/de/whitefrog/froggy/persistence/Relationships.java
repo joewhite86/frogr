@@ -1,7 +1,7 @@
 package de.whitefrog.froggy.persistence;
 
 import de.whitefrog.froggy.Service;
-import de.whitefrog.froggy.exception.NeobaseRuntimeException;
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.exception.PersistException;
 import de.whitefrog.froggy.exception.RelatedNotPersistedException;
 import de.whitefrog.froggy.exception.RepositoryNotFoundException;
@@ -169,7 +169,12 @@ public class Relationships {
    * @return The corresponding neo4j relationship
    */
   public static <R extends de.whitefrog.froggy.model.relationship.Relationship> Relationship getRelationship(R relationship) {
-    return service.graph().getRelationshipById(relationship.getId());
+    if(relationship.getId() > 0) {
+      return service.graph().getRelationshipById(relationship.getId());
+    }
+    else {
+      throw new UnsupportedOperationException("cant find relationship without id");
+    }
   }
 
   /**
@@ -357,7 +362,7 @@ public class Relationships {
       if(!field.isAccessible()) field.setAccessible(true);
       field.set(model, null);
     } catch(ReflectiveOperationException e) {
-      throw new NeobaseRuntimeException("field " + property + " could not be found on " + model, e);
+      throw new FroggyException("field " + property + " could not be found on " + model, e);
     }
   }
 

@@ -2,7 +2,7 @@ package de.whitefrog.froggy.model.relationship
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonView
-import de.whitefrog.froggy.exception.NeobaseRuntimeException
+import de.whitefrog.froggy.exception.FroggyException
 import de.whitefrog.froggy.model.Base
 import de.whitefrog.froggy.model.Model
 import de.whitefrog.froggy.model.annotation.NotPersistant
@@ -14,8 +14,15 @@ import java.util.*
 
 /**
  * Base class for all relationships between entities.
+ * Cannot be abstract, because it is used in DefaultRelationshipRepository as default
  */
-abstract class BaseRelationship<out From : Model, out To : Model>(override val from: From, override val to: To) : Relationship<From, To> {
+open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To> {
+  override var from: From? = null
+  override var to: To? = null
+  constructor(from: From, to: To): this() {
+    this.from = from
+    this.to = to
+  }
   @JsonView(Views.Hidden::class)
   override var id = random.nextLong()
     get() {
@@ -85,7 +92,7 @@ abstract class BaseRelationship<out From : Model, out To : Model>(override val f
     try {
       base = javaClass.newInstance() as T
     } catch (e: ReflectiveOperationException) {
-      throw NeobaseRuntimeException(e.message, e)
+      throw FroggyException(e.message, e)
     }
 
     base.type = type()

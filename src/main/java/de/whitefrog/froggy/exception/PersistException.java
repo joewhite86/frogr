@@ -4,7 +4,7 @@ package de.whitefrog.froggy.exception;
  * Thrown when something went wrong during persistence.
  * Should be overwritten.
  */
-public class PersistException extends RuntimeException {
+public class PersistException extends FroggyException {
   public PersistException(String message) {
       super(message);
   }

@@ -1,6 +1,6 @@
 package de.whitefrog.froggy.model;
 
-import de.whitefrog.froggy.exception.NeobaseRuntimeException;
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.model.rest.FieldList;
 import de.whitefrog.froggy.persistence.AnnotationDescriptor;
 import de.whitefrog.froggy.persistence.FieldDescriptor;
@@ -97,7 +97,7 @@ public class SaveContext<T extends Base> {
         }
       }
     } catch(IllegalAccessException e) {
-      throw new NeobaseRuntimeException(e.getMessage(), e);
+      throw new FroggyException(e.getMessage(), e);
     }
     
     return false;

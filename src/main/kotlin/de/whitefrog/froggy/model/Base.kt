@@ -3,6 +3,7 @@ package de.whitefrog.froggy.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
+import java.util.*
 import javax.xml.bind.annotation.XmlRootElement
 
 

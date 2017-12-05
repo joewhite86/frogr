@@ -2,7 +2,7 @@ package de.whitefrog.froggy.rest.response;
 
 import de.whitefrog.froggy.exception.DuplicateEntryException;
 import de.whitefrog.froggy.exception.MissingRequiredException;
-import de.whitefrog.froggy.exception.NeobaseException;
+import de.whitefrog.froggy.exception.FroggyException;
 import org.neo4j.helpers.collection.MapUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
   private static final Logger logger = LoggerFactory.getLogger(ExceptionMapper.class);
 
-  public static final Map<Class<NeobaseException>, String> codes = MapUtil.genericMap(
+  public static final Map<Class<FroggyException>, String> codes = MapUtil.genericMap(
   );
 
   public javax.ws.rs.core.Response toResponse(Exception exception) {

@@ -1,7 +1,7 @@
 package de.whitefrog.froggy.repository;
 
 import de.whitefrog.froggy.Service;
-import de.whitefrog.froggy.exception.NeobaseRuntimeException;
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.exception.PersistException;
 import de.whitefrog.froggy.exception.TypeMismatchException;
 import de.whitefrog.froggy.model.Model;
@@ -50,7 +50,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
     try {
       return (T) getModelClass().newInstance();
     } catch(ReflectiveOperationException e) {
-      throw new NeobaseRuntimeException(e.getMessage(), e);
+      throw new FroggyException(e.getMessage(), e);
     }
   }
 

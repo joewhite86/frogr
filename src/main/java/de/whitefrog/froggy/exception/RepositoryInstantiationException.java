@@ -5,7 +5,7 @@ package de.whitefrog.froggy.exception;
  * This can happen when a wrong model name is passed or 
  * the packages are not properly registered in the service. 
  */
-public class RepositoryInstantiationException extends NeobaseRuntimeException {
+public class RepositoryInstantiationException extends FroggyException {
   public RepositoryInstantiationException(String message) { super(message); }
   public RepositoryInstantiationException(Throwable cause) {
       super(cause);

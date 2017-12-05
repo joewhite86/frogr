@@ -6,7 +6,7 @@ import de.whitefrog.froggy.model.Model
 /**
  * Interface common to all relationship models.
  */
-interface Relationship<out From : Model, out To : Model> : Base {
-  val from: From
-  val to: To
+interface Relationship<From : Model, To : Model> : Base {
+  var from: From?
+  var to: To?
 }

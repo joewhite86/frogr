@@ -1,7 +1,7 @@
 package de.whitefrog.froggy.repository;
 
 import de.whitefrog.froggy.Service;
-import de.whitefrog.froggy.exception.NeobaseRuntimeException;
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.exception.PersistException;
 import de.whitefrog.froggy.model.Model;
 import de.whitefrog.froggy.model.SaveContext;
@@ -44,7 +44,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
         new Class[] {from.getClass(), to.getClass()});
       return (T) constructor.newInstance(from, to);
     } catch(ReflectiveOperationException e) {
-      throw new NeobaseRuntimeException(e.getMessage(), e);
+      throw new FroggyException(e.getMessage(), e);
     }
   }
 

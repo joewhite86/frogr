@@ -2,7 +2,7 @@ package de.whitefrog.froggy.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonView
-import de.whitefrog.froggy.exception.NeobaseRuntimeException
+import de.whitefrog.froggy.exception.FroggyException
 import de.whitefrog.froggy.model.annotation.Fetch
 import de.whitefrog.froggy.model.annotation.NotPersistant
 import de.whitefrog.froggy.model.annotation.Unique
@@ -126,7 +126,7 @@ abstract class Entity : Model, Comparable<Base> {
         }
       }
     } catch (e: ReflectiveOperationException) {
-      throw NeobaseRuntimeException(e.message, e)
+      throw FroggyException(e.message, e)
     }
 
     return base
