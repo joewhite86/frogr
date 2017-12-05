@@ -364,7 +364,7 @@ public abstract class Persistence {
 //        }
         ignoredFields = Arrays.asList("id", "from", "to");
       } else {
-        node = Persistence.getNode((de.whitefrog.froggy.model.Model) model);
+        node = Persistence.getNode((Model) model);
       }
       
       for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {

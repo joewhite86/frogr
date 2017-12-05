@@ -33,13 +33,12 @@ abstract class Entity : Model, Comparable<Base> {
   /**
    * Unique identifier. String based, guaranteed unique identifier.
    */
-  @Uuid
-  @Fetch
-  @Unique
+  @Uuid @Fetch @Unique 
   override var uuid: String? = null
   /**
    * Type identifier. Used to determine the model class to use for this entity.
    */
+  @Fetch 
   override var type: String? = null
   /**
    * Model to use. Can be used for abstract parent classes to further determine 
@@ -98,6 +97,7 @@ abstract class Entity : Model, Comparable<Base> {
    * True, if the entity was already persisted.
    */
   override val persisted: Boolean
+    @JsonIgnore
     get() = id > 0 || uuid != null
 
   /**
@@ -222,22 +222,15 @@ abstract class Entity : Model, Comparable<Base> {
   }
 
   companion object {
-    @JvmField
-    val AllFields = "all"
-    @JvmField
-    val IdProperty = "id"
-    @JvmField
-    val ModifiedBy = "modifiedBy"
-    @JvmField
-    val LastModified = "lastModified"
-    @JvmField
-    val Created = "created"
-    @JvmField
-    val Type = "type"
-    @JvmField
-    val Model = "model"
-    @JvmField
-    val Uuid = "uuid"
+    @JvmField val AllFields = "all"
+    @JvmField val GravatarUrl = "gravatarUrl"
+    @JvmField val IdProperty = "id"
+    @JvmField val ModifiedBy = "modifiedBy"
+    @JvmField val LastModified = "lastModified"
+    @JvmField val Created = "created"
+    @JvmField val Type = "type"
+    @JvmField val Model = "model"
+    @JvmField val Uuid = "uuid"
     private val random = Random()
   }
 }

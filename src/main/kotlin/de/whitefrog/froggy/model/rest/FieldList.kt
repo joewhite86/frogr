@@ -49,7 +49,8 @@ class FieldList : HashSet<QueryField>() {
           }
         } else if (field.startsWith("[")) {
           // assuming sth like user.[name;login]
-          return parseFields(*field.substring(1, field.length - 1).split(";".toRegex()).dropLastWhile(String::isEmpty).toTypedArray())
+          return parseFields(*field.substring(1, field.length - 1)
+            .split(";".toRegex()).dropLastWhile(String::isEmpty).toTypedArray())
         }
         val queryField = QueryField(field, addAll)
         if (addAll) queryField.subFields(QueryField(Entity.AllFields))

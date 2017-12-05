@@ -86,17 +86,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         params.query(request.getParameter("query"));
       }
 
-      if(params.fields().isEmpty()) {
-        params.fields(Entity.AllFields);
-      }
-
-      // preceed language header, if set
-      // TODO: doesn't work when Accept-Language: de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4,fr;q=0.2
-//            Locale locale = headers.getAcceptableLanguages().get(0);
-//            if(!locale.equals(new Locale("*", ""))) {
-//                params.locale(locale);
-//            }
-
       return params;
     }
   }
@@ -195,7 +184,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
 
   private static FieldList resolveFields(String value) {
     List<String> fields = Arrays.asList(StringUtils.split(value, ","));
-    return FieldList.parseFields(fields, true);
+    return FieldList.parseFields(fields, false);
   }
 
   private static void resolveOrder(SearchParameter params, String value) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.froggy.exception.FroggyException
 import de.whitefrog.froggy.model.Base
 import de.whitefrog.froggy.model.Model
+import de.whitefrog.froggy.model.annotation.Fetch
 import de.whitefrog.froggy.model.annotation.NotPersistant
 import de.whitefrog.froggy.model.annotation.Unique
 import de.whitefrog.froggy.model.annotation.Uuid
@@ -32,10 +33,9 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
       field = value
       initialId = false
     }
-  @Uuid
-  @Unique
+  @Uuid @Unique @Fetch
   override var uuid: String? = null
-  @NotPersistant
+  @Fetch
   override var type: String? = null
   override var created: Long? = null
   @JsonView(Views.Secure::class)
@@ -45,14 +45,11 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
 
   @NotPersistant
   private var initialId = true
-  @NotPersistant
-  @JsonIgnore
+  @NotPersistant @JsonIgnore
   override var checkedFields: MutableList<String> = ArrayList()
-  @NotPersistant
-  @JsonIgnore
+  @NotPersistant @JsonIgnore
   override var fetchedFields: MutableList<String> = ArrayList()
-  @NotPersistant
-  @JsonIgnore
+  @NotPersistant @JsonIgnore
   override var removeProperties: MutableList<String> = ArrayList()
 
   override fun resetId() {

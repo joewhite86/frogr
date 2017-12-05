@@ -100,18 +100,6 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     return tag;
   }
 
-  public void fetch(de.whitefrog.froggy.model.relationship.Relationship relationship) {
-    fetch(relationship, new FieldList());
-  }
-
-  public void fetch(de.whitefrog.froggy.model.relationship.Relationship relationship, String... fields) {
-    fetch(relationship, FieldList.parseFields(fields));
-  }
-  
-  public void fetch(de.whitefrog.froggy.model.relationship.Relationship relationship, FieldList fields) {
-    Persistence.fetch(relationship, fields);
-  }
-
   @Override
   public T find(long id, String... fields) {
     return search().ids(id).fields(fields).single();
