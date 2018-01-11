@@ -44,7 +44,17 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     this.service = service;
     this.type = type;
   }
-  
+
+  @Override
+  public T createModel(PropertyContainer node) {
+    return createModel(node, new FieldList());
+  }
+
+  @Override
+  public boolean contains(T model) {
+    return model.getId() != -1 && find(model.getId()) != null;
+  }
+
   @Override
   public String getType() {
     return type;
@@ -58,7 +68,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
     return modelClass;
   }
-  
+
   Set<String> getModelInterfaces(Class<?> clazz) {
     Set<String> output = new HashSet<>();
     Class<?>[] interfaces = clazz.getInterfaces();
@@ -70,19 +80,9 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     }
     return output;
   }
-
+  
   public Logger logger() {
     return logger;
-  }
-
-  @Override
-  public boolean contains(T model) {
-    return model.getId() != -1 && find(model.getId()) != null;
-  }
-  
-  @Override
-  public T createModel(PropertyContainer node) {
-    return createModel(node, new FieldList());
   }
 
   public T fetch(T tag, String... fields) {

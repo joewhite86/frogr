@@ -1,10 +1,7 @@
 package de.whitefrog.froggy.persistence;
 
 import de.whitefrog.froggy.Service;
-import de.whitefrog.froggy.exception.FroggyException;
-import de.whitefrog.froggy.exception.PersistException;
-import de.whitefrog.froggy.exception.RelatedNotPersistedException;
-import de.whitefrog.froggy.exception.RepositoryNotFoundException;
+import de.whitefrog.froggy.exception.*;
 import de.whitefrog.froggy.model.Base;
 import de.whitefrog.froggy.model.Entity;
 import de.whitefrog.froggy.model.Model;
@@ -55,8 +52,8 @@ public class Relationships {
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
       return Persistence.get(getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction()));
-//      throw new RelationshipExistsException("a relationship " + annotation.type() +
-//        " between " + model + " and " + foreignModel + " already exists");
+//      throw new DuplicateEntryException("a relationship " + annotation.type() +
+//        " between " + model + " and " + foreignModel + " already exists", model);
     }
     RelationshipRepository<BaseRelationship<Model, Model>> repository;
     try {
