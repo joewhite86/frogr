@@ -305,7 +305,9 @@ public abstract class Persistence {
     if(model.getId() > 0) {
       return service.graph().getNodeById(model.getId());
     } else if(model.getUuid() != null && model.getType() != null) {
-      return service.graph().findNode(Label.label(model.getType()), Entity.Uuid, model.getUuid());
+      Node node = service.graph().findNode(Label.label(model.getType()), Entity.Uuid, model.getUuid());
+      model.setId(node.getId());
+      return node;
     } else {
       throw new UnsupportedOperationException("cant get a node without id or uuid");
     }
