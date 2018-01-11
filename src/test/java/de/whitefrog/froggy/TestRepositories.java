@@ -101,21 +101,20 @@ public class TestRepositories {
     }
   }
 
-  @Ignore
-  @Test(expected = DuplicateEntryException.class)
   public void createDuplicateRelationship() {
     try(Transaction tx = TestSuite.service().beginTx()) {
       Person model1 = repository.createModel();
       Person model2 = repository.createModel();
       repository.save(model1, model2);
 
+      model1.setLikes(new ArrayList<>());
       model1.getLikes().add(model2);
       repository.save(model1);
       
       model1.getLikes().clear();
       model1.getLikes().add(model2);
       repository.save(model1);
-
+      
       Likes duplicate = new Likes(model1, model2);
       duplicate.setField("test");
       relationships.save(duplicate);
