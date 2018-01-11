@@ -237,7 +237,7 @@ public abstract class Persistence {
         model.setId(rel.getId());
       }
       model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
-      fetch(model, fields, false);
+      service.repository(clazz).fetch(model, false, fields);
       return model;
     } catch(IllegalStateException e) {
       throw e;
