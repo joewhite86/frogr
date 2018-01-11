@@ -218,6 +218,7 @@ abstract class Entity : Model, Comparable<Base> {
 
   override fun toString(): String {
     val typeName = if (type() != null) type() else javaClass.simpleName
+    val id = if (id == -1L) uuid else id.toString()
     return "$typeName ($id)"
   }
 
