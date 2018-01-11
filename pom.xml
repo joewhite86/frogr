@@ -9,12 +9,12 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <neo4j.version>3.0.7</neo4j.version>
+        <neo4j.version>3.3.1</neo4j.version>
         <slf4j.version>1.7.5</slf4j.version>
         <dropwizard.version>1.0.6</dropwizard.version>
         <gson.version>2.7</gson.version>
         <logback.version>1.1.7</logback.version>
-        <kotlin.version>1.2.0</kotlin.version>
+        <kotlin.version>1.2.10</kotlin.version>
     </properties>
 
     <dependencies>
@@ -22,7 +22,25 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-enterprise</artifactId>
             <version>${neo4j.version}</version>
+            
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-nop</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-bolt</artifactId>
+            <version>${neo4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-shell</artifactId>
+            <version>${neo4j.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
