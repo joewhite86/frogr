@@ -18,8 +18,8 @@ import java.util.*
  * Cannot be abstract, because it is used in DefaultRelationshipRepository as default
  */
 open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To> {
-  override var from: From? = null
-  override var to: To? = null
+  lateinit override final var from: From
+  lateinit override final var to: To
   constructor(from: From, to: To): this() {
     this.from = from
     this.to = to
