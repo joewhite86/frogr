@@ -20,7 +20,7 @@ public class TestSuite {
   private static TemporaryService service;
 
   @BeforeClass
-  public static void setup() throws ConfigurationException {
+  public static void setup() {
     service();
   }
 

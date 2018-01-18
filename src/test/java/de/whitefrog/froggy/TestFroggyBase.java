@@ -1,7 +1,6 @@
 package de.whitefrog.froggy;
 
 import de.whitefrog.froggy.test.TemporaryService;
-import org.apache.commons.configuration.ConfigurationException;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -12,13 +11,13 @@ import org.slf4j.LoggerFactory;
 @Suite.SuiteClasses({
   TestRepositories.class
 })
-public class TestNeobase {
-  private static final Logger logger = LoggerFactory.getLogger(TestNeobase.class);
+public class TestFroggyBase {
+  private static final Logger logger = LoggerFactory.getLogger(TestFroggyBase.class);
 
   private static TemporaryService service;
 
   @BeforeClass
-  public static void setup() throws ConfigurationException {
+  public static void setup() {
     service();
   }
 
