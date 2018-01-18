@@ -1,5 +1,6 @@
 package de.whitefrog.froggy;
 
+import de.whitefrog.froggy.exception.FroggyException;
 import de.whitefrog.froggy.model.Base;
 import de.whitefrog.froggy.model.Graph;
 import de.whitefrog.froggy.model.Model;
@@ -19,9 +20,9 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.helpers.collection.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +46,7 @@ public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String neo4jConfig = "config/neo4j.properties";
   private static final String snapshotSuffix = "-SNAPSHOT";
-  private static String version;
-  protected enum State { Started, Running, ShuttingDown }
+  public enum State { Started, Running, ShuttingDown }
   
   private GraphDatabaseService graphDb;
   private String directory;
@@ -55,7 +55,6 @@ public class Service implements AutoCloseable {
   private RepositoryFactory repositoryFactory;
   private Set<String> packageRegistry = new HashSet<>();
   private Validator validator;
-  private boolean useBolt = true;
   private State state = State.Started;
 
   public Service() {
@@ -71,15 +70,9 @@ public class Service implements AutoCloseable {
   public void connect(String directory) {
     try {
       this.directory = directory;
-      GraphDatabaseSettings.BoltConnector bolt = GraphDatabaseSettings.boltConnector( "0" );
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
         .newEmbeddedDatabaseBuilder(new File(directory))
         .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
-      if(useBolt) {
-        builder
-          .setConfig(bolt.enabled, "true")
-          .setConfig(bolt.address, "localhost:7600");
-      }
       graphDb = builder.newGraphDatabase();
       Persistence.setService(this);
       
@@ -119,11 +112,13 @@ public class Service implements AutoCloseable {
 
   public void connect() {
     try {
-      Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
-      String directory = properties.getString("graph.location");
+      if(directory == null) {
+        Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
+        directory = properties.getString("graph.location");
+      }
       connect(directory);
     } catch (ConfigurationException e) {
-      logger.error("Could not read myband.properties", e);
+      logger.error("Could not read neo4j.properties", e);
     }
   }
   
@@ -139,8 +134,11 @@ public class Service implements AutoCloseable {
     return graph != null? graph.getVersion(): null;
   }
   public void setVersion(String version) {
-    graph.setVersion(version);
-    graphRepository.save(graph);
+    try(Transaction tx = beginTx()) {
+      graph.setVersion(version);
+      graphRepository.save(graph);
+      tx.success();
+    }
   }
   
   public State getState() {
@@ -155,12 +153,7 @@ public class Service implements AutoCloseable {
   }
 
   private static void registerShutdownHook(final Service service) {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        service.shutdown();
-      }
-    });
+    Runtime.getRuntime().addShutdownHook(new Thread(service::shutdown));
   }
 
   @SuppressWarnings("unchecked")
@@ -183,9 +176,7 @@ public class Service implements AutoCloseable {
   }
 
   public synchronized static String getManifestVersion() {
-    if(version != null) return version;
-
-    version = System.getProperty("version", Patcher.class.getPackage().getImplementationVersion());
+    String version = System.getProperty("version", Patcher.class.getPackage().getImplementationVersion());
 
     if(version == null) {
       version = "undefined";
@@ -196,17 +187,24 @@ public class Service implements AutoCloseable {
 
     return version;
   }
-  
+
+  /**
+   * 
+   */
+  @SuppressWarnings("unchecked")
   private void initializeSchema() {
     try(Transaction tx = beginTx()) {
+      Schema schema = graph().schema();
       for(Class modelClass : Persistence.cache().getAllModels()) {
         if(!Model.class.isAssignableFrom(modelClass) || Modifier.isAbstract(modelClass.getModifiers())) continue;
+        if(!Base.class.isAssignableFrom(modelClass)) 
+          throw new FroggyException("model class " + modelClass.getName() + " is not of type Base");
 
         ModelRepository repository = (ModelRepository) repository(modelClass);
         List<ConstraintDefinition> constraints = Iterables.asList(
-          graph().schema().getConstraints(repository.label()));
+          schema.getConstraints(repository.label()));
         List<IndexDefinition> indices = Iterables.asList(
-          graph().schema().getIndexes(repository.label()));
+          schema.getIndexes(repository.label()));
         
         for(FieldDescriptor descriptor : Persistence.cache().fieldMap(modelClass)) {
           AnnotationDescriptor annotations = descriptor.annotations();
@@ -225,10 +223,10 @@ public class Service implements AutoCloseable {
               existingIndex = index;
               break;
             }
-          }          
-          
+          }
+
           if(annotations.unique && existing == null) {
-            graph().schema().constraintFor(repository.label())
+            schema.constraintFor(repository.label())
               .assertPropertyIsUnique(descriptor.getName())
               .create();
             logger.info("created unique constraint on field \"{}\" for model \"{}\"",
@@ -240,7 +238,7 @@ public class Service implements AutoCloseable {
           }
 
           if(annotations.indexed != null && !annotations.unique && existingIndex == null) {
-            graph().schema().indexFor(repository.label())
+            schema.indexFor(repository.label())
               .on(descriptor.getName())
               .create();
             logger.info("created index on field \"{}\" for model \"{}\"",
@@ -252,6 +250,7 @@ public class Service implements AutoCloseable {
           }
         }
       }
+//      schema.awaitIndexesOnline(Long.MAX_VALUE, TimeUnit.SECONDS);
       tx.success();
     }
   }
@@ -264,7 +263,7 @@ public class Service implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     shutdown();
   }
 

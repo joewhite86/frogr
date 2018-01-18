@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+  TestService.class,
   TestRepositories.class,
   TestModels.class
 })
