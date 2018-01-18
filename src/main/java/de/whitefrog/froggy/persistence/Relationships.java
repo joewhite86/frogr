@@ -51,9 +51,9 @@ public class Relationships {
     Node foreignNode = Persistence.getNode(foreignModel);
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      return Persistence.get(getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction()));
-//      throw new DuplicateEntryException("a relationship " + annotation.type() +
-//        " between " + model + " and " + foreignModel + " already exists", model);
+//      return Persistence.get(getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction()));
+      throw new DuplicateEntryException("a relationship " + annotation.type() +
+        " between " + model + " and " + foreignModel + " already exists", model);
     }
     RelationshipRepository<BaseRelationship<Model, Model>> repository;
     try {
