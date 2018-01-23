@@ -78,7 +78,7 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   }
 
   override val persisted: Boolean
-    get() = id > 0 || uuid != null
+    get() = id > -1 || uuid != null
 
   override fun <T : Base> clone(vararg fields: String): T {
     return clone(Arrays.asList(*fields))
@@ -93,7 +93,7 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
     }
 
     base.type = type()
-    if (fields.isEmpty() || fields.contains(IdProperty) && id > 0) base.id = id
+    if (fields.isEmpty() || fields.contains(IdProperty) && id > -1) base.id = id
     return base
   }
 

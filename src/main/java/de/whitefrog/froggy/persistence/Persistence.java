@@ -302,7 +302,7 @@ public abstract class Persistence {
    */
   public static Node getNode(Model model) {
     Validate.notNull(model);
-    if(model.getId() > 0) {
+    if(model.getId() > -1) {
       return service.graph().getNodeById(model.getId());
     } else if(model.getUuid() != null && model.getType() != null) {
       Node node = service.graph().findNode(Label.label(model.getType()), Entity.Uuid, model.getUuid());

@@ -47,7 +47,7 @@ public class SaveContext<T extends Base> {
   public SaveContext(Repository<T> repository, T model) {
     this.repository = repository;
     this.model = model;
-    if(model.getId() > 0) {
+    if(model.getId() > -1) {
       original = repository.createModel(node());
     }
     else if(model.getUuid() != null) {
@@ -137,7 +137,7 @@ public class SaveContext<T extends Base> {
     if(node == null && original() != null) {
       if(model instanceof Model) node = repository.graph().getNodeById(original().getId());
       else node = repository.graph().getRelationshipById(original().getId());
-    } else if(node == null && model().getId() > 0) {
+    } else if(node == null && model().getId() > -1) {
       if(model instanceof Model) node = repository.graph().getNodeById(model().getId());
       else node = repository.graph().getRelationshipById(model().getId());
     }

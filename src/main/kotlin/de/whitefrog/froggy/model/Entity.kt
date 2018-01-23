@@ -98,7 +98,7 @@ abstract class Entity : Model, Comparable<Base> {
    */
   override val persisted: Boolean
     @JsonIgnore
-    get() = id > 0 || uuid != null
+    get() = id > -1 || uuid != null
 
   /**
    * Create a clone of this entity.
