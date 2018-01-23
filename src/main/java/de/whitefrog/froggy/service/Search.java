@@ -41,10 +41,20 @@ public class Search {
     this.params = new SearchParameter();
   }
 
+  /**
+   * Count the number of results.
+   * @return The result count
+   */
   public long count() {
     String id = CollectionUtils.isEmpty(params.returns())? "*": params.returns().get(0);
     return count(id);
   }
+
+  /**
+   * Count the number of results of a specific identifier.
+   * @param id The identifier to use
+   * @return The result count
+   */
   public long count(String id) {
     Query query = repository.queryBuilder().buildSimple(params);
     query.query(query.query() + " return count(" + id + ") as c");
@@ -54,7 +64,12 @@ public class Search {
     result.close();
     return count;
   }
-  
+
+  /**
+   * Adds all found field values.
+   * @param field The field to sum up
+   * @return The sum of all results
+   */
   public Number sum(String field) {
     Query query = repository.queryBuilder().buildSimple(params);
     query.query(query.query() + " return sum(" + field + ") as c");
@@ -64,6 +79,10 @@ public class Search {
     return sum;
   }
 
+  /**
+   * Get a list of results.
+   * @return A list of results
+   */
   public <T extends Base> List<T> list() {
     Stream<T> stream = (Stream<T>) search(params);
     List<T> list = stream.collect(Collectors.toList());
@@ -71,6 +90,10 @@ public class Search {
     return list;
   }
 
+  /**
+   * Get a set of results.
+   * @return A set of results
+   */
   public <T extends Base> Set<T> set() {
     Stream<T> stream = (Stream<T>) search(params);
     Set<T> set = stream.collect(Collectors.toSet());
@@ -78,6 +101,10 @@ public class Search {
     return set;
   }
 
+  /**
+   * Get a single result.
+   * @return A single result
+   */
   public <T extends Base> T single() {
     Stream<T> result = (Stream<T>) search(params.limit(1));
     Optional<T> optional = result.findFirst();
@@ -85,6 +112,11 @@ public class Search {
     return optional.orElse(null);
   }
 
+  /**
+   * Get a long value. Tries to convert the result to Long and throws an 
+   * UnsupportedOperationException if that fails.
+   * @return A long value
+   */
   public Long toLong() {
     Query query = repository.queryBuilder().buildSimple(params);
     if(params.returns().size() > 1) {
@@ -100,6 +132,11 @@ public class Search {
     else throw new UnsupportedOperationException(o.getClass().getSimpleName() + " cannot be cast to Long");
   }
 
+  /**
+   * Get a Integer value. Tries to convert the result to Integer and 
+   * throws an UnsupportedOperationException if that fails.
+   * @return A Integer value
+   */
   public Integer toInt() {
     Query query = repository.queryBuilder().buildSimple(params);
     if(params.returns().size() > 1) {
@@ -114,7 +151,7 @@ public class Search {
     else if(o instanceof Integer) return (Integer) o;
     else throw new UnsupportedOperationException(o.getClass().getSimpleName() + " cannot be cast to Integer");
   }
-
+  
   private Stream<? extends Base> search(SearchParameter params) {
     Stream<? extends Base> stream;
     Query query = repository.queryBuilder().build(params);
@@ -157,9 +194,11 @@ public class Search {
       }
     }
   }
-  
-  
 
+
+  /**
+   * Print queries and parameters to stdout.
+   */
   public Search debug() {
     debugQuery = true;
     return this;
@@ -170,96 +209,181 @@ public class Search {
     return this;
   }
 
+  /**
+   * Fields to fetch on results.
+   * @param fields Fields to fetch
+   */
   public Search fields(String... fields) {
     params.fields(fields);
     return this;
   }
 
+  /**
+   * Fields to fetch on results.
+   * @param fields QueryField's to fetch
+   */
   public Search fields(QueryField... fields) {
     params.fields(fields);
     return this;
   }
 
+  /**
+   * Fields to fetch on results.
+   * @param fields FieldList containing all fields to fetch
+   */
   public Search fields(FieldList fields) {
     params.fields(fields);
     return this;
   }
 
+  /**
+   * Filter results by field values. Supports only Filter.Equals filter.
+   * @param property Field to apply the filter on
+   * @param value Value to look for
+   */
   public Search filter(String property, String value) {
     params.filter(property, value);
     return this;
   }
 
+  /**
+   * Adds a filter for results.
+   * @param filter Filter to add
+   */
   public Search filter(Filter filter) {
     params.filter(filter);
     return this;
   }
 
+  /**
+   * Replaces the underlying SearchParameter object.
+   * This should be called first, to prevent overriding.
+   * @param params SearchParameter object
+   */
   public Search params(SearchParameter params) {
     this.params = params;
     return this;
   }
 
+  /**
+   * Locale to use for queries.
+   * @param locale Locale to use
+   */
   public Search locale(Locale locale) {
     params.locale(locale);
     return this;
   }
 
+  /**
+   * Query indexed fields. 
+   * Use '*' as wildcard operator at start or end of query.
+   * Use the form 'field:queryString' to query only specific fields.
+   * Could be replaced by filters. But this provides a convenient way to make simple queries.
+   * @param query The querystring to use
+   */
   public Search query(String query) {
     params.query(query);
     return this;
   }
 
+  /**
+   * Start results at a specific position. Especially useful in combination
+   * when results are ordered.
+   * @param start The position to start from.
+   */
   public Search start(int start) {
     params.start(start);
     return this;
   }
 
+  /**
+   * Filter results by ids.
+   * @param ids Ids to include in results
+   */
   public Search ids(Long... ids) {
     params.ids(ids);
     return this;
   }
 
+  /**
+   * Filter results by ids.
+   * @param ids Ids to include in results as set
+   */
   public Search ids(Set<Long> ids) {
     params.ids(ids);
     return this;
   }
 
+  /**
+   * Filter results by uuids.
+   * @param uuids UUIDs to include in results
+   */
   public Search uuids(String... uuids) {
     params.uuids(uuids);
     return this;
   }
 
+  /**
+   * Filter results by uuids.
+   * @param uuids UUIDs to include in results as list
+   */
   public Search uuids(List<String> uuids) {
     params.uuids(uuids);
     return this;
   }
 
+  /**
+   * Filter results by uuids.
+   * @param uuids UUIDs to include in results as set
+   */
   public Search uuids(Set<String> uuids) {
     params.uuids(uuids);
     return this;
   }
 
+  /**
+   * Limit results to a specific count.
+   * @param limit Amount of results to return
+   */
   public Search limit(int limit) {
     params.limit(limit);
     return this;
   }
 
+  /**
+   * Page number to return, starts with 1.
+   * Should be used in combination with limit.
+   * If set, there's no start required.
+   * @param page Page number
+   */
   public Search page(int page) {
     params.page(page);
     return this;
   }
 
+  /**
+   * Sort results by a specific field in ascending order.
+   * @param field Field, by which results will be sorted
+   */
   public Search orderBy(String field) {
     params.orderBy(field);
     return this;
   }
 
+  /**
+   * Sort results by a specific field and given order.
+   * @param field Field, by which results will be sorted
+   * @param dir Sort direction (ascending or descending)
+   */
   public Search orderBy(String field, SearchParameter.SortOrder dir) {
     params.orderBy(field, dir);
     return this;
   }
 
+  /**
+   * Fields to return.
+   * @param fields Fields to return
+   */
   public Search returns(String... fields) {
     params.returns(fields);
     return this;
