@@ -3,6 +3,7 @@ package de.whitefrog.froggy.repository;
 import de.whitefrog.froggy.Service;
 import de.whitefrog.froggy.exception.RepositoryInstantiationException;
 import de.whitefrog.froggy.exception.RepositoryNotFoundException;
+import de.whitefrog.froggy.model.Model;
 import de.whitefrog.froggy.model.relationship.Relationship;
 import de.whitefrog.froggy.persistence.Persistence;
 import org.apache.commons.lang.reflect.ConstructorUtils;
@@ -23,28 +24,28 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Factory to build repository instances.
+ * Factory to build {@link Repository repository} instances.
  * Uses a static and a local cache to prevent from double allocations.
- * Works in a multi-thread environment with different services running at the same time.
+ * Works in a multi-threaded environment with different {@link Service services} running at the same time.
  */
 public class RepositoryFactory {
   
   private static final Logger logger = LoggerFactory.getLogger(RepositoryFactory.class);
   /**
-   * Static repository cache by name and service.
+   * Static {@link Repository repository} cache by name and {@link Service service}.
    */
   private static final Map<Service, Map<String, Repository>> staticCache = new HashMap<>();
   /**
-   * Static repository class cache.
+   * Static {@link Repository repository} {@link Class class} cache.
    */
   private static final Map<String, Class> repositoryCache = new HashMap<>();
 
   /**
-   * Local service.
+   * Local {@link Service service}.
    */
   private final Service service;
   /**
-   * Local repository cache.
+   * Local {@link Repository repository} cache.
    */
   private final Map<String, Repository> cache;
   
@@ -69,7 +70,7 @@ public class RepositoryFactory {
   }
 
   /**
-   * Return all currently cached repository classes.
+   * Return all currently cached {@link Repository repository} {@link Class classes}.
    * @return All currently cached repository classes
    */
   public Collection<Class> repositoryClasses() {
@@ -77,7 +78,7 @@ public class RepositoryFactory {
   }
 
   /**
-   * Return all currently cached repositories.
+   * Return all currently cached {@link Repository repositories}.
    * @return All currently cached repositories
    */
   public Collection<Repository> cache() {
@@ -85,7 +86,7 @@ public class RepositoryFactory {
   }
 
   /**
-   * Get the repository for a specific model class.
+   * Get the {@link Repository repository} for a specific {@link Model model} {@link Class class}.
    * @param modelClass Model class used to lookup the repository
    * @return Repository used for the passed model class
    */
@@ -133,7 +134,7 @@ public class RepositoryFactory {
   }
 
   /**
-   * Get the repository for the model with a specific name.
+   * Get the {@link Repository repository} for the {@link Model model} with a specific name.
    * @param name Model name used to lookup the repository
    * @return Repository used for the passed model name
    */
@@ -151,9 +152,9 @@ public class RepositoryFactory {
   }
 
   /**
-   * Register a new repository manually. It should not be neccessary to call
-   * this under normal circumstances. Use the service registry appropriatly.
-   * @param name Model name used in the repository
+   * Register a new {@link Repository repository} manually. It should not be neccessary to call
+   * this under normal circumstances. Use {@link Service#register(String) the service registry} instead.
+   * @param name {@link Model} name used in the repository
    * @param repository Repository to add to the cache
    */
   public void register(String name, Repository repository) {
