@@ -14,8 +14,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestModels {
-  public static PersonRepository repository;
-  public static RelationshipRepository<Likes> relationships;
+  private static PersonRepository repository;
+  private static RelationshipRepository<Likes> relationships;
 
   @BeforeClass
   public static void before() {

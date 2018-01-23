@@ -1,27 +1,26 @@
 package de.whitefrog.froggy;
 
 import de.whitefrog.froggy.exception.DuplicateEntryException;
-import de.whitefrog.froggy.model.rest.Filter;
 import de.whitefrog.froggy.repository.RelationshipRepository;
 import de.whitefrog.froggy.test.Likes;
 import de.whitefrog.froggy.test.Person;
 import de.whitefrog.froggy.test.PersonRepository;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphdb.Transaction;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRepositories {
-  public static PersonRepository persons;
-  public static RelationshipRepository<Likes> likesRepository;
+  private static PersonRepository persons;
+  private static RelationshipRepository<Likes> likesRepository;
   
   @BeforeClass
   public static void before() {
-    persons = new PersonRepository(TestSuite.service());
+    persons = TestSuite.service().repository(Person.class);
     likesRepository = TestSuite.service().repository(Likes.class);
   }
   
@@ -74,8 +73,8 @@ public class TestRepositories {
       
       Likes likes = new Likes(model1, model2);
       likes.setField("test");
-      TestRepositories.likesRepository.save(likes);
-      likes = TestRepositories.likesRepository.find(likes.getId(), "from", "to", "field");
+      likesRepository.save(likes);
+      likes = likesRepository.find(likes.getId(), "from", "to", "field");
       assertThat(likes).isNotNull();
       assertThat(likes.getField()).isEqualTo("test");
       assertThat(likes.getFrom()).isEqualTo(model1);
