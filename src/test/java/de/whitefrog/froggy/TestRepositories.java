@@ -1,10 +1,13 @@
 package de.whitefrog.froggy;
 
 import de.whitefrog.froggy.exception.DuplicateEntryException;
+import de.whitefrog.froggy.exception.MissingRequiredException;
+import de.whitefrog.froggy.exception.RepositoryInstantiationException;
+import de.whitefrog.froggy.repository.DefaultRepository;
+import de.whitefrog.froggy.repository.ModelRepository;
 import de.whitefrog.froggy.repository.RelationshipRepository;
-import de.whitefrog.froggy.test.Likes;
-import de.whitefrog.froggy.test.Person;
-import de.whitefrog.froggy.test.PersonRepository;
+import de.whitefrog.froggy.repository.Repository;
+import de.whitefrog.froggy.test.*;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -38,6 +41,15 @@ public class TestRepositories {
       model = persons.find(model.getId(), "field");
       assertThat(model).isNotNull();
       assertThat(model.getField()).isEqualTo("test");
+    }
+  }
+  
+  @Test(expected = MissingRequiredException.class)
+  public void createModelMissingRequired() {
+    try(Transaction tx = TestSuite.service().beginTx()) {
+      ModelRepository<PersonRequiredField> repository = TestSuite.service().repository(PersonRequiredField.class);
+      PersonRequiredField model = repository.createModel();
+      repository.save(model);
     }
   }
   
@@ -132,5 +144,22 @@ public class TestRepositories {
       Person found = persons.findByUuid(person.getUuid());
       assertThat(found).isEqualTo(person);
     }
+  }
+  
+  @Test(expected = RepositoryInstantiationException.class)
+  public void invalidRepository() {
+    TestSuite.service().repository("Invalid");
+  }
+  
+  @Test
+  public void defaultRepository() {
+    Repository<Clothing> repository = TestSuite.service().repository(Clothing.class);
+    assertThat(repository).isInstanceOfAny(DefaultRepository.class);
+    assertThat(TestSuite.service().repositoryFactory().cache()).contains(repository);
+  }
+  
+  @Test
+  public void repositoryCache() {
+    assertThat(TestSuite.service().repositoryFactory().cache()).contains(likesRepository);
   }
 }
