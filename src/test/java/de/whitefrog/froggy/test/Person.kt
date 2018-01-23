@@ -12,6 +12,7 @@ class Person : Entity() {
   @Unique
   var uniqueField: String? = null
   var field: String? = null
+  var number: Long? = null
   @Lazy
   @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: List<Person>? = null

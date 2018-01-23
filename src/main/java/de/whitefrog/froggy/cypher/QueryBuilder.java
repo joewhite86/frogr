@@ -325,11 +325,11 @@ public class QueryBuilder {
 
   private String getQueryComparator(String query) {
     if(query.startsWith("*") && !query.endsWith("*")) {
-      return "starts with";
+      return "ends with";
     } else if(query.startsWith("*") && query.endsWith("*")) {
       return "contains";
     } else if(query.endsWith("*")) {
-      return "ends with";
+      return "starts with";
     } else {
       return  "=";
     }

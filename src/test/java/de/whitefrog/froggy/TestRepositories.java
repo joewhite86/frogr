@@ -99,6 +99,9 @@ public class TestRepositories {
     }
   }
 
+  // There will not be an exception, else we run into problems
+  // on not named relationships that already exist
+  @Ignore
   @Test(expected = DuplicateEntryException.class)
   public void createDuplicateRelationship() {
     try(Transaction tx = TestSuite.service().beginTx()) {
@@ -128,40 +131,6 @@ public class TestRepositories {
       assertThat(person.getUuid()).isNotEmpty();
       Person found = persons.findByUuid(person.getUuid());
       assertThat(found).isEqualTo(person);
-    }
-  }
-  
-  @Test
-  public void search() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
-      Person person1 = persons.createModel();
-      person1.setField("test1");
-      Person person2 = persons.createModel();
-      person2.setField("test2");
-      persons.save(person1, person2);
-
-      Likes likes1 = new Likes(person1, person2);
-      
-      Likes likes2 = new Likes(person2, person1);
-      likesRepository.save(likes1, likes2);
-      
-      List<Person> persons = TestRepositories.persons.search()
-        .filter(new Filter.StartsWith("field", "test"))
-        .list();
-      
-      assertThat(persons).hasSize(2);
-
-      persons = TestRepositories.persons.search()
-        .filter(new Filter.EndsWith("field", "t1"))
-        .list();
-
-      assertThat(persons).hasSize(1);
-
-      persons = TestRepositories.persons.search()
-        .filter(new Filter.Contains("field", "est"))
-        .list();
-
-      assertThat(persons).hasSize(2);
     }
   }
 }

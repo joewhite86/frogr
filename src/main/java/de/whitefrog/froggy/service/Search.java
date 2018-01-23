@@ -82,7 +82,7 @@ public class Search {
     Stream<T> result = (Stream<T>) search(params.limit(1));
     Optional<T> optional = result.findFirst();
     result.close();
-    return optional.isPresent()? optional.get(): null;
+    return optional.orElse(null);
   }
 
   public Long toLong() {
@@ -92,9 +92,12 @@ public class Search {
     }
     query.query(query.query() + " return " + params.returns().get(0) + " as c");
     Result result = execute(query);
-    Long l = result.hasNext()? (Long) result.columnAs("c").next(): null;
+    Object o = result.hasNext()? result.columnAs("c").next(): null;
     result.close();
-    return l;
+    if(o == null) return null;
+    else if(o instanceof Long) return (Long) o;
+    else if(o instanceof Integer) return ((Integer)o).longValue();
+    else throw new UnsupportedOperationException(o.getClass().getSimpleName() + " cannot be cast to Long");
   }
 
   public Integer toInt() {
@@ -104,9 +107,12 @@ public class Search {
     }
     query.query(query.query() + " return " + params.returns().get(0) + " as c");
     Result result = execute(query);
-    Integer i = result.hasNext()? (Integer) result.columnAs("c").next(): null;
+    Object o = result.hasNext()? result.columnAs("c").next(): null;
     result.close();
-    return i;
+    if(o == null) return null;
+    else if(o instanceof Long) return ((Long) o).intValue();
+    else if(o instanceof Integer) return (Integer) o;
+    else throw new UnsupportedOperationException(o.getClass().getSimpleName() + " cannot be cast to Integer");
   }
 
   private Stream<? extends Base> search(SearchParameter params) {
