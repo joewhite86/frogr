@@ -2,6 +2,7 @@ package de.whitefrog.froggy
 
 import org.junit.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Ignore
 
 class TestService {
   @Test
@@ -27,7 +28,9 @@ class TestService {
     System.setProperty("version", "1.0.1-SNAPSHOT")
     assertThat(Service.getManifestVersion()).isEqualTo("1.0.1")
   }
+  
   @Test
+  @Ignore
   fun restartService() {
     TestSuite.service().shutdown()
     TestSuite.service().connect()
