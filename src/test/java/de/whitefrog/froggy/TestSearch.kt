@@ -1,6 +1,7 @@
 package de.whitefrog.froggy
 
 import de.whitefrog.froggy.model.rest.Filter
+import de.whitefrog.froggy.model.rest.SearchParameter
 import de.whitefrog.froggy.repository.RelationshipRepository
 import de.whitefrog.froggy.test.Likes
 import de.whitefrog.froggy.test.Person
@@ -147,6 +148,48 @@ class TestSearch {
     TestSuite.service().beginTx().use {
       val results = persons.search().query("uniqueField:test*").list<Person>()
       assertThat(results).isNotEmpty
+    }
+  }
+  
+  @Test
+  fun paging() {
+    TestSuite.service().beginTx().use { 
+      val results = persons.search().list<Person>()
+      var page = persons.search().limit(1).list<Person>()
+      assertThat(page).hasSize(1)
+      assertThat(page[0]).isEqualTo(results[0])
+      page = persons.search().limit(1).page(2).list()
+      assertThat(page).hasSize(1)
+      assertThat(page[0]).isEqualTo(results[1])
+    }
+  }
+  
+  @Test
+  fun orderBy() {
+    TestSuite.service().beginTx().use { 
+      var results = persons.search()
+        .orderBy("number", SearchParameter.SortOrder.ASC)
+        .fields("number")
+        .list<Person>()
+      var prev: Person? = null
+      for(result in results) {
+        if(prev != null) {
+          assertThat(result.number).isGreaterThan(prev.number)
+        }
+        prev = result
+      }
+      
+      prev = null
+      results = persons.search()
+        .orderBy("number", SearchParameter.SortOrder.DESC)
+        .fields("number")
+        .list()
+      for(result in results) {
+        if(prev != null) {
+          assertThat(result.number).isLessThan(prev.number)
+        }
+        prev = result
+      }
     }
   }
 
