@@ -11,14 +11,18 @@ import java.io.IOException;
 
 public class TemporaryService extends Service {
   private final TemporaryFolder folder = new TemporaryFolder();
+  private String path;
 
   @Override
   public void connect() {
     try {
-      folder.create();
-      register("de.whitefrog.froggy");
-      super.connect(folder.newFolder().getAbsolutePath());
-      System.out.println("GraphDb @ " + folder.newFolder().getAbsolutePath());
+      if(path == null) {
+        folder.create();
+        register("de.whitefrog.froggy");
+        path = folder.newFolder().getAbsolutePath();
+      }
+      super.connect(path);
+      System.out.println("GraphDb @ " + path);
     } catch (IOException e) {
       e.printStackTrace();
     }
