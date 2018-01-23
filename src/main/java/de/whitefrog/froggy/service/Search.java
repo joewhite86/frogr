@@ -27,6 +27,15 @@ import java.util.stream.Stream;
 /**
  * Provides search filtering, counting, fetching, ordering and paging.
  * Can return results in different formats.
+ * Use as follows:
+ * <pre>
+ *   <code>List<ModelType> results = repository.search()
+ *       .filter("field", "value*")
+ *       .fields("fieldA", "fieldB")
+ *       .limit(10)
+ *       .page(2)
+ *       .list();</code>
+ * </pre>
  */
 public class Search {
   private static final Logger logger = LoggerFactory.getLogger(Search.class);
@@ -80,8 +89,8 @@ public class Search {
   }
 
   /**
-   * Get a list of results.
-   * @return A list of results
+   * Get a {@link List list} of results.
+   * @return A {@link List list} of results
    */
   public <T extends Base> List<T> list() {
     Stream<T> stream = (Stream<T>) search(params);
@@ -91,8 +100,8 @@ public class Search {
   }
 
   /**
-   * Get a set of results.
-   * @return A set of results
+   * Get a {@link Set set} of results.
+   * @return A {@link Set set} of results
    */
   public <T extends Base> Set<T> set() {
     Stream<T> stream = (Stream<T>) search(params);
@@ -113,9 +122,9 @@ public class Search {
   }
 
   /**
-   * Get a long value. Tries to convert the result to Long and throws an 
-   * UnsupportedOperationException if that fails.
-   * @return A long value
+   * Get a {@link Long} value. Tries to convert the result to {@link Long} and throws an 
+   * {@link UnsupportedOperationException} if that fails.
+   * @return A {@link Long} value
    */
   public Long toLong() {
     Query query = repository.queryBuilder().buildSimple(params);
@@ -133,9 +142,9 @@ public class Search {
   }
 
   /**
-   * Get a Integer value. Tries to convert the result to Integer and 
-   * throws an UnsupportedOperationException if that fails.
-   * @return A Integer value
+   * Get a {@link Integer} value. Tries to convert the result to {@link Integer} and 
+   * throws an {@link UnsupportedOperationException} if that fails.
+   * @return A {@link Integer} value
    */
   public Integer toInt() {
     Query query = repository.queryBuilder().buildSimple(params);
@@ -220,7 +229,7 @@ public class Search {
 
   /**
    * Fields to fetch on results.
-   * @param fields QueryField's to fetch
+   * @param fields {@link QueryField}'s to fetch
    */
   public Search fields(QueryField... fields) {
     params.fields(fields);
@@ -229,7 +238,7 @@ public class Search {
 
   /**
    * Fields to fetch on results.
-   * @param fields FieldList containing all fields to fetch
+   * @param fields {@link FieldList} containing all fields to fetch
    */
   public Search fields(FieldList fields) {
     params.fields(fields);
@@ -237,7 +246,7 @@ public class Search {
   }
 
   /**
-   * Filter results by field values. Supports only Filter.Equals filter.
+   * Filter results by field values. Supports only {@link Filter.Equals} filter.
    * @param property Field to apply the filter on
    * @param value Value to look for
    */
@@ -247,8 +256,8 @@ public class Search {
   }
 
   /**
-   * Adds a filter for results.
-   * @param filter Filter to add
+   * Adds a {@link Filter filter} for results.
+   * @param filter {@link Filter} to add
    */
   public Search filter(Filter filter) {
     params.filter(filter);
@@ -256,9 +265,9 @@ public class Search {
   }
 
   /**
-   * Replaces the underlying SearchParameter object.
+   * Replaces the underlying {@link SearchParameter} object.
    * This should be called first, to prevent overriding.
-   * @param params SearchParameter object
+   * @param params {@link SearchParameter} object
    */
   public Search params(SearchParameter params) {
     this.params = params;
@@ -266,8 +275,8 @@ public class Search {
   }
 
   /**
-   * Locale to use for queries.
-   * @param locale Locale to use
+   * {@link Locale} to use for queries.
+   * @param locale {@link Locale} to use
    */
   public Search locale(Locale locale) {
     params.locale(locale);
@@ -278,7 +287,7 @@ public class Search {
    * Query indexed fields. 
    * Use '*' as wildcard operator at start or end of query.
    * Use the form 'field:queryString' to query only specific fields.
-   * Could be replaced by filters. But this provides a convenient way to make simple queries.
+   * Could be replaced by {@link Filter filters}. But this provides a convenient way to make simple queries.
    * @param query The querystring to use
    */
   public Search query(String query) {
@@ -288,7 +297,7 @@ public class Search {
 
   /**
    * Start results at a specific position. Especially useful in combination
-   * when results are ordered.
+   * when results are {@link #orderBy(String, SearchParameter.SortOrder) ordered}.
    * @param start The position to start from.
    */
   public Search start(int start) {
@@ -352,8 +361,8 @@ public class Search {
 
   /**
    * Page number to return, starts with 1.
-   * Should be used in combination with limit.
-   * If set, there's no start required.
+   * Should be used in combination with {@link #limit(int) limit}.
+   * If set, there's no {@link #start(int) start} required.
    * @param page Page number
    */
   public Search page(int page) {
