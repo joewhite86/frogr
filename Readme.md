@@ -1,4 +1,4 @@
 Froggy
 ======
 
-Find the documentation at froggy.readthedocs.io
+Find the documentation at [froggy.readthedocs.io](http://froggy.readthedocs.io)
