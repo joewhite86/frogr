@@ -44,10 +44,9 @@ import java.util.Set;
  */
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
-  private static final String neo4jConfig = "config/neo4j.properties";
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown }
-  
+  public enum State { Started, Running, ShuttingDown;}
+
   private GraphDatabaseService graphDb;
   private String directory;
   private GraphRepository graphRepository;
@@ -55,6 +54,7 @@ public class Service implements AutoCloseable {
   private RepositoryFactory repositoryFactory;
   private Set<String> packageRegistry = new HashSet<>();
   private Validator validator;
+  private String neo4jConfig = "config/neo4j.properties";
   private State state = State.Started;
 
   public Service() {
@@ -128,6 +128,10 @@ public class Service implements AutoCloseable {
   
   public String directory() {
     return directory;
+  }
+  
+  public void setConfig(String configFile) {
+    neo4jConfig = configFile;
   }
 
   public String getVersion() {
