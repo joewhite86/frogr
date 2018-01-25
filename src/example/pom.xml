@@ -7,7 +7,7 @@
     <artifactId>froggy-example</artifactId>
     <groupId>de.whitefrog</groupId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     
     <properties>
         <kotlin.version>1.2.10</kotlin.version>
@@ -17,7 +17,7 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>froggy-base</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
