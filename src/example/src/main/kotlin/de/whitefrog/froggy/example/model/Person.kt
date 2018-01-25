@@ -17,7 +17,7 @@ class Person() : Entity() {
   @Required
   var name: String? = null
 
-  @RelatedTo(type = RelationshipTypes.MarriedWith, direction = Direction.BOTH, multiple = false)
+  @RelatedTo(type = RelationshipTypes.MarriedWith, direction = Direction.BOTH)
   var marriedWith: Person? = null
   @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
   var parents: List<Person>? = null

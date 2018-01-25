@@ -5,7 +5,6 @@ import de.whitefrog.froggy.test.Likes;
 import de.whitefrog.froggy.test.Person;
 import de.whitefrog.froggy.test.PersonRepository;
 import de.whitefrog.froggy.test.TemporaryService;
-import org.apache.commons.configuration.ConfigurationException;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

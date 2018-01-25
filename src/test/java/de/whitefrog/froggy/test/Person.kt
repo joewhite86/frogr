@@ -16,4 +16,6 @@ class Person : Entity() {
   @Lazy
   @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: List<Person>? = null
+  @RelatedTo(direction = Direction.BOTH, type = "MarriedWith")
+  var marriedWith: Person? = null
 }
