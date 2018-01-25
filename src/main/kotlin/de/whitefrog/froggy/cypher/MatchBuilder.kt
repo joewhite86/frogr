@@ -11,6 +11,7 @@ class MatchBuilder {
   private var relationshipType: String = ""
   private var to: String = ""
   private var toLabel: String = ""
+  private var direction: String = ">"
 
   fun from(from: String): MatchBuilder {
     this.from = from
@@ -41,8 +42,13 @@ class MatchBuilder {
     this.toLabel = ":$toLabel"
     return this
   }
+  
+  fun undirected(): MatchBuilder {
+    this.direction = ""
+    return this
+  }
 
   fun build(): String {
-    return "($from$fromLabel)-[$relationship$relationshipType]->($to$toLabel)"
+    return "($from$fromLabel)-[$relationship$relationshipType]-$direction($to$toLabel)"
   }
 }

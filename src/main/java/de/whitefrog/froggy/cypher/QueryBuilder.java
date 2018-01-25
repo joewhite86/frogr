@@ -65,7 +65,8 @@ public class QueryBuilder {
             .relationship(order.field())
             .relationshipType(descriptor.relationshipCount.type());
           
-          if(descriptor.relationshipCount.direction().equals(Direction.OUTGOING)) {
+          if(descriptor.relationshipCount.direction().equals(Direction.OUTGOING) ||
+              descriptor.relationshipCount.direction().equals(Direction.BOTH)) {
             match.from(id()).fromLabel(type);
             if(!descriptor.relationshipCount.otherModel().equals(Model.class)) 
               match.toLabel(descriptor.relationshipCount.otherModel().getSimpleName());
@@ -73,6 +74,9 @@ public class QueryBuilder {
             match.to(id()).toLabel(type);
             if(!descriptor.relationshipCount.otherModel().equals(Model.class))
               match.fromLabel(descriptor.relationshipCount.otherModel().getSimpleName());
+          }
+          if(descriptor.relationshipCount.direction().equals(Direction.BOTH)) {
+            match.undirected();
           }
           matches.put(order.field(), match.build());
         }
@@ -113,12 +117,16 @@ public class QueryBuilder {
           MatchBuilder match = new MatchBuilder()
             .relationshipType(descriptor.relatedTo.type());
           if(isRelationship) match.relationship(returnsKey);
-          if(descriptor.relatedTo.direction().equals(Direction.OUTGOING)) {
+          if(descriptor.relatedTo.direction().equals(Direction.OUTGOING) ||
+              descriptor.relatedTo.direction().equals(Direction.BOTH)) {
             match.from(id()).fromLabel(type);
             if(!isRelationship) match.to(returnsKey);
           } else {
             match.to(id()).toLabel(type);
             if(!isRelationship) match.from(returnsKey);
+          }
+          if(descriptor.relatedTo.direction().equals(Direction.BOTH)) {
+            match.undirected();
           }
           matches.put(returnsKey, match.build());
         }
@@ -156,7 +164,8 @@ public class QueryBuilder {
     String className = descriptor.baseClass().getSimpleName();
 
     if(annotations.relatedTo != null) {
-      if(annotations.relatedTo.direction().equals(Direction.OUTGOING)) {
+      if(annotations.relatedTo.direction().equals(Direction.OUTGOING) ||
+          annotations.relatedTo.direction().equals(Direction.BOTH)) {
         match.from(id);
         if(id.equals(id())) {
           match.fromLabel(type);
@@ -176,6 +185,9 @@ public class QueryBuilder {
         } else {
           match.from(fieldName).fromLabel(className);
         }
+      }
+      if(annotations.relatedTo.direction().equals(Direction.BOTH)) {
+        match.undirected();
       }
       match.relationshipType(annotations.relatedTo.type());
       if(descriptor.isRelationship()) match.relationship(fieldName);

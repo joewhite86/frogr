@@ -73,8 +73,8 @@ public class Relationships {
     } else if(annotation.direction() == Direction.INCOMING) {
       relationship = repository.createModel(foreignModel, model);
     } else {
-      // TODO: implement sth useful here
-      throw new IllegalArgumentException();
+      // on Direction.BOTH we can create either a OUTGOING or an INCOMING relation
+      relationship = repository.createModel(model, foreignModel);
     }
     repository.save(relationship);
     
@@ -265,7 +265,7 @@ public class Relationships {
   }
 
   /**
-   * Used only from Persistence class with the models save context and field descriptor
+   * Used only from Persistence class with the models save context and field descriptor.
    */
   @SuppressWarnings("unchecked")
   static <T extends Model> void saveField(SaveContext<T> context, FieldDescriptor descriptor)
@@ -336,8 +336,9 @@ public class Relationships {
               throw new PersistException(relModel + " should have " + model + " as 'from' field set");
             }
           } else if(relatedTo.direction().equals(Direction.BOTH)) {
-            // TODO: Handle "BOTH"
-            throw new UnsupportedOperationException("BOTH is not supported yet");
+            if(!relModel.getFrom().equals(model) && !relModel.getTo().equals(model)) {
+              throw new PersistException(relModel + "should have " + model + " either set as 'from' or 'to' field");
+            }
           }
           repository.save(relModel);
         }
