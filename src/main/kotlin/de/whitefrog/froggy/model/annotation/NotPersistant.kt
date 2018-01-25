@@ -1,7 +1,7 @@
 package de.whitefrog.froggy.model.annotation
 
 /**
- * Indicates that a field should not be persistated.
+ * The field should not be persisted.
  */
 @MustBeDocumented
 @Target(AnnotationTarget.FIELD)

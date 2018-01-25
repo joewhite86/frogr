@@ -1,8 +1,8 @@
 package de.whitefrog.froggy.model.annotation
 
 /**
- * Indicates a property must be and will be unique.
- * This includes that the property will be indexed as well.
+ * The field is unique across all models of the same type. Will be indexed as well.
+ * If a duplicate value is passed an exception will be thrown.
  */
 @MustBeDocumented
 @Target(AnnotationTarget.FIELD)

@@ -9,7 +9,9 @@ import java.util.Arrays;
 
 public class Application extends de.whitefrog.froggy.Application<Configuration> {
   public Application() {
+    // register the rest classes
     register("de.whitefrog.froggy.example.rest");
+    // register repositories and models
     serviceInjector().service().register("de.whitefrog.froggy.example");
     // insert some data
     PersonRepository repository = service().repository(Person.class);
@@ -20,7 +22,9 @@ public class Application extends de.whitefrog.froggy.Application<Configuration> 
         Person jerry = new Person("Jerry Smith");
         Person morty = new Person("Morty Smith");
         Person summer = new Person("Summer Smith");
+        // we need to save the people first, before we can create relationships
         repository.save(rick, beth, jerry, morty, summer);
+        
         rick.setChildren(Arrays.asList(beth));
         beth.setChildren(Arrays.asList(morty, summer));
         beth.setMarriedWith(jerry);

@@ -76,14 +76,7 @@ REST:
    :maxdepth: 2
    :caption: Contents:
 
+   guide
+   documentation
    license
    help
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
