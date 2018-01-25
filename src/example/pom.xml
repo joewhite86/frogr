@@ -8,9 +8,14 @@
     <groupId>de.whitefrog</groupId>
     <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
+
+    <name>froggy</name>
+    <description>Neo4j powered restful drop-in solution</description>
+    <url>http://github.com/joewhite86/froggy</url>
     
     <properties>
         <kotlin.version>1.2.10</kotlin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
     <dependencies>
@@ -31,6 +36,39 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Jochen Weis</name>
+            <email>jochen@whitefrog.de</email>
+            <organization>Whitefrog</organization>
+            <organizationUrl>http://whitefrog.de</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/joewhite86/froggy.git</connection>
+        <developerConnection>scm:git:ssh://github.com:joewhite86/froggy.git</developerConnection>
+        <url>http://github.com/joewhite86/froggy/tree/master</url>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
