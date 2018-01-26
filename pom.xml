@@ -6,7 +6,7 @@
 
     <groupId>de.whitefrog</groupId>
     <artifactId>froggy-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <packaging>pom</packaging>
     <name>Froggy</name>
     <description>Neo4j powered restful drop-in solution</description>

@@ -7,7 +7,7 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>froggy-parent</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.1</version>
     </parent>
     <artifactId>froggy-auth</artifactId>
     <packaging>jar</packaging>
