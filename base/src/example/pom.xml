@@ -10,14 +10,14 @@
     <version>0.0.1-SNAPSHOT</version>
     
     <properties>
-        <kotlin.version>1.2.10</kotlin.version>
+        <kotlin.version>1.2.20</kotlin.version>
     </properties>
     
     <dependencies>
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>froggy-base</artifactId>
-            <version>0.0.1</version>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

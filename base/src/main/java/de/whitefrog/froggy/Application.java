@@ -3,6 +3,7 @@ package de.whitefrog.froggy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
+import de.whitefrog.froggy.health.GraphHealthCheck;
 import de.whitefrog.froggy.rest.request.SearchParameterResolver;
 import de.whitefrog.froggy.rest.request.ServiceInjector;
 import de.whitefrog.froggy.rest.response.ExceptionMapper;
@@ -73,6 +74,8 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
     cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, AllowedMethods);
     cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, AllowedMethods);
     cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+
+    environment.healthChecks().register("graph", new GraphHealthCheck(service()));
 
     environment.getObjectMapper().enable(MapperFeature.USE_ANNOTATIONS);
     environment.getObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
