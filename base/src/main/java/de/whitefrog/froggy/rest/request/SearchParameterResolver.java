@@ -34,7 +34,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
   private SearchParameterValueFactory factory = new SearchParameterValueFactory();
 
   static {
-    mapper.setVisibilityChecker(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+    mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
       .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
       .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
       .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
@@ -135,12 +135,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     switch(key) {
       case "q":
         params.query(value);
-        break;
-      case "ids":
-        split = value.split(",");
-        List<Long> ids = new ArrayList<>(split.length);
-        for(String s : split) ids.add(Long.parseLong(s));
-        params.ids(ids);
         break;
       case "uuids":
         split = value.split(",");

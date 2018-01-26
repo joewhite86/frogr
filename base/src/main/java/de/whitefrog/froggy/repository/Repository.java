@@ -127,6 +127,7 @@ public interface Repository<T extends Base> {
    * Save some entities.
    * @param entities Entities to save.
    */
+  @SuppressWarnings("unchecked")
   void save(T... entities);
 
   /**

@@ -6,7 +6,7 @@ import de.whitefrog.froggy.model.annotation.NotPersistant
 import javax.security.auth.Subject
 import java.security.Principal
 
-open abstract class BaseUser : Entity(), Principal {
+open class BaseUser : Entity(), Principal {
   @NotPersistant
   private val name: String? = null
   var role: String? = null

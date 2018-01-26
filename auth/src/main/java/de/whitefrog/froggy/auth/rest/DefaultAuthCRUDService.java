@@ -72,6 +72,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @GET
   @Path("{id: [0-9]+}")
   @RolesAllowed({Role.User})
+  @SuppressWarnings("unchecked")
   public M read(@Auth BaseUser user, @PathParam("id") long id,
                 @SearchParam SearchParameter params) {
     return (M) search(user, params.ids(id)).singleton();

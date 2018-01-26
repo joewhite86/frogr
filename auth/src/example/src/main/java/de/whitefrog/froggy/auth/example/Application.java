@@ -46,6 +46,7 @@ public class Application extends de.whitefrog.froggy.Application<Configuration> 
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public void run(Configuration configuration, Environment environment) throws Exception {
     super.run(configuration, environment);
 

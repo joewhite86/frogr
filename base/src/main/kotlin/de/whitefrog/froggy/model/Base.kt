@@ -1,6 +1,7 @@
 package de.whitefrog.froggy.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
 import javax.xml.bind.annotation.XmlRootElement
@@ -11,7 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement
  */
 @XmlRootElement
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 interface Base : Serializable {
   var id: Long
   var uuid: String?

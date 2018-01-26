@@ -27,6 +27,7 @@ public class Simpsons extends Application<Configuration> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public void run(Configuration configuration, Environment environment) throws Exception {
     super.run(configuration, environment);
 

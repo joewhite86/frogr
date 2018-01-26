@@ -76,6 +76,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   @GET
   @Path("{id: [0-9]+}")
   @RolesAllowed({Role.User})
+  @SuppressWarnings("unchecked")
   public M read(@Auth U user, @PathParam("id") long id,
                 @SearchParam SearchParameter params) {
     return (M) search(user, params.ids(id)).singleton();
@@ -93,6 +94,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   @GET
   @RolesAllowed({Role.User})
   @JsonView({ Views.Public.class })
+  @SuppressWarnings("unchecked")
   public Response search(@Auth U user, @SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response response = new Response<>();
