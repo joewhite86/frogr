@@ -17,7 +17,7 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>froggy-base</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
