@@ -26,7 +26,7 @@ public class Authenticator<U extends BaseUser> implements io.dropwizard.auth.Aut
   }
 
   @Override
-  public Optional<U> authenticate(String accessToken) throws AuthenticationException {
+  public Optional<U> authenticate(String accessToken) {
     if(SimulateUnauthorized) {
       return Optional.empty();
     }
