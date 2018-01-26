@@ -6,7 +6,7 @@ Each model has to inherit from the ``Model`` interface.
 But theres a base class ``Entity`` that implements all needed methods for us.
 
 Models mainly consist of field and relationship definitions that define how it is used inside our project.
-I recommend using Kotlin_ for models, because I'm lazy and hate to write getter and setter methods ;)
+I recommend using Kotlin_ for models, because I'm lazy and hate to write getter and setter methods, but thats up to you ;)
 
 Model fields should always be initialized with ``null``, so that the persistence layer can properly decide if 
 the value is relevant for storing to database. Also we should not use primitive types here.
