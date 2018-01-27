@@ -83,6 +83,20 @@ Reference: `Dropwizard Configuration`_
 
 Reference: `Neo4j Configuration`_
 
+We should add a class that holds our relationship types, so that we have consistent and convienient access.
+This is not a requirement but I highly recommend it.
+
+.. code-block:: java
+
+  public abstract class RelationshipTypes {
+    public static final String ChildOf = "ChildOf";
+    public static final String MarriedWith = "MarriedWith";
+
+    public enum t implements RelationshipType {
+      ChildOf, MarriedWith
+    }
+  }
+
 Now, let's create a :doc:`model <models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
 
@@ -104,10 +118,12 @@ All models have to extend the Entity class or implement the Model interface at l
     var marriedWith: Person? = null
     // Relationship to a collection of models
     @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
-    var parents: List<Person>? = null
+    var parents: List<Person> = ArrayList()
     @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
-    var children: List<Person>? = null
+    var children: List<Person> = ArrayList()
   }
+
+As you can see, we used the relationship types created before, to declare our relationships to other models.
 
 Normally we would create a repository for persons. But we won't need extra methods for
 this tutorial and froggy will create a default repository if it can't find one.
