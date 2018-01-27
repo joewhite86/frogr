@@ -24,7 +24,7 @@ class Person() : Entity() {
   var marriedWith: Person? = null
   // Relationship to a collection of models
   @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
-  var parents: List<Person>? = null
+  var parents: List<Person> = ArrayList()
   @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
-  var children: List<Person>? = null
+  var children: List<Person> = ArrayList()
 }

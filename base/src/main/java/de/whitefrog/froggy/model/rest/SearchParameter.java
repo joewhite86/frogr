@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @XmlRootElement
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY,
   getterVisibility = JsonAutoDetect.Visibility.NONE,
   setterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -34,17 +34,11 @@ public class SearchParameter implements Serializable {
   private Integer depth;
   private Boolean count;
   private Locale locale;
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Set<Long> ids = new HashSet<>();
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private Set<String> uuids = new HashSet<>();
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private List<Filter> filters = new ArrayList<>();
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private List<OrderBy> orderBy = new ArrayList<>();
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private FieldList fields = new FieldList();
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private List<String> returns = new ArrayList<>();
   
   public SearchParameter clone() {

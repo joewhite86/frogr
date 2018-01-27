@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement
  */
 @XmlRootElement
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 interface Base : Serializable {
   var id: Long
   var uuid: String?

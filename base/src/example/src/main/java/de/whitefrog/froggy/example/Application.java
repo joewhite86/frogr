@@ -38,7 +38,7 @@ public class Application extends de.whitefrog.froggy.Application<Configuration> 
   
   @Override
   public String getName() {
-    return "froggyexample-rest";
+    return "froggy-base-example";
   }
 
   public static void main(String[] args) throws Exception {
