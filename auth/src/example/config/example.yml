@@ -14,9 +14,8 @@ server:
 logging:
     level: WARN
     loggers:
-        de.whitefrog.froggy: INFO
         de.whitefrog.froggy.service.Search: DEBUG
-        io.dropwizard: INFO
+        io.dropwizard.jersey.DropwizardResourceConfig: INFO
         io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper: DEBUG
     appenders:
       # console logging

@@ -6,6 +6,7 @@ import de.whitefrog.froggy.model.annotation.Indexed
 import de.whitefrog.froggy.model.annotation.RelatedTo
 import de.whitefrog.froggy.model.annotation.Required
 import de.whitefrog.froggy.model.annotation.Unique
+import de.whitefrog.froggy.model.annotation.Lazy
 import org.neo4j.graphdb.Direction
 
 class Person() : Entity() {
@@ -23,8 +24,8 @@ class Person() : Entity() {
   @RelatedTo(type = RelationshipTypes.MarriedWith, direction = Direction.BOTH)
   var marriedWith: Person? = null
   // Relationship to a collection of models
-  @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
-  var parents: List<Person>? = null
-  @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
-  var children: List<Person>? = null
+  @Lazy @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
+  var parents: List<Person> = ArrayList()
+  @Lazy @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
+  var children: List<Person> = ArrayList()
 }

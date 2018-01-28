@@ -76,18 +76,18 @@ abstract class Entity : Model, Comparable<Base> {
    */
   @NotPersistant
   @JsonIgnore
-  override var checkedFields: MutableList<String> = ArrayList()
+  override var checkedFields: HashSet<String> = HashSet()
   /**
    * Fields already fetched from database. Used to prevent unneccecary
    * read actions.
    */
   @NotPersistant
   @JsonIgnore
-  override var fetchedFields: MutableList<String> = ArrayList()
+  override var fetchedFields: HashSet<String> = HashSet()
 
   @NotPersistant
   @JsonIgnore
-  override var removeProperties: MutableList<String> = ArrayList()
+  override var removeProperties: HashSet<String> = HashSet()
 
   override fun removeProperty(property: String) {
     removeProperties.add(property)

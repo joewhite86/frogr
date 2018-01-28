@@ -46,11 +46,11 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   @NotPersistant
   private var initialId = true
   @NotPersistant @JsonIgnore
-  override var checkedFields: MutableList<String> = ArrayList()
+  override var checkedFields: HashSet<String> = HashSet()
   @NotPersistant @JsonIgnore
-  override var fetchedFields: MutableList<String> = ArrayList()
+  override var fetchedFields: HashSet<String> = HashSet()
   @NotPersistant @JsonIgnore
-  override var removeProperties: MutableList<String> = ArrayList()
+  override var removeProperties: HashSet<String> = HashSet()
 
   override fun resetId() {
     id = random.nextLong()

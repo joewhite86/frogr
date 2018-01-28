@@ -32,7 +32,7 @@ public class Authenticator<U extends BaseUser> implements io.dropwizard.auth.Aut
     }
     // Check input, must be a valid UUID
     if(accessToken.equals("public")) {
-      U pub = (U) repository.createModel();
+      U pub = repository.createModel();
       pub.setRole(Role.Public);
       return Optional.of(pub);
     }

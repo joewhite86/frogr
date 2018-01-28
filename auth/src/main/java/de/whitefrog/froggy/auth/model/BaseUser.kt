@@ -1,19 +1,25 @@
 package de.whitefrog.froggy.auth.model
 
+import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.froggy.model.Entity
-import de.whitefrog.froggy.model.annotation.NotPersistant
+import de.whitefrog.froggy.model.annotation.*
+import de.whitefrog.froggy.rest.Views
 
 import javax.security.auth.Subject
 import java.security.Principal
 
 open class BaseUser : Entity(), Principal {
-  @NotPersistant
-  private val name: String? = null
+  @Unique @Fetch @Required
+  var login: String? = null
+  @JsonView(Views.Hidden::class)
+  var password: String? = null
   var role: String? = null
+  @Indexed
+  @JsonView(Views.Secure::class)
   var accessToken: String? = null
 
   override fun getName(): String? {
-    return name
+    return login
   }
 
   override fun implies(subject: Subject?): Boolean {

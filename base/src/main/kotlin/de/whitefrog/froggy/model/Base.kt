@@ -2,8 +2,8 @@ package de.whitefrog.froggy.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
+import java.util.*
 import javax.xml.bind.annotation.XmlRootElement
 
 
@@ -17,9 +17,9 @@ interface Base : Serializable {
   var id: Long
   var uuid: String?
   var type: String?
-  var checkedFields: MutableList<String>
-  var fetchedFields: MutableList<String>
-  var removeProperties: MutableList<String>
+  var checkedFields: HashSet<String>
+  var fetchedFields: HashSet<String>
+  var removeProperties: HashSet<String>
   var modifiedBy: String?
   val persisted: Boolean
   var created: Long?

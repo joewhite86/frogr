@@ -1,7 +1,7 @@
 package de.whitefrog.auth.rest;
 
-import de.whitefrog.auth.model.BaseUser;
 import de.whitefrog.auth.repository.UserRepository;
+import de.whitefrog.froggy.auth.model.BaseUser;
 import de.whitefrog.froggy.rest.service.RestService;
 import org.neo4j.graphdb.Transaction;
 
