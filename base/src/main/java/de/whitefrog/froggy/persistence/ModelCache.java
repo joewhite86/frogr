@@ -61,7 +61,6 @@ public class ModelCache {
     return fieldDescriptor(field.getDeclaringClass(), field.getName());
   }
 
-  @SuppressWarnings("unchecked")
   public List<FieldDescriptor> fieldMap(Class clazz) {
     if(cache.containsKey(clazz)) return cache.get(clazz);
 
@@ -73,7 +72,7 @@ public class ModelCache {
         if(!ignoreFields.contains(field.getName()) &&
             !Modifier.isStatic(field.getModifiers()) &&
             !containsField(descriptors, field.getName())) {
-          descriptors.add(new FieldDescriptor<>(clazz, field));
+          descriptors.add(new FieldDescriptor<>(field));
         }
       }
       traverse = traverse.getSuperclass();
