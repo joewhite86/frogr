@@ -10,9 +10,9 @@ import java.security.Principal
 
 open class BaseUser : Entity(), Principal {
   @Unique @Fetch @Required
-  var login: String? = null
+  open var login: String? = null
   @JsonView(Views.Hidden::class)
-  var password: String? = null
+  open var password: String? = null
   var role: String? = null
   @Indexed
   @JsonView(Views.Secure::class)

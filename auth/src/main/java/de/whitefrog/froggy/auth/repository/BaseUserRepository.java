@@ -37,7 +37,7 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
     return roles;
   }
 
-  private String generateHash(String password) {
+  public String generateHash(String password) {
     return DigestUtils.sha1Hex(password);
   }
 

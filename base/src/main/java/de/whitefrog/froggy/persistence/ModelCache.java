@@ -61,6 +61,7 @@ public class ModelCache {
     return fieldDescriptor(field.getDeclaringClass(), field.getName());
   }
 
+  @SuppressWarnings("unchecked")
   public List<FieldDescriptor> fieldMap(Class clazz) {
     if(cache.containsKey(clazz)) return cache.get(clazz);
 
@@ -70,7 +71,8 @@ public class ModelCache {
     while(traverse != null && Base.class.isAssignableFrom(traverse)) {
       for(Field field : traverse.getDeclaredFields()) {
         if(!ignoreFields.contains(field.getName()) &&
-           !Modifier.isStatic(field.getModifiers())) {
+            !Modifier.isStatic(field.getModifiers()) &&
+            !containsField(descriptors, field.getName())) {
           descriptors.add(new FieldDescriptor<>(clazz, field));
         }
       }
@@ -80,6 +82,13 @@ public class ModelCache {
     cache.put(clazz, descriptors);
 
     return descriptors;
+  }
+  
+  private <M extends Base> boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
+    for(FieldDescriptor<M> descriptor : descriptors) {
+      if(descriptor.field().getName().equals(fieldName)) return true;
+    }
+    return false;
   }
 
   public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
