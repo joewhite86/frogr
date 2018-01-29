@@ -12,6 +12,7 @@ import java.util.Arrays;
 @Path("persons")
 public class Persons extends CRUDService<PersonRepository, Person> {
   @GET
+  @Path("init")
   public void init() {
     // insert some data
     PersonRepository repository = service().repository(Person.class);
