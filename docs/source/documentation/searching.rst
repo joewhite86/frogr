@@ -7,32 +7,10 @@ Java
 In Java code there's a easy to use method in each repository.
 Here are some examples:
 
-.. code-block:: java
-
-  // Filter results by uuids and return the name and the person married with the found person.
-  List<Person> results = search()
-    .uuids(uuid1, uuid2)
-    .fields(Person.Name, Person.MarriedWith)
-    .list();
-
-  // Get a count of persons, where on of its parents name is "Jerry Smith".
-  long count = search()
-    .filter("parents.name", Filter.Equals("Jerry Smith"))
-    .count();
-
-  // Get a paged result of all persons, with a page size of 10, ordered by the name property.
-  List<Person> page = search()
-    .limit(10)
-    .page(1)
-    .orderBy(Person.Name)
-    .fields(Person.Name)
-    .list();
-
-  // Get a single person and its children with their names.
-  Person beth = search()
-    .filter(Person.Name, "Beth Smith")
-    .fields(FieldList.parseFields("name,children.name"))
-    .single();
+.. literalinclude:: ../../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/repository/PersonRepository.java
+  :language: java
+  :lines: 31-54
+  :dedent: 4
 
 REST
 ----

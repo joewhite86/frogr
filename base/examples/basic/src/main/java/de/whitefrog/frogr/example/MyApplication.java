@@ -1,9 +1,10 @@
 package de.whitefrog.frogr.example;
 
+import de.whitefrog.frogr.Application;
 import io.dropwizard.Configuration;
 
-public class Application extends de.whitefrog.frogr.Application<Configuration> {
-  public Application() {
+public class MyApplication extends Application<Configuration> {
+  public MyApplication() {
     // register the rest classes
     register("de.whitefrog.frogr.example.rest");
     // register repositories and models
@@ -16,6 +17,6 @@ public class Application extends de.whitefrog.frogr.Application<Configuration> {
   }
 
   public static void main(String[] args) throws Exception {
-    new Application().run("server", "config/example.yml");
+    new MyApplication().run("server", "config/example.yml");
   }
 }
