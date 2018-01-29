@@ -6,7 +6,4 @@ import de.whitefrog.frogr.auth.repository.BaseUserRepository;
 import de.whitefrog.frogr.repository.ModelRepository;
 
 public class UserRepository extends BaseUserRepository<User> {
-  public UserRepository(Service service) {
-    super(service);
-  }
 }

@@ -13,10 +13,6 @@ If, for example, we want a repository for the ``Person`` model, we would create 
 .. code-block:: java
 
   public class PersonRepository extends BaseModelRepository<Person> {
-    public PersonRepository(Service service) {
-      super(service);
-    }
-
     public Person uselessExampleMethod(Person p) {
       return p;
     }

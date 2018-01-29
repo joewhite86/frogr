@@ -8,10 +8,6 @@ import de.whitefrog.frogr.repository.BaseModelRepository;
 import java.util.Arrays;
 
 public class PersonRepository extends BaseModelRepository<Person> {
-  public PersonRepository(Service service) {
-    super(service);
-  }
-  
   public void init() {
     Person rick = new Person("Rick Sanchez");
     Person beth = new Person("Beth Smith");

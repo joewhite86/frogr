@@ -32,9 +32,6 @@ And here's the repository implementation:
 .. code-block:: java
 
   public class PersonRepository extends BaseModelRepository<Person> {
-    public PersonRepository(Service service) {
-      super(service);
-    }
     public void init() {
       Person rick = new Person("Rick Sanchez");
       Person beth = new Person("Beth Smith");
@@ -67,7 +64,7 @@ This would create these REST paths:
 
 The ``POST`` and ``PUT`` methods both take a json object, representing the model to create or update.
 
-The ``GET`` method takes url parameters used for a search operation. See :doc:`Search <search>` for further details.
+The ``GET`` method takes url parameters used for a search operation. See :doc:`Searches <searching>` for further details.
 Additionally there's also a ``GET /{uuid}`` method for convenience, which searches for a particular person.
 
 We can also use ``POST /search`` path, which takes the search parameters as a json object, but I strongly recommend using GET for that purpose, as only GET can be cached correctly.
