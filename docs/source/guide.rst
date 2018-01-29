@@ -4,7 +4,7 @@ Guide
 Quickstart
 ----------
 
-Add the dependency to your project.
+First, add the dependency to your project.
 
 Maven:
 
@@ -43,6 +43,7 @@ Next we will create the main entry point for the service.
 As you can see there are two registry calls in the application's constructor.
 ``register(...)`` let's the application know in which package to look for rest classes.
 ``serviceInjector().service().register(...)`` tells the application where to look for models and repositories.
+More information about the Application entry point: :doc:`Application <documentation/application>`
 
 You may also have noticed there's a config file used in the main method.
 This is required to setup our Dropwizard_ instance, so we have to create that one now. 
@@ -97,7 +98,7 @@ This is not a requirement but I highly recommend it.
     }
   }
 
-Now, let's create a :doc:`model <models>`. I recommend using Kotlin_ for that.
+Now, let's create a :doc:`model <documentation/models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
 
 .. code-block:: kotlin
@@ -127,9 +128,9 @@ As you can see, we used the relationship types created before, to declare our re
 
 Normally we would create a repository for persons. But we won't need extra methods for
 this tutorial and frogr will create a default repository if it can't find one.
-If you need more information visit :doc:`repositories`.
+If you need more information visit :doc:`documentation/repositories`.
 
-Next we'll have to create the REST :doc:`service <services>` layer. There's a base class, that provides
+Next we'll have to create the REST :doc:`service <documentation/services>` layer. There's a base class, that provides
 basic CRUD operations, so you only have to add methods for special cases. Of course you
 can also use any other JAX-RS annotated class.
 
