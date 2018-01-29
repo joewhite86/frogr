@@ -63,13 +63,6 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   }
 
   @GET
-  @Path("{id: [0-9]+}")
-  public M read(@PathParam("id") long id,
-                @SearchParam SearchParameter params) {
-    return (M) search(params.ids(id)).singleton();
-  }
-
-  @GET
   @Path("{uuid: [a-zA-Z0-9]+}")
   @JsonView({Views.Public.class})
   public Model read(@PathParam("uuid") String uuid,
