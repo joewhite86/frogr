@@ -8,13 +8,10 @@ First, add the dependency to your project.
 
 Maven:
 
-.. code-block:: xml
-
-  <dependency>
-      <groupId>de.whitefrog</groupId>
-      <artifactId>frogr-base</artifactId>
-      <version>0.0.3-SNAPSHOT</version>
-  </dependency>
+.. literalinclude:: ../../base/examples/basic/pom.xml
+  :language: xml
+  :lines: 17-21
+  :dedent: 8
 
 Next we will create the main entry point for the service.
 
