@@ -45,7 +45,7 @@ import java.util.Set;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown;}
+  public enum State { Started, Running, ShuttingDown}
 
   private GraphDatabaseService graphDb;
   private String directory;
@@ -81,16 +81,16 @@ public class Service implements AutoCloseable {
       
       try(Transaction tx = beginTx()) {
         graph = graphRepository.getGraph();
+        String version = getManifestVersion();
         if(graph == null) {
           graph = graphRepository.create();
-          graph.setVersion(getManifestVersion());
+          if(!version.equals("undefined")) graph.setVersion(version);
           graphRepository.save(graph);
           logger.info("--------------------------------------------");
           logger.info("---   creating fresh database instance   ---");
           logger.info("---   " + directory + "   ---");
           logger.info("--------------------------------------------");
         } else {
-          String version = getManifestVersion();
           if(!version.equals("undefined")) {
             graph.setVersion(version);
             graphRepository.save(graph);
@@ -192,11 +192,7 @@ public class Service implements AutoCloseable {
       version = System.getProperty("version", "undefined");
     }
 
-    if(version.equals("undefined")) {
-      logger.warn("No implementation version found in manifest");
-    } else {
-      if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
-    }
+    if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
 
     return version;
   }

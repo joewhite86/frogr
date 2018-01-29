@@ -4,6 +4,6 @@ class Graph : Entity() {
     var version: String? = null
 
     companion object {
-        val Version = "version"
+        @JvmField val Version = "version"
     }
 }

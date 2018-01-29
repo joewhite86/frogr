@@ -25,8 +25,8 @@ public class GraphRepository {
     if(results.hasNext()) {
       Node node = (Node) results.next().get("n");
       graph = new Graph();
-      if(node.hasProperty(Graph.Companion.getVersion())) {
-        graph.setVersion((String) node.getProperty(Graph.Companion.getVersion()));
+      if(node.hasProperty(Graph.Version)) {
+        graph.setVersion((String) node.getProperty(Graph.Version));
       }
     }
     return graph;
@@ -36,10 +36,10 @@ public class GraphRepository {
     if(this.graph != null) {
       Result results = service.graph().execute("match (n:Graph) return n");
       Node node = (Node) results.next().get("n");
-      node.setProperty(Graph.Companion.getVersion(), graph.getVersion());
+      if(graph.getVersion() != null) node.setProperty(Graph.Version, graph.getVersion());
     } else {
       Node node = service.graph().createNode(Label.label("Graph"));
-      node.setProperty(Graph.Companion.getVersion(), graph.getVersion());
+      if(graph.getVersion() != null) node.setProperty(Graph.Version, graph.getVersion());
       this.graph = graph;
     }
   }
