@@ -2,10 +2,10 @@ package de.whitefrog.froggy.auth.rest;
 
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
-import de.whitefrog.froggy.model.Model;
-import de.whitefrog.froggy.auth.model.Role;
-import de.whitefrog.froggy.model.SaveContext;
 import de.whitefrog.froggy.auth.model.BaseUser;
+import de.whitefrog.froggy.auth.model.Role;
+import de.whitefrog.froggy.model.Model;
+import de.whitefrog.froggy.model.SaveContext;
 import de.whitefrog.froggy.model.rest.SearchParameter;
 import de.whitefrog.froggy.rest.Views;
 import de.whitefrog.froggy.rest.request.SearchParam;
@@ -23,12 +23,12 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
-public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRestService<M> {
+public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser> extends DefaultRestService<M> {
   private static final Logger logger = LoggerFactory.getLogger(DefaultAuthCRUDService.class);
 
   @POST
   @RolesAllowed({Role.User})
-  public List<M> create(@Auth BaseUser user, List<M> models) {
+  public List<M> create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
@@ -50,7 +50,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
 
   @PUT
   @RolesAllowed({Role.User})
-  public List<M> update(@Auth BaseUser user, List<M> models) {
+  public List<M> update(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         SaveContext<M> context = new SaveContext<>(repository(), model);
@@ -73,7 +73,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @Path("{id: [0-9]+}")
   @RolesAllowed({Role.User})
   @SuppressWarnings("unchecked")
-  public M read(@Auth BaseUser user, @PathParam("id") long id,
+  public M read(@Auth U user, @PathParam("id") long id,
                 @SearchParam SearchParameter params) {
     return (M) search(user, params.ids(id)).singleton();
   }
@@ -82,7 +82,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @Path("{uuid: [a-zA-Z0-9]+}")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
-  public Model read(@Auth BaseUser user, @PathParam("uuid") String uuid,
+  public Model read(@Auth U user, @PathParam("uuid") String uuid,
                     @SearchParam SearchParameter params) {
     return (Model) search(user, params.uuids(uuid)).singleton();
   }
@@ -90,7 +90,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @GET
   @RolesAllowed({Role.User})
   @JsonView({ Views.Public.class })
-  public Response<M> search(@Auth BaseUser user, @SearchParam SearchParameter params) {
+  public Response<M> search(@Auth U user, @SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response<M> response = new Response<>();
 
@@ -114,14 +114,14 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @Path("search")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
-  public Response<M> searchPost(@Auth BaseUser user, SearchParameter params) {
+  public Response<M> searchPost(@Auth U user, SearchParameter params) {
     return search(user, params);
   }
 
   @DELETE
   @Path("{uuid: [a-zA-Z0-9]+}")
   @RolesAllowed({Role.User})
-  public void delete(@Auth BaseUser user, @PathParam("uuid") String uuid) {
+  public void delete(@Auth U user, @PathParam("uuid") String uuid) {
     try(Transaction tx = service().beginTx()) {
       M model = repository().findByUuid(uuid);
       if(model == null) throw new NotFoundException();
@@ -135,7 +135,7 @@ public abstract class DefaultAuthCRUDService<M extends Model> extends DefaultRes
   @Path("authorize")
   public void authorize(@Validated Model model) {}
   
-  public void authorize(BaseUser user, M model, SaveContext<M> context) {}
+  public void authorize(U user, M model, SaveContext<M> context) {}
 
-  public void authorizeDelete(BaseUser user, M model) {}
+  public void authorizeDelete(U user, M model) {}
 }
