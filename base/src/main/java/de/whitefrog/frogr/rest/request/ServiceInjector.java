@@ -24,7 +24,7 @@ public class ServiceInjector implements Factory<Service> {
   }
 
   @Override
-  public void dispose(Service service) {
-      service.shutdown();
+  public void dispose(Service service) { 
+    service.shutdown();
   }
 }
