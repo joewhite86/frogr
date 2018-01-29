@@ -13,7 +13,7 @@ Maven:
   <dependency>
       <groupId>de.whitefrog</groupId>
       <artifactId>frogr-base</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>0.0.2</version>
   </dependency>
 
 Next we will create the main entry point for the service.
