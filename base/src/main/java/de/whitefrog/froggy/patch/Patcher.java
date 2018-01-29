@@ -49,8 +49,7 @@ public class Patcher {
    * @param service Service to use for the patches
    */
   public static void patch(Service service) {
-    // TODO: This should be the manifest version, not the graph version (service.getVersion())
-    String version = service.getVersion();
+    String version = Service.getManifestVersion();
     if(!version.equals("undefined")) patch(service, version);
   }
 

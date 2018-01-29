@@ -90,10 +90,13 @@ public class Service implements AutoCloseable {
           logger.info("---   " + directory + "   ---");
           logger.info("--------------------------------------------");
         } else {
-          graph.setVersion(getManifestVersion());
-          graphRepository.save(graph);
+          String version = getManifestVersion();
+          if(!version.equals("undefined")) {
+            graph.setVersion(version);
+            graphRepository.save(graph);
+          }
           logger.info("--------------------------------------------");
-          logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "x.x.x");
+          logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
           logger.info("---   {}   ---", directory);
           logger.info("--------------------------------------------");
         }
@@ -180,16 +183,33 @@ public class Service implements AutoCloseable {
   }
 
   public synchronized static String getManifestVersion() {
-    String version = System.getProperty("version", Patcher.class.getPackage().getImplementationVersion());
-
+    String version = null;
+    Class mainClass = getMainClass();
+    if(mainClass != null) {
+      version = getMainClass().getPackage().getImplementationVersion();
+    }
     if(version == null) {
-      version = "undefined";
+      version = System.getProperty("version", "undefined");
+    }
+
+    if(version.equals("undefined")) {
       logger.warn("No implementation version found in manifest");
     } else {
       if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
     }
 
     return version;
+  }
+
+  private static Class getMainClass() {
+    Class clazz = null;
+    try {
+      StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+      clazz = Class.forName(stacktrace[stacktrace.length - 1].getClassName());
+    } catch(ClassNotFoundException e) {
+      logger.error(e.getMessage(), e);
+    }
+    return clazz;
   }
 
   /**
