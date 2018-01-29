@@ -1,6 +1,5 @@
 package de.whitefrog.frogr.repository;
 
-import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.persistence.Persistence;
 
@@ -8,8 +7,8 @@ import de.whitefrog.frogr.persistence.Persistence;
  * Will be used by {@link RepositoryFactory} method when no other repository was found. 
  */
 public class DefaultRelationshipRepository<T extends BaseRelationship> extends BaseRelationshipRepository<T> {
-  public DefaultRelationshipRepository(Service service, String modelName) {
-    super(service, modelName);
+  public DefaultRelationshipRepository(String modelName) {
+    super(modelName);
   }
 
   @Override

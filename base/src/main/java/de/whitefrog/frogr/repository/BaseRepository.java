@@ -34,14 +34,12 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private String type;
   protected Class<?> modelClass;
 
-  public BaseRepository(Service service) {
+  public BaseRepository() {
     this.logger = LoggerFactory.getLogger(getClass());
-    this.service = service;
     this.type = getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Repository"));
   }
-  public BaseRepository(Service service, String type) {
+  public BaseRepository(String type) {
     this.logger = LoggerFactory.getLogger(getClass());
-    this.service = service;
     this.type = type;
   }
 
@@ -114,6 +112,8 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   public GraphDatabaseService graph() {
     return service().graph();
   }
+
+  public void initialize() {}
 
   @Override
   public QueryBuilder queryBuilder() {

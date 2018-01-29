@@ -1,6 +1,5 @@
 package de.whitefrog.frogr.repository;
 
-import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.model.Model;
@@ -28,12 +27,12 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
     extends BaseRepository<T> implements RelationshipRepository<T> {
   private final Logger logger;
 
-  public BaseRelationshipRepository(Service service) {
-    super(service);
+  public BaseRelationshipRepository() {
+    super();
     this.logger = LoggerFactory.getLogger(getClass());
   }
-  public BaseRelationshipRepository(Service service, String modelName) {
-    super(service, modelName);
+  public BaseRelationshipRepository(String modelName) {
+    super(modelName);
     this.logger = LoggerFactory.getLogger(getClass());
   }
 
@@ -76,7 +75,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
       throw new IllegalStateException(e.getMessage(), e);
     }
   }
-  
+
   @Override
   public void remove(T model) throws PersistException {
     Validate.notNull(model.getId(), "'id' is required");

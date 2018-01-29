@@ -98,6 +98,8 @@ public interface Repository<T extends Base> {
    * @return Database instance
    */
   GraphDatabaseService graph();
+  
+  void initialize();
 
   /**
    * Query builder instance to use.

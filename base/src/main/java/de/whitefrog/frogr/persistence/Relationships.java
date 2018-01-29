@@ -1,10 +1,7 @@
 package de.whitefrog.frogr.persistence;
 
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.FrogrException;
-import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.exception.RelatedNotPersistedException;
-import de.whitefrog.frogr.exception.RepositoryNotFoundException;
+import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.Model;
@@ -66,8 +63,13 @@ public class Relationships {
       // TODO: this should be handled inside of RepositoryFactory but then it would  
       // TODO: create a DefaultRealtionshipRepository for each unknown type name passed 
       // TODO: and i haven't found a solution yet
-      repository = new DefaultRelationshipRepository<>(service, relationshipType.name());
-      service.repositoryFactory().register(relationshipType.name(), repository);
+      repository = new DefaultRelationshipRepository<>(relationshipType.name());
+      try {
+        service.repositoryFactory().setRepositoryService(repository);
+        service.repositoryFactory().register(relationshipType.name(), repository);
+      } catch(ReflectiveOperationException ex) {
+        throw new RepositoryInstantiationException(ex.getCause());
+      }
     }
     BaseRelationship<Model, Model> relationship;
     
