@@ -9,10 +9,15 @@ import de.whitefrog.froggy.rest.request.ServiceInjector;
 import de.whitefrog.froggy.rest.response.ExceptionMapper;
 import de.whitefrog.froggy.rest.response.WrappingWriterInterceptor;
 import io.dropwizard.forms.MultiPartBundle;
+import io.dropwizard.jetty.ConnectorFactory;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.DefaultServerFactory;
+import io.dropwizard.server.SimpleServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
@@ -35,6 +40,7 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 @Singleton
 public abstract class Application<C extends io.dropwizard.Configuration> extends io.dropwizard.Application<C> {
+  private static final Logger logger = LoggerFactory.getLogger(Application.class);
   private static final String AllowedMethods = "OPTIONS,GET,PUT,POST,DELETE,HEAD";
   private static final String AllowedHeaders = "X-Requested-With,Content-Type,Accept,Origin,Authorization";
 
@@ -88,6 +94,23 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
         bindFactory(serviceInjector()).to(Service.class);
       }
     });
+
+    // print the port in log
+    if(configuration.getServerFactory() instanceof DefaultServerFactory) {
+      DefaultServerFactory serverFactory = (DefaultServerFactory) configuration.getServerFactory();
+      for(ConnectorFactory connector : serverFactory.getApplicationConnectors()) {
+        if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
+          logger.info("Service available at: http://localhost:{}", ((HttpConnectorFactory) connector).getPort());
+          break;
+        }
+      }
+    } else {
+      SimpleServerFactory serverFactory = (SimpleServerFactory) configuration.getServerFactory();
+      HttpConnectorFactory connector = (HttpConnectorFactory) serverFactory.getConnector();
+      if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
+        logger.info("Service available at: http://localhost:{}", connector.getPort());
+      }
+    }
   }
 
   public void register(String... packages) {
