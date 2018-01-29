@@ -1,9 +1,9 @@
 package de.whitefrog.auth.model
 
 import de.whitefrog.auth.RelationshipTypes
-import de.whitefrog.froggy.model.Entity
-import de.whitefrog.froggy.model.annotation.RelatedTo
-import de.whitefrog.froggy.model.annotation.Unique
+import de.whitefrog.frogr.model.Entity
+import de.whitefrog.frogr.model.annotation.RelatedTo
+import de.whitefrog.frogr.model.annotation.Unique
 import org.neo4j.graphdb.Direction
 
 class Character : Entity() {

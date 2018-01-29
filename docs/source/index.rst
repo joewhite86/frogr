@@ -1,4 +1,4 @@
-Froggy - Neo4j powered restful drop-in solution
+Frogr - Neo4j powered restful drop-in solution
 ===============================================
 
 Java:

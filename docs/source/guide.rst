@@ -12,7 +12,7 @@ Maven:
 
   <dependency>
       <groupId>de.whitefrog</groupId>
-      <artifactId>froggy-base</artifactId>
+      <artifactId>frogr-base</artifactId>
       <version>1.0.0-SNAPSHOT</version>
   </dependency>
 
@@ -20,12 +20,12 @@ Next we will create the main entry point for the service.
 
 .. code-block:: java
 
-  public class Application extends de.whitefrog.froggy.Application<Configuration> {
+  public class Application extends de.whitefrog.frogr.Application<Configuration> {
     public Application() {
       // register the rest classes
-      register("de.whitefrog.froggy.example.rest");
+      register("de.whitefrog.frogr.example.rest");
       // register repositories and models
-      serviceInjector().service().register("de.whitefrog.froggy.example");
+      serviceInjector().service().register("de.whitefrog.frogr.example");
         tx.success();
       }
     }
@@ -45,7 +45,8 @@ As you can see there are two registry calls in the application's constructor.
 ``serviceInjector().service().register(...)`` tells the application where to look for models and repositories.
 
 You may also have noticed there's a config file used in the main method.
-So we have to create that one now. There's a second config file needed, which configures our embedded neo4j instance.
+This is required to setup our Dropwizard_ instance, so we have to create that one now. 
+There's a second config file needed, which configures our embedded Neo4j_ instance.
 By default these configs should be in your project in a directory 'config'.
 
 ``config/example.yml``
@@ -72,11 +73,29 @@ By default these configs should be in your project in a directory 'config'.
         - type: console
           logFormat: '[%d] [%-5level] %logger{36} - %msg%n'
 
+Reference: `Dropwizard Configuration`_
+
 ``config/neo4j.properties``
 
 .. code-block:: properties
 
   graph.location=graph.db
+
+Reference: `Neo4j Configuration`_
+
+We should add a class that holds our relationship types, so that we have consistent and convienient access.
+This is not a requirement but I highly recommend it.
+
+.. code-block:: java
+
+  public abstract class RelationshipTypes {
+    public static final String ChildOf = "ChildOf";
+    public static final String MarriedWith = "MarriedWith";
+
+    public enum t implements RelationshipType {
+      ChildOf, MarriedWith
+    }
+  }
 
 Now, let's create a :doc:`model <models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
@@ -99,13 +118,15 @@ All models have to extend the Entity class or implement the Model interface at l
     var marriedWith: Person? = null
     // Relationship to a collection of models
     @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
-    var parents: List<Person>? = null
+    var parents: List<Person> = ArrayList()
     @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
-    var children: List<Person>? = null
+    var children: List<Person> = ArrayList()
   }
 
+As you can see, we used the relationship types created before, to declare our relationships to other models.
+
 Normally we would create a repository for persons. But we won't need extra methods for
-this tutorial and froggy will create a default repository if it can't find one.
+this tutorial and frogr will create a default repository if it can't find one.
 If you need more information visit :doc:`repositories`.
 
 Next we'll have to create the REST :doc:`service <services>` layer. There's a base class, that provides
@@ -119,3 +140,7 @@ can also use any other JAX-RS annotated class.
   }
 
 .. _Kotlin: https://kotlinlang.org
+.. _Dropwizard: http://www.dropwizard.io
+.. _`Dropwizard Configuration`: http://www.dropwizard.io/0.7.1/docs/manual/configuration.html
+.. _Neo4j: http://neo4j.com
+.. _`Neo4j Configuration`: https://neo4j.com/docs/operations-manual/3.3/configuration/

@@ -1,3 +1,5 @@
 docs/build
 base/src/example/graph.db
 base/src/example/logs
+auth/src/example/graph.db
+auth/src/example/logs

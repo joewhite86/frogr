@@ -1,10 +1,9 @@
 package de.whitefrog.auth.rest
 
 import de.whitefrog.auth.model.Character
-import de.whitefrog.auth.model.BaseUser
 import de.whitefrog.auth.repository.CharacterRepository
-import de.whitefrog.froggy.auth.rest.AuthCRUDService
-
+import de.whitefrog.frogr.auth.model.BaseUser
+import de.whitefrog.frogr.auth.rest.AuthCRUDService
 import javax.ws.rs.Path
 
 @Path("characters")

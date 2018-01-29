@@ -6,11 +6,11 @@
 
     <parent>
         <groupId>de.whitefrog</groupId>
-        <artifactId>froggy-parent</artifactId>
-        <version>0.0.1</version>
+        <artifactId>frogr-parent</artifactId>
+        <version>0.0.2</version>
         <relativePath>..</relativePath>
     </parent>
-    <artifactId>froggy-base</artifactId>
+    <artifactId>frogr-base</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -62,10 +62,6 @@
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
