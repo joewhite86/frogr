@@ -45,7 +45,7 @@ import java.util.Set;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown;}
+  public enum State { Started, Running, ShuttingDown}
 
   private static Class mainClass = Application.class;
   private GraphDatabaseService graphDb;
