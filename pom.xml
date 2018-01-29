@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.whitefrog</groupId>
-    <artifactId>froggy-parent</artifactId>
+    <artifactId>frogr-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Froggy</name>
+    <name>Frogr</name>
     <description>Neo4j powered restful drop-in solution</description>
-    <url>http://github.com/joewhite86/froggy</url>    
+    <url>http://github.com/joewhite86/frogr</url>    
     
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -25,9 +25,9 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git://github.com/joewhite86/froggy.git</connection>
-        <developerConnection>scm:git:ssh://github.com:joewhite86/froggy.git</developerConnection>
-        <url>http://github.com/joewhite86/froggy/tree/master</url>
+        <connection>scm:git:git://github.com/joewhite86/frogr.git</connection>
+        <developerConnection>scm:git:ssh://github.com:joewhite86/frogr.git</developerConnection>
+        <url>http://github.com/joewhite86/frogr/tree/master</url>
     </scm>
 
     <licenses>

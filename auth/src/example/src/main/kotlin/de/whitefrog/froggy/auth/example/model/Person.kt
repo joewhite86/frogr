@@ -1,12 +1,12 @@
-package de.whitefrog.froggy.auth.example.model
+package de.whitefrog.frogr.auth.example.model
 
-import de.whitefrog.froggy.auth.example.RelationshipTypes
-import de.whitefrog.froggy.model.Entity
-import de.whitefrog.froggy.model.annotation.Indexed
-import de.whitefrog.froggy.model.annotation.RelatedTo
-import de.whitefrog.froggy.model.annotation.Required
-import de.whitefrog.froggy.model.annotation.Unique
-import de.whitefrog.froggy.model.annotation.Lazy
+import de.whitefrog.frogr.auth.example.RelationshipTypes
+import de.whitefrog.frogr.model.Entity
+import de.whitefrog.frogr.model.annotation.Indexed
+import de.whitefrog.frogr.model.annotation.RelatedTo
+import de.whitefrog.frogr.model.annotation.Required
+import de.whitefrog.frogr.model.annotation.Unique
+import de.whitefrog.frogr.model.annotation.Lazy
 import org.neo4j.graphdb.Direction
 
 class Person() : Entity() {

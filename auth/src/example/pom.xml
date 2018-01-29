@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>froggy-auth-example</artifactId>
+    <artifactId>frogr-auth-example</artifactId>
     <groupId>de.whitefrog</groupId>
     <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
@@ -16,12 +16,12 @@
     <dependencies>
         <dependency>
             <groupId>de.whitefrog</groupId>
-            <artifactId>froggy-base</artifactId>
+            <artifactId>frogr-base</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.whitefrog</groupId>
-            <artifactId>froggy-auth</artifactId>
+            <artifactId>frogr-auth</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         

@@ -12,7 +12,7 @@ Maven:
 
   <dependency>
       <groupId>de.whitefrog</groupId>
-      <artifactId>froggy-base</artifactId>
+      <artifactId>frogr-base</artifactId>
       <version>1.0.0-SNAPSHOT</version>
   </dependency>
 
@@ -20,12 +20,12 @@ Next we will create the main entry point for the service.
 
 .. code-block:: java
 
-  public class Application extends de.whitefrog.froggy.Application<Configuration> {
+  public class Application extends de.whitefrog.frogr.Application<Configuration> {
     public Application() {
       // register the rest classes
-      register("de.whitefrog.froggy.example.rest");
+      register("de.whitefrog.frogr.example.rest");
       // register repositories and models
-      serviceInjector().service().register("de.whitefrog.froggy.example");
+      serviceInjector().service().register("de.whitefrog.frogr.example");
         tx.success();
       }
     }
@@ -126,7 +126,7 @@ All models have to extend the Entity class or implement the Model interface at l
 As you can see, we used the relationship types created before, to declare our relationships to other models.
 
 Normally we would create a repository for persons. But we won't need extra methods for
-this tutorial and froggy will create a default repository if it can't find one.
+this tutorial and frogr will create a default repository if it can't find one.
 If you need more information visit :doc:`repositories`.
 
 Next we'll have to create the REST :doc:`service <services>` layer. There's a base class, that provides

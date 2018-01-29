@@ -1,11 +1,11 @@
-package de.whitefrog.froggy.auth.example.rest;
+package de.whitefrog.frogr.auth.example.rest;
 
-import de.whitefrog.froggy.auth.example.model.Person;
-import de.whitefrog.froggy.auth.example.model.User;
-import de.whitefrog.froggy.auth.example.repository.PersonRepository;
-import de.whitefrog.froggy.auth.example.repository.UserRepository;
-import de.whitefrog.froggy.auth.model.Role;
-import de.whitefrog.froggy.auth.rest.AuthCRUDService;
+import de.whitefrog.frogr.auth.example.model.Person;
+import de.whitefrog.frogr.auth.example.model.User;
+import de.whitefrog.frogr.auth.example.repository.PersonRepository;
+import de.whitefrog.frogr.auth.example.repository.UserRepository;
+import de.whitefrog.frogr.auth.model.Role;
+import de.whitefrog.frogr.auth.rest.AuthCRUDService;
 import org.neo4j.graphdb.Transaction;
 
 import javax.ws.rs.GET;

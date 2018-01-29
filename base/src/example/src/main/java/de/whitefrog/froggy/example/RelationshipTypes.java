@@ -1,4 +1,4 @@
-package de.whitefrog.froggy.example;
+package de.whitefrog.frogr.example;
 
 import org.neo4j.graphdb.RelationshipType;
 

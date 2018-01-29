@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Froggy documentation build configuration file, created by
+# Frogr documentation build configuration file, created by
 # sphinx-quickstart on Wed Jan 24 14:49:38 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Froggy'
+project = 'Frogr'
 copyright = '2018, Jochen Weis'
 author = 'Jochen Weis'
 
@@ -114,7 +114,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Froggydoc'
+htmlhelp_basename = 'Frogrdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -141,7 +141,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Froggy.tex', 'Froggy Documentation',
+    (master_doc, 'Frogr.tex', 'Frogr Documentation',
      'Jochen Weis', 'manual'),
 ]
 
@@ -151,7 +151,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'froggy', 'Froggy Documentation',
+    (master_doc, 'frogr', 'Frogr Documentation',
      [author], 1)
 ]
 
@@ -162,8 +162,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Froggy', 'Froggy Documentation',
-     author, 'Froggy', 'One line description of project.',
+    (master_doc, 'Frogr', 'Frogr Documentation',
+     author, 'Frogr', 'One line description of project.',
      'Miscellaneous'),
 ]
 

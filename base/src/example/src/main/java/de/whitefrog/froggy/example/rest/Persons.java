@@ -1,8 +1,8 @@
-package de.whitefrog.froggy.example.rest;
+package de.whitefrog.frogr.example.rest;
 
-import de.whitefrog.froggy.example.model.Person;
-import de.whitefrog.froggy.example.repository.PersonRepository;
-import de.whitefrog.froggy.rest.service.CRUDService;
+import de.whitefrog.frogr.example.model.Person;
+import de.whitefrog.frogr.example.repository.PersonRepository;
+import de.whitefrog.frogr.rest.service.CRUDService;
 import org.neo4j.graphdb.Transaction;
 
 import javax.ws.rs.GET;

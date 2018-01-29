@@ -1,4 +1,4 @@
-package de.whitefrog.froggy.auth.example;
+package de.whitefrog.frogr.auth.example;
 
 import org.neo4j.graphdb.RelationshipType;
 

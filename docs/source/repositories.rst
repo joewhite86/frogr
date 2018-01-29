@@ -5,7 +5,7 @@ Repositories are used to communicate with the underlying database.
 We won't need to create a repository for each :doc:`model <models>`. 
 There's a default implementation, that will be used if no appropriate repository was found which provides basic functionality.
 
-The naming of the repository is important, so that Froggy can find it.
+The naming of the repository is important, so that Frogr can find it.
 Names should start with the :doc:`model <models>` name and end with "Repository" (case-sensitive) and it should extend ``BaseModelRepository`` or ``BaseRelationshipRepository``.
 
 If, for example, we want a repository for the ``Person`` model, we would create a repository called ``PersonRepository``:

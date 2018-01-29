@@ -1,11 +1,11 @@
 package de.whitefrog.auth;
 
 import de.whitefrog.auth.repository.UserRepository;
-import de.whitefrog.froggy.Application;
-import de.whitefrog.froggy.Service;
-import de.whitefrog.froggy.auth.model.BaseUser;
-import de.whitefrog.froggy.auth.rest.oauth.Authenticator;
-import de.whitefrog.froggy.auth.rest.oauth.Authorizer;
+import de.whitefrog.frogr.Application;
+import de.whitefrog.frogr.Service;
+import de.whitefrog.frogr.auth.model.BaseUser;
+import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
+import de.whitefrog.frogr.auth.rest.oauth.Authorizer;
 import io.dropwizard.Configuration;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthFilter;

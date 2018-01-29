@@ -6,16 +6,16 @@
 
     <parent>
         <groupId>de.whitefrog</groupId>
-        <artifactId>froggy-parent</artifactId>
+        <artifactId>frogr-parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>froggy-auth</artifactId>
+    <artifactId>frogr-auth</artifactId>
     <packaging>jar</packaging>
     
     <dependencies>
         <dependency>
             <groupId>de.whitefrog</groupId>
-            <artifactId>froggy-base</artifactId>
+            <artifactId>frogr-base</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

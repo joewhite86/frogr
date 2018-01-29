@@ -1,8 +1,8 @@
-package de.whitefrog.froggy.auth.example;
+package de.whitefrog.frogr.auth.example;
 
-import de.whitefrog.froggy.auth.example.model.User;
-import de.whitefrog.froggy.auth.rest.oauth.Authenticator;
-import de.whitefrog.froggy.auth.rest.oauth.Authorizer;
+import de.whitefrog.frogr.auth.example.model.User;
+import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
+import de.whitefrog.frogr.auth.rest.oauth.Authorizer;
 import io.dropwizard.Configuration;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthFilter;
@@ -11,12 +11,12 @@ import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 
-public class Application extends de.whitefrog.froggy.Application<Configuration> {
+public class Application extends de.whitefrog.frogr.Application<Configuration> {
   public Application() {
     // register the rest classes
-    register("de.whitefrog.froggy.auth.example");
+    register("de.whitefrog.frogr.auth.example");
     // register repositories and models
-    serviceInjector().service().register("de.whitefrog.froggy.auth.example");
+    serviceInjector().service().register("de.whitefrog.frogr.auth.example");
     
   }
 
@@ -39,7 +39,7 @@ public class Application extends de.whitefrog.froggy.Application<Configuration> 
 
   @Override
   public String getName() {
-    return "froggy-auth-example-rest";
+    return "frogr-auth-example-rest";
   }
 
   public static void main(String[] args) throws Exception {
