@@ -77,6 +77,6 @@ REST:
    :caption: Contents:
 
    guide
-   documentation
+   documentation/documentation
    license
    help

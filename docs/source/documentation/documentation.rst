@@ -8,4 +8,4 @@ Documentation
    models
    repositories
    services
-   search
+   searching
