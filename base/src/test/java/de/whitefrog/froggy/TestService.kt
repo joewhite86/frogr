@@ -21,12 +21,12 @@ class TestService {
   @Test
   fun noManifestVersion() {
     System.clearProperty("version")
-    assertThat(Service.getManifestVersion()).isEqualTo("undefined")
+    assertThat(TestSuite.service().manifestVersion).isEqualTo("undefined")
   }
   @Test
   fun snapshotManifestVersion() {
     System.setProperty("version", "1.0.1-SNAPSHOT")
-    assertThat(Service.getManifestVersion()).isEqualTo("1.0.1")
+    assertThat(TestSuite.service().manifestVersion).isEqualTo("1.0.1")
   }
   
   @Test

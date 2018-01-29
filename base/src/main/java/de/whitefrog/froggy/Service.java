@@ -45,8 +45,9 @@ import java.util.Set;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown}
+  public enum State { Started, Running, ShuttingDown;}
 
+  private static Class mainClass = Application.class;
   private GraphDatabaseService graphDb;
   private String directory;
   private GraphRepository graphRepository;
@@ -182,11 +183,11 @@ public class Service implements AutoCloseable {
     return graphDb;
   }
 
-  public synchronized static String getManifestVersion() {
+  public synchronized String getManifestVersion() {
     String version = null;
-    Class mainClass = getMainClass();
+    
     if(mainClass != null) {
-      version = getMainClass().getPackage().getImplementationVersion();
+      version = mainClass.getPackage().getImplementationVersion();
     }
     if(version == null) {
       version = System.getProperty("version", "undefined");
@@ -196,16 +197,13 @@ public class Service implements AutoCloseable {
 
     return version;
   }
+  
+  public static void setMainClass(Class clazz) {
+    mainClass = clazz;
+  }
 
-  private static Class getMainClass() {
-    Class clazz = null;
-    try {
-      StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
-      clazz = Class.forName(stacktrace[stacktrace.length - 1].getClassName());
-    } catch(ClassNotFoundException e) {
-      logger.error(e.getMessage(), e);
-    }
-    return clazz;
+  public static Class getMainClass() {
+    return mainClass;
   }
 
   /**

@@ -49,7 +49,7 @@ public class Patcher {
    * @param service Service to use for the patches
    */
   public static void patch(Service service) {
-    String version = Service.getManifestVersion();
+    String version = service.getManifestVersion();
     if(!version.equals("undefined")) patch(service, version);
   }
 
