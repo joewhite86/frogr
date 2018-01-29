@@ -7,7 +7,7 @@ public class Role {
   public static final String User = "User";
   public static final String Public = "Public";
 
-  private final Map<String, List<String>> includes = createIncludes();
+  private static final Map<String, List<String>> includes = createIncludes();
 
   private static Map<String, List<String>> createIncludes() {
     Map<String, List<String>> includes = new HashMap<>(2);
@@ -18,7 +18,7 @@ public class Role {
     return includes;
   }
 
-  public boolean inRole(String userRole, String role) {
+  public static boolean inRole(String userRole, String role) {
     return userRole.equals(role) || includes.containsKey(userRole) && includes.get(userRole).contains(role);
   }
 }
