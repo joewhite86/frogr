@@ -28,4 +28,10 @@ class Person() : Entity() {
   var parents: List<Person> = ArrayList()
   @Lazy @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
   var children: List<Person> = ArrayList()
+  
+  companion object {
+    @JvmField val Name = "name"
+    @JvmField val MarriedWith = "marriedWith"
+    @JvmField val Children = "children"
+  }
 }
