@@ -20,4 +20,4 @@ There's access to it in any REST service class and inside any repository:
 
 .. literalinclude:: ../../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
   :language: java
-  :lines: 11-
+  :lines: 14-

@@ -8,6 +8,7 @@ import de.whitefrog.frogr.model.annotation.Required
 import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.model.annotation.Lazy
 import org.neo4j.graphdb.Direction
+import java.util.*
 
 class Person() : Entity() {
   constructor(name: String) : this() {

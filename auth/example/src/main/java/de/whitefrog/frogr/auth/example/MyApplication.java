@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.auth.example;
 
+import de.whitefrog.frogr.Application;
 import de.whitefrog.frogr.auth.example.model.User;
 import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
 import de.whitefrog.frogr.auth.rest.oauth.Authorizer;
@@ -11,8 +12,8 @@ import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 
-public class Application extends de.whitefrog.frogr.Application<Configuration> {
-  public Application() {
+public class MyApplication extends Application<Configuration> {
+  public MyApplication() {
     // register the rest classes
     register("de.whitefrog.frogr.auth.example");
     // register repositories and models
@@ -43,6 +44,6 @@ public class Application extends de.whitefrog.frogr.Application<Configuration> {
   }
 
   public static void main(String[] args) throws Exception {
-    new Application().run("server", "config/example.yml");
+    new MyApplication().run("server", "config/example.yml");
   }
 }

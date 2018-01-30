@@ -2,11 +2,25 @@ Models
 ======
 
 Models define the data structure, used for our project.
-Each model has to inherit from the ``Model`` interface. 
-But theres a base class ``Entity`` that implements all needed methods for us.
+Each model has at least extend the ``Model`` interface.
 
-Models mainly consist of field and relationship definitions that define how it is used inside our project.
+Entities
+--------
+ 
+For entities there's a base class ``Entity`` that implements all needed methods for us.
+
+Entity models primarily consists of field and relationship definitions that define how it is used inside our project.
 I recommend using Kotlin_ for models, because I'm lazy and hate to write getter and setter methods, but thats up to you ;)
+
+Relationships
+-------------
+
+For relationships we can use the ``BaseRelationship<From, To>`` class.
+
+We can use every annotated field entities are using, except ``@RelatedTo`` and ``@RelationshipCount``.
+
+Fields
+------
 
 Model fields should always be initialized with ``null``, so that the persistence layer can properly decide if 
 the value is relevant for storing to database. Also we should not use primitive types here.
@@ -21,6 +35,8 @@ Fields can be annotated with hibernate annotations extended by a set of unique o
 
 @Lazy
   Indicator for lists to fetch them lazily on demand, not every list item at once.
+  Using this will NOT delete relationships when one is missing in save operations.
+  We have to delete them manually, when needed.
 
 @NotPersistant
   The field should not be persisted.

@@ -1,17 +1,18 @@
-Guide
-=====
-
 Quickstart
-----------
+==========
 
 First, add the dependency to your project.
 
-Maven:
+Maven
+-----
 
 .. literalinclude:: ../../base/examples/basic/pom.xml
   :language: xml
   :lines: 17-21
   :dedent: 8
+
+Application
+-----------
 
 Next we will create the main entry point for the service.
 
@@ -23,6 +24,9 @@ As you can see there are two registry calls in the application's constructor.
 ``register(...)`` let's the application know in which package to look for rest classes.
 ``serviceInjector().service().register(...)`` tells the application where to look for models and repositories.
 More information about the Application entry point: :doc:`Application <documentation/application>`
+
+Configs
+-------
 
 You may also have noticed there's a config file used in the main method.
 This is required to setup our Dropwizard_ instance, so we have to create that one now. 
@@ -43,12 +47,18 @@ Reference: `Dropwizard Configuration`_
 
 Reference: `Neo4j Configuration`_
 
+RelationshipTypes
+-----------------
+
 We should add a class that holds our relationship types, so that we have consistent and convienient access.
-This is not a requirement but I highly recommend it.
+This is not a requirement but I highly recommend it. Doing so we don't have to deal with string in Java code, which is never a good choice, right?
 
 .. literalinclude:: ../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/RelationshipTypes.java
   :language: java
   :lines: 5-
+
+Model
+-----
 
 Now, let's create a :doc:`model <documentation/models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
@@ -59,9 +69,15 @@ All models have to extend the Entity class or implement the Model interface at l
 
 As you can see, we used the relationship types created before, to declare our relationships to other models.
 
+Repository
+----------
+
 Normally we would create a repository for persons. But we won't need extra methods for
 this tutorial and frogr will create a default repository if it can't find one.
 If you need more information visit :doc:`documentation/repositories`.
+
+Service
+-------
 
 Next we'll have to create the REST :doc:`service <documentation/services>` layer. There's a base class, that provides
 basic CRUD operations, so you only have to add methods for special cases. Of course you
@@ -69,7 +85,7 @@ can also use any other JAX-RS annotated class.
 
 .. literalinclude:: ../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
   :language: java
-  :lines: 11-12,24
+  :lines: 14-26,35
 
 .. _Kotlin: https://kotlinlang.org
 .. _Dropwizard: http://www.dropwizard.io

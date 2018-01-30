@@ -8,7 +8,7 @@ import org.neo4j.graphdb.Transaction;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
-@Path("persons")
+@Path("person")
 public class Persons extends CRUDService<PersonRepository, Person> {
   @GET
   @Path("init")

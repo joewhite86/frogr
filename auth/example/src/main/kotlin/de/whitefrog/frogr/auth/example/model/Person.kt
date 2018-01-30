@@ -8,6 +8,7 @@ import de.whitefrog.frogr.model.annotation.Required
 import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.model.annotation.Lazy
 import org.neo4j.graphdb.Direction
+import java.util.*
 
 class Person() : Entity() {
   constructor(name: String) : this() {
@@ -28,4 +29,10 @@ class Person() : Entity() {
   var parents: List<Person> = ArrayList()
   @Lazy @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.INCOMING)
   var children: List<Person> = ArrayList()
+
+  companion object {
+    @JvmField val Name = "name"
+    @JvmField val MarriedWith = "marriedWith"
+    @JvmField val Children = "children"
+  }
 }

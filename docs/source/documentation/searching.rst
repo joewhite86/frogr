@@ -137,3 +137,13 @@ Here are some examples, that would return the same results as the Java queries a
       }
     ]
   }
+
+Usage in services
+-----------------
+
+If we want to write a method that takes its own search parameters, we can use the ``@SearchParam`` annotation along with a ``SearchParameter`` argument:
+
+.. literalinclude:: ../../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
+  :language: java
+  :lines: 14-15,28-35
+
