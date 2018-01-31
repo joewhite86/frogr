@@ -12,7 +12,7 @@ If, for example, we want a repository for the ``Person`` model, we would create 
 
 .. literalinclude:: ../../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/repository/PersonRepository.java
   :language: java
-  :lines: 11-27,56
+  :lines: 11-29,58
 
 We can access our repository easily by calling the ``.repository(..)`` method of the ``Service`` instance.
 The method takes either the :doc:`model <models>` class or the name as string.

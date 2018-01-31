@@ -19,7 +19,7 @@ class Person() : Entity() {
 
   // Relationship to another single model
   @RelatedTo(type = RelationshipTypes.MarriedWith, direction = Direction.BOTH)
-  var marriedWith: Person? = null
+  var marriedWith: MarriedWith? = null
   // Relationship to a collection of models
   @Lazy @RelatedTo(type = RelationshipTypes.ChildOf, direction = Direction.OUTGOING)
   var parents: List<Person> = ArrayList()

@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.example.repository;
 
+import de.whitefrog.frogr.example.model.MarriedWith;
 import de.whitefrog.frogr.example.model.Person;
 import de.whitefrog.frogr.model.rest.FieldList;
 import de.whitefrog.frogr.model.rest.Filter;
@@ -20,10 +21,11 @@ public class PersonRepository extends BaseModelRepository<Person> {
 
     rick.setChildren(Arrays.asList(beth));
     beth.setChildren(Arrays.asList(morty, summer));
-    beth.setMarriedWith(jerry);
     jerry.setChildren(Arrays.asList(morty, summer));
-    jerry.setMarriedWith(beth);
     save(rick, beth, jerry, morty, summer);
+    MarriedWith marriedWith = new MarriedWith(jerry, beth);
+    marriedWith.setYears(10L);
+    service().repository(MarriedWith.class).save(marriedWith);
   }
 
   public void searchExamples() {

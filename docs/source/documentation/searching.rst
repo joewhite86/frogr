@@ -9,7 +9,7 @@ Here are some examples:
 
 .. literalinclude:: ../../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/repository/PersonRepository.java
   :language: java
-  :lines: 31-54
+  :lines: 34-56
   :dedent: 4
 
 REST
