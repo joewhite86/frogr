@@ -182,6 +182,36 @@ public class Relationships {
   /**
    * Get all relationships matching a model's field descriptor. 
    * For all relationships fetch the fields passed.
+   *
+   * @param model Model that contains the relationships
+   * @param descriptor Descriptor for the relationship field
+   * @param fields Field list to fetch for the relationships
+   * @return Set of matching relationships
+   * descriptor could not be created
+   */
+  @SuppressWarnings("unchecked")
+  static <R extends BaseRelationship> R getRelationship(
+      Model model, FieldDescriptor descriptor, FieldList fields) {
+    RelatedTo annotation = descriptor.annotations().relatedTo;
+    Validate.notNull(model);
+    Validate.notNull(annotation.type());
+
+    ResourceIterator<Relationship> iterator =
+      (ResourceIterator<Relationship>) Persistence.getNode(model).getRelationships(
+        annotation.direction(), RelationshipType.withName(annotation.type())).iterator();
+
+    R relationshipModel = null;
+    if(iterator.hasNext()) {
+      Relationship relationship = iterator.next();
+      relationshipModel = Persistence.get(relationship, fields);
+    }
+    iterator.close();
+    return relationshipModel;
+  }
+
+  /**
+   * Get all relationships matching a model's field descriptor. 
+   * For all relationships fetch the fields passed.
    * 
    * @param model Model that contains the relationships
    * @param descriptor Descriptor for the relationship field
