@@ -17,7 +17,8 @@ import org.slf4j.LoggerFactory;
   TestService.class,
   TestRepositories.class,
   TestModels.class,
-  TestSearch.class
+  TestSearch.class,
+  TestFieldList.class
 })
 public class TestSuite {
   private static final Logger logger = LoggerFactory.getLogger(TestSuite.class);

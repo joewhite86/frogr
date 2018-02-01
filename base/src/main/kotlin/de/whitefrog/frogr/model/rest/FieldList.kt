@@ -1,23 +1,26 @@
 package de.whitefrog.frogr.model.rest
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import de.whitefrog.frogr.exception.QueryParseException
 import de.whitefrog.frogr.model.Entity
-
-import java.util.Arrays
-import java.util.HashSet
+import java.util.*
 
 /**
  * Field list used in rest queries. Contains multiple QueryField instances.
  */
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
+@JsonAutoDetect(
+  fieldVisibility = JsonAutoDetect.Visibility.ANY, 
+  getterVisibility = JsonAutoDetect.Visibility.NONE, 
+  setterVisibility = JsonAutoDetect.Visibility.NONE
+)
 class FieldList : HashSet<QueryField>() {
 
   fun containsField(name: String): Boolean {
-    return this.any { it.field() == name }
+    return this.any { it.field == name }
   }
 
   operator fun get(name: String): QueryField? {
-    return this.firstOrNull { it.field() == name }
+    return this.firstOrNull { it.field == name }
   }
 
   companion object {
@@ -25,41 +28,94 @@ class FieldList : HashSet<QueryField>() {
     var All = FieldList.parseFields(Entity.AllFields)
 
     @JvmStatic
-    fun create(vararg fields: QueryField): FieldList {
-      val list = FieldList()
-      list.addAll(Arrays.asList(*fields))
-      return list
-    }
-
-    @JvmStatic
     fun parseFields(vararg fields: String): FieldList {
-      return parseFields(Arrays.asList(*fields), false)
+      return parseFields(Arrays.asList(*fields))
     }
+    
+    @JvmStatic
+    fun parseFields(stringFields: List<String>) : FieldList {
+      val fields = FieldList()
 
-    @JvmStatic @JvmOverloads 
-    fun parseFields(fields: List<String>, addAll: Boolean = false): FieldList {
-      val fieldList = FieldList()
-
-      for (field in fields) {
-        if (field.contains(".")) {
-          val fieldName = field.substring(0, field.indexOf("."))
-          if (fieldList.containsField(fieldName)) {
-            fieldList[fieldName]!!.subFields(QueryField(field.substring(field.indexOf(".") + 1), addAll))
-            continue
-          }
-        } else if (field.startsWith("[")) {
-          // assuming sth like user.[name;login]
-          return parseFields(*field.substring(1, field.length - 1)
-            .split(";".toRegex()).dropLastWhile(String::isEmpty).toTypedArray())
+      stringFields
+        .map { if(it.contains(".")) parseField(it, fields) else QueryField(it) }
+        .forEach { 
+          if(fields.containsField(it.field)) {
+            fields[it.field]!!.subFields().addAll(it.subFields())
+          } else {
+            fields.add(it)
+          } 
         }
-        val queryField = QueryField(field, addAll)
-        if (addAll) queryField.subFields(QueryField(Entity.AllFields))
-        fieldList.add(queryField)
-      }
+      
+      return fields
+    }
+    
+    @JvmStatic
+    fun parseFields(input: String) : FieldList {
+      val fields = FieldList()
 
-      if (addAll) fieldList.add(QueryField(Entity.AllFields))
-      return fieldList
+      var field = ""
+      var brackets = 0
+      for(char in input) {
+        when {
+          char == '}' -> {
+            if(brackets == 0) throw QueryParseException("missing {")
+            brackets--
+            field+= char
+          }
+          char == '{' -> {
+            brackets++
+            field+= char
+          }
+          brackets > 0 || char != ',' -> {
+            field+= char
+          }
+          else -> {
+            // brackets is 0 and current char is ',' (end of field)
+            fields.add(parseField(field, fields))
+            field = ""
+          }
+        }
+      }
+      if(brackets > 0) {
+        throw QueryParseException("missing }")
+      }
+      if(!field.isEmpty()) {
+        fields.add(parseField(field, fields))
+      }
+      
+      return fields
+    }
+    @JvmStatic
+    private fun parseField(pFieldString: String, parentFields: FieldList) : QueryField {
+      val queryField: QueryField?
+      val fieldString = pFieldString.trim()
+
+      // if there's a "." in the string, we have to parse the subfields too
+      if(fieldString.contains(".")) {
+        val field = fieldString.substring(0, fieldString.indexOf("."))
+        var subFieldString = fieldString.substring(field.length + 1, fieldString.length) 
+        
+        if(subFieldString.startsWith("{")) {
+          if(!subFieldString.endsWith("}")) throw QueryParseException("missing }")
+          subFieldString = subFieldString.substring(1, subFieldString.length - 1)
+        }
+        // if we already have the field in the parent FieldList, we can add all subfields there
+        if(parentFields.containsField(field)) {
+          queryField = parentFields[field]!!
+          queryField.subFields().addAll(parseFields(subFieldString))
+        } 
+        // ... else we create a new one and add all subfields there
+        else {
+          queryField = QueryField(field)
+          queryField.subFields(parseFields(subFieldString))
+        }
+      } 
+      // ... else we have a plain QueryField
+      else {
+        queryField = QueryField(fieldString)
+      }
+      
+      return queryField
     }
   }
-
 }
