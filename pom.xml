@@ -60,6 +60,7 @@
     <modules>
         <module>base</module>
         <module>auth</module>
+        <module>test</module>
     </modules>
     
     <build>
