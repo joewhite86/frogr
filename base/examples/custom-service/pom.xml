@@ -9,7 +9,7 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>frogr-parent</artifactId>
-        <version>0.0.3-SNAPSHOT</version>
+        <version>0.1.0-SNAPSHOT</version>
         <relativePath>../../..</relativePath>
     </parent>
     
@@ -17,7 +17,6 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-base</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
