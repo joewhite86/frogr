@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.whitefrog.frogr.model.Entity;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
@@ -32,6 +33,7 @@ public class SearchParameter implements Serializable {
   private Integer depth;
   private Boolean count;
   private Locale locale;
+  private Set<Long> ids = new HashSet<>();
   private Set<String> uuids = new HashSet<>();
   private List<Filter> filters = new ArrayList<>();
   private List<OrderBy> orderBy = new ArrayList<>();
@@ -47,6 +49,7 @@ public class SearchParameter implements Serializable {
     clone.depth = depth;
     clone.count = count;
     clone.locale = locale;
+    clone.ids = ids;
     clone.uuids = uuids;
     clone.filters = filters().stream().collect(Collectors.toList());
     clone.orderBy = orderBy().stream().collect(Collectors.toList());
@@ -198,6 +201,34 @@ public class SearchParameter implements Serializable {
   @JsonIgnore
   public boolean isFiltered() {
     return !filters.isEmpty();
+  }
+
+  /**
+   * Only request the id field
+   */
+  public SearchParameter idOnly() {
+    fields(Entity.IdProperty);
+    return this;
+  }
+
+  public List<Long> ids() {
+    return new ArrayList<>(ids);
+  }
+
+  public SearchParameter ids(Long... ids) {
+    this.ids.addAll(Arrays.asList(ids));
+    return this;
+  }
+
+  @Deprecated
+  public SearchParameter ids(List<Long> ids) {
+    this.ids = new HashSet<>(ids);
+    return this;
+  }
+
+  public SearchParameter ids(Set<Long> ids) {
+    this.ids = ids;
+    return this;
   }
 
   public List<String> uuids() {

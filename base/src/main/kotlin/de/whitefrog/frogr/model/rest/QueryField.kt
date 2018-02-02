@@ -45,7 +45,7 @@ data class QueryField @JvmOverloads constructor(var field: String, val addAll: B
   }
 
   fun field(): String {
-    return field ?: ""
+    return field
   }
 
   fun limit(): Int {
