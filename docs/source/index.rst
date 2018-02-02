@@ -89,4 +89,5 @@ REST:
    guide
    documentation/documentation
    license
+   contact
    help

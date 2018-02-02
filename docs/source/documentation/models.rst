@@ -27,48 +27,48 @@ the value is relevant for storing to database. Also we should not use primitive 
 
 Fields can be annotated with hibernate annotations extended by a set of unique ones. These are:
 
-@Fetch
+``@Fetch``
   Indicates that a field should be automatically fetched.
 
-@Indexed 
+``@Indexed``
   Indicates that a field should be handled by an index.
 
-@Lazy
+``@Lazy``
   Indicator for lists to fetch them lazily on demand, not every list item at once.
   Using this will NOT delete relationships when one is missing in save operations.
   We have to delete them manually, when needed.
 
-@NotPersistant
+``@NotPersistant``
   The field should not be persisted.
 
-@NullRemove
+``@NullRemove``
   Remove a property if set to ``null``.
 
-**@RelatedTo(type=None, direction=Direction.OUTGOING, multiple=false, restrictType=false)**
+``@RelatedTo(type=None, direction=Direction.OUTGOING, multiple=false, restrictType=false)``
+  The field represents a relation to another or the same model. 
 
-| The field represents a relation to another or the same model. 
 | ``type`` has to be set to the relationship type name.
 | ``direction`` defaults to an outgoing relationship, but can be also incoming or even both.
 | ``multiple`` allows multiple relationships to the same model.
 | ``restrictType`` restricts the type. Used when the same relationship type is used for multiple model relationships.
 |
 
-**@RelationshipCount(type=None, direction=Direction.OUTGOING, otherModel=Model.class)**
-
-| The field should contain the relationship count for a specified relationship type when fetched. Will not be persisted.
+``@RelationshipCount(type=None, direction=Direction.OUTGOING, otherModel=Model.class)``
+  The field should contain the relationship count for a specified relationship type when fetched. Will not be persisted.
+  
 | ``type`` has to be set to the relationship type name.
 | ``direction`` defaults to an outgoing relationship, but can be also incoming or even both.
 | ``otherModel`` is used to only query for specific models.
 |
 
-@Required
+``@Required``
   The field is required upon storing to database. If it is missing an exception will be thrown.
 
-@Unique
+``@Unique``
   The field is unique across all models of the same type. Will be indexed as well. 
   If a duplicate value is passed an exception will be thrown.
 
-@Uuid
+``@Uuid``
   Auto-generated uuid field. This should not be required as theres always an uuid field on each model.
 
 .. _Kotlin: https://kotlinlang.org

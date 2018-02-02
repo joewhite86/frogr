@@ -4,7 +4,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #7e57c2;
+  color: #9775CC;
 }
 
 a {
@@ -12,15 +12,19 @@ a {
 }
 
 a:hover {
-  color: #9B5C2E;
+  color: #518AB8;
 }
 
 a:visited {
-  color: #3F729B;
+  color: #518AB8;
 }
 
 .wy-nav-content-wrap {
   background: #181818;
+}
+
+.wy-nav-side {
+  background: #212121;
 }
 
 .wy-side-nav-search {
