@@ -7,10 +7,13 @@ Setup
 Maven
 ^^^^^
 
-.. literalinclude:: ../../../auth/example/pom.xml
-  :language: xml
-  :lines: 22-26 
-  :dedent: 8
+.. code-block:: xml
+
+  <dependency>
+      <groupId>de.whitefrog</groupId>
+      <artifactId>frogr-auth</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+  </dependency>
 
 User Model
 ^^^^^^^^^^
