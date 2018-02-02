@@ -14,7 +14,6 @@ import java.util.*
   setterVisibility = JsonAutoDetect.Visibility.NONE
 )
 class FieldList : HashSet<QueryField>() {
-
   fun containsField(name: String): Boolean {
     return this.any { it.field == name }
   }
@@ -85,6 +84,7 @@ class FieldList : HashSet<QueryField>() {
       
       return fields
     }
+    
     @JvmStatic
     private fun parseField(pFieldString: String, parentFields: FieldList) : QueryField {
       val queryField: QueryField?

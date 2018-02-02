@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.frogr.model.rest.FieldList;
 import de.whitefrog.frogr.model.rest.Filter;
 import de.whitefrog.frogr.model.rest.SearchParameter;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.server.internal.inject.AbstractContainerRequestValueFactory;
 import org.glassfish.jersey.server.internal.inject.AbstractValueFactoryProvider;
@@ -26,7 +25,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Locale;
 
 @Singleton
@@ -156,6 +154,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         params.depth(Integer.parseInt(value));
         break;
       case "order":
+      case "orderBy":
+      case "sort":
         resolveOrder(params, value);
         break;
       case "filter":
