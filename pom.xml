@@ -59,11 +59,11 @@
 
     <modules>
         <module>auth</module>
-        <module>auth/example</module>
         <module>base</module>
-        <module>base/examples/basic</module>
-        <module>base/examples/custom-service</module>
         <module>test</module>
+        <module>examples/oauth</module>
+        <module>examples/basic</module>
+        <module>examples/custom-service</module>
     </modules>
     
     <build>
