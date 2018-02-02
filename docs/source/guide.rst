@@ -66,7 +66,7 @@ Model
 Now, let's create a :doc:`model <documentation/models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
 
-.. literalinclude:: ../../examples/basic/src/main/kotlin/de/whitefrog/frogr/example/model/Person.kt
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/model/Person.kt
   :language: kotlin
   :lines: 9-
 

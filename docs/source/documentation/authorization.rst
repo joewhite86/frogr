@@ -21,7 +21,7 @@ User Model
 The User model has to extend ``BaseUser`` and defines our user, which can be passed 
 in :doc:`Service <services>` methods using the ``@Auth`` annotation.
 
-.. literalinclude:: ../../../examples/oauth/src/main/kotlin/de/whitefrog/frogr/auth/example/model/User.kt
+.. literalinclude:: ../../../examples/oauth/src/main/java/de/whitefrog/frogr/auth/example/model/User.kt
   :language: kotlin
   :lines: 5
 
