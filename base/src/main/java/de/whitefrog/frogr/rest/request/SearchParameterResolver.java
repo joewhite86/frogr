@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.frogr.model.rest.FieldList;
 import de.whitefrog.frogr.model.rest.Filter;
 import de.whitefrog.frogr.model.rest.SearchParameter;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.server.internal.inject.AbstractContainerRequestValueFactory;
 import org.glassfish.jersey.server.internal.inject.AbstractValueFactoryProvider;
@@ -24,7 +23,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Locale;
 
 @Singleton
 public class SearchParameterResolver extends AbstractValueFactoryProvider {
@@ -62,7 +63,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       if(request.getHeader(ParameterName) != null) {
         params = resolve(request.getHeader(ParameterName));
       } else if(request.getParameter(ParameterName) != null) {
-        // .. in query parameter
+        // .. in query parameter: ?params={fields:...}
         params = resolve(request.getParameter(ParameterName));
       } else {
         // .. as query parameters
@@ -76,13 +77,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
 
       if(params.page() != 1 && params.start() == 0) {
         params.start((params.page() - 1) * params.limit());
-      }
-
-      // helper for older libraries
-      if(request.getParameter("q") != null) {
-        params.query(request.getParameter("q"));
-      } else if(request.getParameter("query") != null) {
-        params.query(request.getParameter("query"));
       }
 
       return params;
@@ -113,8 +107,10 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     }
     try {
       if(params.startsWith("{")) {
+        // map json object formatted as string
         return mapper.readValue(params, SearchParameter.class);
       } else {
+        // parse parameters in header
         SearchParameter searchParamter = new SearchParameter();
         String[] splits = params.split(";");
         for(String split : splits) {
@@ -158,6 +154,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         params.depth(Integer.parseInt(value));
         break;
       case "order":
+      case "orderBy":
+      case "sort":
         resolveOrder(params, value);
         break;
       case "filter":
@@ -176,8 +174,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
   }
 
   private static FieldList resolveFields(String value) {
-    List<String> fields = Arrays.asList(StringUtils.split(value, ","));
-    return FieldList.parseFields(fields, false);
+    return FieldList.parseFields(value);
   }
 
   private static void resolveOrder(SearchParameter params, String value) {

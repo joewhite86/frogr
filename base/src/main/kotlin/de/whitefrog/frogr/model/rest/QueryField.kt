@@ -4,15 +4,13 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.apache.commons.lang.builder.EqualsBuilder
 import org.apache.commons.lang.builder.HashCodeBuilder
-
-import java.util.Arrays
+import java.util.*
 
 /**
  * Single query field used in rest queries. Can have sub-fields and limit and skip values.
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
-class QueryField @JvmOverloads constructor(field: String, addAll: Boolean = false) {
-  private var field: String? = null
+data class QueryField @JvmOverloads constructor(var field: String, val addAll: Boolean = false) {
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
   private var skip = 0
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
@@ -21,13 +19,13 @@ class QueryField @JvmOverloads constructor(field: String, addAll: Boolean = fals
   private var subFields = FieldList()
 
   init {
-    if (field.contains(".")) {
-      val fields = field.split("\\.".toRegex(), 2).toTypedArray()
-      parseField(fields[0])
-      this.subFields = FieldList.parseFields(Arrays.asList(fields[1]), addAll)
-    } else {
+//    if (field.contains(".")) {
+//      val fields = field.split("\\.".toRegex(), 2).toTypedArray()
+//      parseField(fields[0])
+//      this.subFields = FieldList.parseFields(Arrays.asList(fields[1]), addAll)
+//    } else {
       parseField(field)
-    }
+//    }
   }
 
   private fun parseField(field: String) {
@@ -47,7 +45,7 @@ class QueryField @JvmOverloads constructor(field: String, addAll: Boolean = fals
   }
 
   fun field(): String {
-    return field ?: ""
+    return field
   }
 
   fun limit(): Int {
@@ -92,6 +90,16 @@ class QueryField @JvmOverloads constructor(field: String, addAll: Boolean = fals
   }
 
   override fun toString(): String {
-    return field!! + if (subFields().isEmpty()) "" else " (" + subFields.size + " subfields)"
+    var str = field
+    if(!subFields().isEmpty()) {
+      str += "{"
+      subFields().forEachIndexed { i, f ->
+        str += f.toString() +
+          (if (f.limit != SearchParameter.DefaultLimit) "(limit: " + f.limit + ")" else "") +
+          (if (i + 1 < subFields().size) "," else "")
+      }
+      str += "}"
+    }
+    return str
   }
 }

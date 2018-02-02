@@ -6,7 +6,6 @@ import de.whitefrog.frogr.exception.RepositoryNotFoundException;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.persistence.Persistence;
-import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -15,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
@@ -99,24 +99,25 @@ public class RepositoryFactory {
           throw new ClassNotFoundException(name + "Repository");
         }
         Class c = repositoryCache.get(name + "Repository");
-        Constructor<Repository> ctor = ConstructorUtils.getMatchingAccessibleConstructor(c, new Class[] {service.getClass()});
+        Constructor<Repository> ctor = c.getDeclaredConstructor();
         if (ctor == null) {
-          throw new RepositoryInstantiationException("No constructor " + name + "Repository(" 
-            + service.getClass().getName() + ") found in " + c.getName());
+          throw new RepositoryInstantiationException("No constructor " + name + "Repository() found in " + c.getName());
         }
-        repository = ctor.newInstance(service);
+        repository = ctor.newInstance();
+        setRepositoryService(repository);
       } catch(ClassNotFoundException e) {
         try {
           logger.debug("No repository found for " + modelClass.getSimpleName() + ", creating a default one");
           if(!Relationship.class.isAssignableFrom(modelClass)) {
             Constructor<DefaultRepository> ctor = 
-              DefaultRepository.class.getConstructor(Service.class, String.class);
-            repository = ctor.newInstance(service, name);
+              DefaultRepository.class.getConstructor(String.class);
+            repository = ctor.newInstance(name);
           } else {
             Constructor<DefaultRelationshipRepository> ctor = 
-              DefaultRelationshipRepository.class.getConstructor(Service.class, String.class);
-            repository = ctor.newInstance(service, name);
+              DefaultRelationshipRepository.class.getConstructor(String.class);
+            repository = ctor.newInstance(name);
           }
+          setRepositoryService(repository);
         } catch(ReflectiveOperationException ex) {
           throw new RepositoryInstantiationException(e.getCause());
         }
@@ -128,6 +129,12 @@ public class RepositoryFactory {
     }
 
     return repository;
+  }
+
+  public void setRepositoryService(Repository repository) throws ReflectiveOperationException {
+    Field serviceField = BaseRepository.class.getDeclaredField("service");
+    serviceField.setAccessible(true);
+    serviceField.set(repository, service);
   }
 
   /**

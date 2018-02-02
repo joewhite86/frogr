@@ -1,0 +1,114 @@
+body {
+  color: #A7A7A7;
+  font-family: "Helvetica Neue","Lato","proxima-nova",Arial,sans-serif
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #9775CC;
+}
+
+a {
+  color: #AFC4DB;
+}
+
+a:hover {
+  color: #518AB8;
+}
+
+a:visited {
+  color: #518AB8;
+}
+
+.wy-nav-content-wrap {
+  background: #181818;
+}
+
+.wy-nav-side {
+  background: #212121;
+}
+
+.wy-side-nav-search {
+  background: #7e57c2;
+}
+
+.wy-side-nav-search input[type=text] {
+  border-color: #7b78c3;
+}
+
+.wy-side-nav-search a:visited {
+  color: #f0f0ff;
+}
+
+.wy-menu-vertical header, .wy-menu-vertical p.caption {
+  color: #f8f8f8;
+}
+
+code, .rst-content tt, .rst-content code {
+  background: none;
+  border: none;
+  font-size: 93%;
+  color: #CF6A4C;
+}
+
+dt, strong {
+  color: #fafafa;
+}
+
+.rst-content tt.literal, .rst-content tt.literal, .rst-content code.literal {
+  color: #CF6A4C;
+}
+
+div[class^='highlight'] pre {
+ font-family: Monaco,Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L","Courier New",Courier,monospace;
+ color: #f8f8f8;
+}
+
+.codeblock, pre.literal-block, .rst-content .literal-block, .rst-content pre.literal-block, div[class^='highlight'] {
+  background: #0B0B0B;
+  border: 1px solid #5F5A60;
+  border-radius: 4px;
+}
+
+.c1 {
+  color: #5F5A60;
+}
+
+.kc {
+  color: #CF6A4C;
+}
+
+.kd {
+  color: #F9EE98;
+}
+
+.n, .mi {
+  color: #f8f8f8;
+}
+
+.nt {
+  color: #DAD085;
+}
+
+.nc {
+  color: #9B703F;
+}
+
+.nd {
+  color: #8996A8;
+}
+
+.na {
+  color: #7587A6;
+}
+
+.nf {
+  color: #AC885B;
+}
+
+.s, .s2 {
+  color: #8F9D6A;
+}
+
+.k {
+  color: #CDA869
+}

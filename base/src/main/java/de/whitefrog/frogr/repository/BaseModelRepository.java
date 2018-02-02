@@ -1,6 +1,5 @@
 package de.whitefrog.frogr.repository;
 
-import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
@@ -26,8 +25,8 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   private final Label label;
   private Set<Label> labels;
 
-  public BaseModelRepository(Service service) {
-    super(service);
+  public BaseModelRepository() {
+    super();
     this.label = Label.label(getType());
     if(getModelClass() != null) {
       this.labels = getModelInterfaces(getModelClass()).stream()
@@ -37,8 +36,8 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
       logger().warn("no model class found for {}", getClass());
     }
   }
-  public BaseModelRepository(Service service, String modelName) {
-    super(service, modelName);
+  public BaseModelRepository(String modelName) {
+    super(modelName);
     this.label = Label.label(modelName);
     this.labels = getModelInterfaces(getModelClass()).stream()
       .map(Label::label)

@@ -6,7 +6,7 @@
 
     <groupId>de.whitefrog</groupId>
     <artifactId>frogr-parent</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <packaging>pom</packaging>
     <name>Frogr</name>
     <description>Neo4j powered restful drop-in solution</description>
@@ -60,6 +60,7 @@
     <modules>
         <module>base</module>
         <module>auth</module>
+        <module>test</module>
     </modules>
     
     <build>

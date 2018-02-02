@@ -4,8 +4,8 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.DuplicateEntryException;
-import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.FrogrException;
+import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Entity;
@@ -414,7 +414,12 @@ public abstract class Persistence {
         }
         field.set(model, Set.class.isAssignableFrom(field.getType())? related: new ArrayList<>(related));        
       } else {
-        Model related = Relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
+        Base related;
+        if(descriptor.isModel()) {
+          related = Relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
+        } else {
+          related = Relationships.getRelationship((Model) model, descriptor, subFields);
+        }
         field.set(model, related);
       }
     } 

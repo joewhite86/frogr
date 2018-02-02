@@ -1,10 +1,7 @@
 package de.whitefrog.frogr.persistence;
 
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.FrogrException;
-import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.exception.RelatedNotPersistedException;
-import de.whitefrog.frogr.exception.RepositoryNotFoundException;
+import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.Model;
@@ -66,8 +63,13 @@ public class Relationships {
       // TODO: this should be handled inside of RepositoryFactory but then it would  
       // TODO: create a DefaultRealtionshipRepository for each unknown type name passed 
       // TODO: and i haven't found a solution yet
-      repository = new DefaultRelationshipRepository<>(service, relationshipType.name());
-      service.repositoryFactory().register(relationshipType.name(), repository);
+      repository = new DefaultRelationshipRepository<>(relationshipType.name());
+      try {
+        service.repositoryFactory().setRepositoryService(repository);
+        service.repositoryFactory().register(relationshipType.name(), repository);
+      } catch(ReflectiveOperationException ex) {
+        throw new RepositoryInstantiationException(ex.getCause());
+      }
     }
     BaseRelationship<Model, Model> relationship;
     
@@ -175,6 +177,36 @@ public class Relationships {
     else {
       throw new UnsupportedOperationException("cant find relationship without id");
     }
+  }
+
+  /**
+   * Get all relationships matching a model's field descriptor. 
+   * For all relationships fetch the fields passed.
+   *
+   * @param model Model that contains the relationships
+   * @param descriptor Descriptor for the relationship field
+   * @param fields Field list to fetch for the relationships
+   * @return Set of matching relationships
+   * descriptor could not be created
+   */
+  @SuppressWarnings("unchecked")
+  static <R extends BaseRelationship> R getRelationship(
+      Model model, FieldDescriptor descriptor, FieldList fields) {
+    RelatedTo annotation = descriptor.annotations().relatedTo;
+    Validate.notNull(model);
+    Validate.notNull(annotation.type());
+
+    ResourceIterator<Relationship> iterator =
+      (ResourceIterator<Relationship>) Persistence.getNode(model).getRelationships(
+        annotation.direction(), RelationshipType.withName(annotation.type())).iterator();
+
+    R relationshipModel = null;
+    if(iterator.hasNext()) {
+      Relationship relationship = iterator.next();
+      relationshipModel = Persistence.get(relationship, fields);
+    }
+    iterator.close();
+    return relationshipModel;
   }
 
   /**

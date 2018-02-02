@@ -1,0 +1,24 @@
+server:
+    applicationConnectors:
+      - type: http
+        port: 8282
+    adminConnectors:
+      - type: http
+        port: 8286
+    requestLog:
+        appenders:
+          - type: file
+            currentLogFilename: logs/access.log
+            threshold: ALL
+            archive: false
+logging:
+    level: WARN
+    loggers:
+        de.whitefrog.frogr: INFO
+        de.whitefrog.frogr.service.Search: DEBUG
+        io.dropwizard.jersey.DropwizardResourceConfig: INFO
+        io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper: DEBUG
+    appenders:
+      # console logging
+      - type: console
+        logFormat: '[%d] [%-5level] %logger{36} - %msg%n'

@@ -1,6 +1,5 @@
 package de.whitefrog.frogr.auth.repository;
 
-import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.auth.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
@@ -28,10 +27,6 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
   private static final Logger logger = LoggerFactory.getLogger(BaseUserRepository.class);
   
   private Role roles = new Role();
-  
-  public BaseUserRepository(Service service) {
-    super(service);
-  }
   
   public Role getRoles() {
     return roles;

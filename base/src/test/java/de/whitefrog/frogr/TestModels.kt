@@ -51,7 +51,7 @@ class TestModels {
 
     @BeforeClass @JvmStatic
     fun before() {
-      repository = PersonRepository(TestSuite.service())
+      repository = TestSuite.service().repository(Person::class.java)
       relationships = TestSuite.service().repository(Likes::class.java)
     }
   }
