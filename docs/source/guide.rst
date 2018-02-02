@@ -6,10 +6,13 @@ First, add the dependency to your project.
 Maven
 -----
 
-.. literalinclude:: ../../base/examples/basic/pom.xml
-  :language: xml
-  :lines: 17-21
-  :dedent: 8
+.. code-block:: xml
+
+  <dependency>
+      <groupId>de.whitefrog</groupId>
+      <artifactId>frogr-base</artifactId>
+      <version>0.1.0</version>
+  </dependency>
 
 Application
 -----------

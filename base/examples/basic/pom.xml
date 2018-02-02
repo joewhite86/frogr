@@ -9,7 +9,7 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>frogr-parent</artifactId>
-        <version>0.0.3</version>
+        <version>0.1.0</version>
         <relativePath>../../..</relativePath>
     </parent>
     
@@ -17,7 +17,6 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-base</artifactId>
-            <version>0.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -39,6 +38,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>

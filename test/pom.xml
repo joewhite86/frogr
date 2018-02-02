@@ -5,7 +5,7 @@
     <parent>
         <artifactId>frogr-parent</artifactId>
         <groupId>de.whitefrog</groupId>
-        <version>0.0.3</version>
+        <version>0.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,7 +15,6 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-base</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
