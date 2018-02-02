@@ -6,6 +6,7 @@ import de.whitefrog.frogr.repository.RelationshipRepository
 import de.whitefrog.frogr.test.Likes
 import de.whitefrog.frogr.test.Person
 import de.whitefrog.frogr.test.PersonRepository
+import de.whitefrog.frogr.test.TemporaryService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -13,7 +14,7 @@ import org.junit.Test
 class TestSearch {
   @Test
   fun startsWith() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val results = persons.search()
         .filter(Filter.StartsWith("field", "test"))
         .list<Person>()
@@ -23,7 +24,7 @@ class TestSearch {
   
   @Test
   fun endsWith() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val results = persons.search()
         .filter(Filter.EndsWith("field", "t1"))
         .list<Person>()
@@ -33,7 +34,7 @@ class TestSearch {
 
   @Test
   fun contains() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val results = persons.search()
         .filter(Filter.Contains("field", "est"))
         .list<Person>()
@@ -43,7 +44,7 @@ class TestSearch {
 
   @Test
   fun ids() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val person = persons.search()
         .ids(TestSuite.person1.id)
         .single<Person>()
@@ -53,7 +54,7 @@ class TestSearch {
 
   @Test
   fun uuids() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val person = persons.search()
         .uuids(TestSuite.person1.uuid)
         .single<Person>()
@@ -63,7 +64,7 @@ class TestSearch {
 
   @Test
   fun count() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val count = persons.search().count()
       assertThat(count).isEqualTo(2)
     }
@@ -71,7 +72,7 @@ class TestSearch {
 
   @Test
   fun sum() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val sum = persons.search().sum("person.number").toLong()
       assertThat(sum).isEqualTo(TestSuite.person1.number!! + TestSuite.person2.number!!)
     }
@@ -79,7 +80,7 @@ class TestSearch {
   
   @Test
   fun set() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       val set = persons.search().set<Person>()
       assertThat(set).isInstanceOfAny(Set::class.java)
     }
@@ -87,7 +88,7 @@ class TestSearch {
 
   @Test
   fun toLong() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val long = persons.search().limit(1).returns("person.number").toLong()
       assertThat(long is Long).isTrue
     }
@@ -95,14 +96,14 @@ class TestSearch {
 
   @Test(expected = UnsupportedOperationException::class)
   fun toLongTooManyReturns() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       persons.search().limit(1).returns("person.number", "person.field").toLong()
     }
   }
 
   @Test
   fun toInt() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val long = persons.search().limit(1).returns("person.number").toInt()
       assertThat(long is Int).isTrue
     }
@@ -110,14 +111,14 @@ class TestSearch {
 
   @Test(expected = UnsupportedOperationException::class)
   fun toIntTooManyReturns() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       persons.search().limit(1).returns("person.number", "person.field").toInt()
     }
   }
   
   @Test
   fun searchLikedPersons() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       val result = persons.search()
         .filter(Filter.GreaterThan("likes.number", 0L))
         .returns("likes")
@@ -128,7 +129,7 @@ class TestSearch {
   
   @Test
   fun start() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       val results = persons.search().list<Person>()
       val result = persons.search().start(1).limit(1).single<Person>()
       assertThat(results[1]).isEqualTo(result)
@@ -137,7 +138,7 @@ class TestSearch {
   
   @Test
   fun query() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       val results = persons.search().query("test*").list<Person>()
       assertThat(results).isNotEmpty
     }
@@ -145,7 +146,7 @@ class TestSearch {
 
   @Test
   fun queryConcreteField() {
-    TestSuite.service().beginTx().use {
+    service.beginTx().use {
       val results = persons.search().query("uniqueField:test*").list<Person>()
       assertThat(results).isNotEmpty
     }
@@ -153,7 +154,7 @@ class TestSearch {
   
   @Test
   fun paging() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       val results = persons.search().list<Person>()
       var page = persons.search().limit(1).list<Person>()
       assertThat(page).hasSize(1)
@@ -166,7 +167,7 @@ class TestSearch {
   
   @Test
   fun orderBy() {
-    TestSuite.service().beginTx().use { 
+    service.beginTx().use { 
       var results = persons.search()
         .orderBy("number", SearchParameter.SortOrder.ASC)
         .fields("number")
@@ -194,13 +195,17 @@ class TestSearch {
   }
 
   companion object {
+    lateinit var service: Service
     lateinit var persons: PersonRepository
     lateinit var likesRepository: RelationshipRepository<Likes>
 
     @BeforeClass @JvmStatic
     fun before() {
-      persons = TestSuite.service().repository(Person::class.java)
-      likesRepository = TestSuite.service().repository(Likes::class.java)
+      service = TemporaryService()
+      service.connect()
+      TestSuite.prepareData(service)
+      persons = service.repository(Person::class.java)
+      likesRepository = service.repository(Likes::class.java)
     }
   }
 }

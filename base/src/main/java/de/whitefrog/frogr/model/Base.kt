@@ -6,7 +6,6 @@ import java.io.Serializable
 import java.util.*
 import javax.xml.bind.annotation.XmlRootElement
 
-
 /**
  * Base interface used for all entity and relationship types.
  */

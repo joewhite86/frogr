@@ -1,0 +1,11 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.2.21"
+}
+description = ''
+apply plugin: 'application'
+mainClassName = 'de.whitefrog.frogr.example.MyApplication'
+dependencies {
+    compile project(':frogr-base')
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version:'1.2.21'
+    testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test', version:'1.2.21'
+}

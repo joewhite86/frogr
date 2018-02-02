@@ -37,7 +37,7 @@ public class TestSuite {
       try {
         service = new TemporaryService();
         service.connect();
-        prepareData();
+        prepareData(service);
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
       }
@@ -45,11 +45,11 @@ public class TestSuite {
     return service;
   }
   
-  private static void prepareData() {
-    PersonRepository persons = service().repository(Person.class);
-    Repository<Likes> likesRepository = service().repository(Likes.class);
+  public static void prepareData(Service service) {
+    PersonRepository persons = service.repository(Person.class);
+    Repository<Likes> likesRepository = service.repository(Likes.class);
     
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       person1 = persons.createModel();
       person1.setField("test1");
       person1.setUniqueField("test1");

@@ -1,0 +1,15 @@
+rootProject.name = 'frogr-parent'
+
+include ':frogr-auth'
+include ':frogr-base'
+include ':frogr-test'
+include ':frogr-auth-example'
+include ':frogr-base-example'
+include ':frogr-custom-service-example'
+
+project(':frogr-auth').projectDir = "$rootDir/auth" as File
+project(':frogr-base').projectDir = "$rootDir/base" as File
+project(':frogr-test').projectDir = "$rootDir/test" as File
+project(':frogr-auth-example').projectDir = "$rootDir/examples/oauth" as File
+project(':frogr-base-example').projectDir = "$rootDir/examples/basic" as File
+project(':frogr-custom-service-example').projectDir = "$rootDir/examples/custom-service" as File

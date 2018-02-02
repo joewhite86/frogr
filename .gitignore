@@ -1,3 +1,6 @@
-docs/build
+build
 graph.db
 logs
+target
+out
+.gradle

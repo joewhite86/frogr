@@ -20,11 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestRepositories {
   private static PersonRepository persons;
   private static RelationshipRepository<Likes> likesRepository;
+  private static Service service;
   
   @BeforeClass
   public static void before() {
-    persons = TestSuite.service().repository(Person.class);
-    likesRepository = TestSuite.service().repository(Likes.class);
+    service = new TemporaryService();
+    service.connect();
+    persons = service.repository(Person.class);
+    likesRepository = service.repository(Likes.class);
   }
   
   @Test
@@ -34,7 +37,7 @@ public class TestRepositories {
   
   @Test
   public void createModel() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model = persons.createModel();
       model.setField("test");
       persons.save(model);
@@ -46,8 +49,8 @@ public class TestRepositories {
   
   @Test(expected = MissingRequiredException.class)
   public void createModelMissingRequired() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
-      ModelRepository<PersonRequiredField> repository = TestSuite.service().repository(PersonRequiredField.class);
+    try(Transaction tx = service.beginTx()) {
+      ModelRepository<PersonRequiredField> repository = service.repository(PersonRequiredField.class);
       PersonRequiredField model = repository.createModel();
       repository.save(model);
     }
@@ -55,7 +58,7 @@ public class TestRepositories {
   
   @Test
   public void uuid() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model = persons.createModel();
       persons.save(model);
       assertThat(model.getUuid()).isNotEmpty();
@@ -64,7 +67,7 @@ public class TestRepositories {
   
   @Test(expected = DuplicateEntryException.class)
   public void uniqueConstraint() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model = persons.createModel();
       model.setUniqueField("unique");
       persons.save(model);
@@ -76,7 +79,7 @@ public class TestRepositories {
   
   @Test
   public void createRelationship() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model1 = persons.createModel();
       model1.setField("test1");
       Person model2 = persons.createModel();
@@ -96,7 +99,7 @@ public class TestRepositories {
 
   @Test
   public void createRelationship2() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model1 = persons.createModel();
       Person model2 = persons.createModel();
       persons.save(model1, model2);
@@ -116,7 +119,7 @@ public class TestRepositories {
   @Ignore
   @Test(expected = DuplicateEntryException.class)
   public void createDuplicateRelationship() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person model1 = persons.createModel();
       Person model2 = persons.createModel();
       persons.save(model1, model2);
@@ -137,7 +140,7 @@ public class TestRepositories {
   
   @Test
   public void findByUuid() {
-    try(Transaction tx = TestSuite.service().beginTx()) {
+    try(Transaction tx = service.beginTx()) {
       Person person = persons.createModel();
       persons.save(person);
       assertThat(person.getUuid()).isNotEmpty();
@@ -148,18 +151,18 @@ public class TestRepositories {
   
   @Test(expected = RepositoryInstantiationException.class)
   public void invalidRepository() {
-    TestSuite.service().repository("Invalid");
+    service.repository("Invalid");
   }
   
   @Test
   public void defaultRepository() {
-    Repository<Clothing> repository = TestSuite.service().repository(Clothing.class);
+    Repository<Clothing> repository = service.repository(Clothing.class);
     assertThat(repository).isInstanceOfAny(DefaultRepository.class);
-    assertThat(TestSuite.service().repositoryFactory().cache()).contains(repository);
+    assertThat(service.repositoryFactory().cache()).contains(repository);
   }
   
   @Test
   public void repositoryCache() {
-    assertThat(TestSuite.service().repositoryFactory().cache()).contains(likesRepository);
+    assertThat(service.repositoryFactory().cache()).contains(likesRepository);
   }
 }
