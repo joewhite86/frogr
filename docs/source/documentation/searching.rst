@@ -147,3 +147,40 @@ If we want to write a method that takes its own search parameters, we can use th
   :language: java
   :lines: 14-15,28-35
 
+Parameters
+----------
+
+These are the possible querystring parameters, but you can find nearly identical methods in Java too.
+
+``uuids``
+  Comma-seperated list of uuids to search.
+``query``
+  Searches all indexed fields for a query string.
+``count``
+  Add a total value of found records, useful if the result is limited.
+``start``
+  Start returning results at a specific position, not required when ``page`` is set.
+``limit``
+  Limit the results.
+``page``
+  Page to return. Takes the limit parameter and sets the cursor to the needed position.
+``filter``/``filters``
+  Filter to apply. Filters start with the field name, followed by a ``:`` and the comparator. 
+  Valid comparators are: 
+
+| ``=`` Equal
+| ``!`` Not equal
+| ``<`` less than
+| ``<=`` less or equal than
+| ``>`` greater than
+| ``>=`` greater or equal than
+| ``({x}-{y})`` in a range between x and y
+|
+
+``fields``
+  Comma-seperated list of fields to fetch. Can also fetch sub-fields of related models seperated by a ``.``, for example ``children.name`` would fetch all childrens and their names.
+  Multiple sub-fields can be fetched inside curly braces, ``children.{name,age}`` would fetch all childrens and their names and ages.
+``return``/``returns``
+  Returns a related model instead of the service model. 
+``order``/``orderBy``/``sort``
+  Comma-seperated list of fields on which the results are sorted. ``-`` before the field sorts in descending, ``+`` in ascending direction. If bypassed ascending direction is used.
