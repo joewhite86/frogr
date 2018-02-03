@@ -103,7 +103,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public void remove(T model) throws PersistException {
     Validate.notNull(model.getId(), "'id' is required");
-    Persistence.delete(this, model);
+    Persistence.delete(model);
     logger().info("{} deleted", model);
   }
 

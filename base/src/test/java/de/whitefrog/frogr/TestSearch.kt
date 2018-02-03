@@ -3,15 +3,28 @@ package de.whitefrog.frogr
 import de.whitefrog.frogr.model.rest.Filter
 import de.whitefrog.frogr.model.rest.SearchParameter
 import de.whitefrog.frogr.repository.RelationshipRepository
-import de.whitefrog.frogr.test.Likes
-import de.whitefrog.frogr.test.Person
-import de.whitefrog.frogr.test.PersonRepository
 import de.whitefrog.frogr.test.TemporaryService
+import de.whitefrog.frogr.test.model.Likes
+import de.whitefrog.frogr.test.model.Person
+import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
 import org.junit.Test
 
 class TestSearch {
+  private val service: Service = TemporaryService()
+  private var persons: PersonRepository
+  private var likesRepository: RelationshipRepository<Likes>
+  private var person1: Person
+  private var person2: Person
+
+  init {
+    service.connect()
+    val list = TestSuite.prepareData(service)
+    person1 = list[0]
+    person2 = list[1]
+    persons = service.repository(Person::class.java)
+    likesRepository = service.repository(Likes::class.java)
+  }
   @Test
   fun startsWith() {
     service.beginTx().use {
@@ -46,9 +59,9 @@ class TestSearch {
   fun ids() {
     service.beginTx().use {
       val person = persons.search()
-        .ids(TestSuite.person1.id)
+        .ids(person1.id)
         .single<Person>()
-      assertThat(person).isEqualTo(TestSuite.person1)
+      assertThat(person).isEqualTo(person1)
     }
   }
 
@@ -56,9 +69,9 @@ class TestSearch {
   fun uuids() {
     service.beginTx().use {
       val person = persons.search()
-        .uuids(TestSuite.person1.uuid)
+        .uuids(person1.uuid)
         .single<Person>()
-      assertThat(person).isEqualTo(TestSuite.person1)
+      assertThat(person).isEqualTo(person1)
     }
   }
 
@@ -74,7 +87,7 @@ class TestSearch {
   fun sum() {
     service.beginTx().use {
       val sum = persons.search().sum("person.number").toLong()
-      assertThat(sum).isEqualTo(TestSuite.person1.number!! + TestSuite.person2.number!!)
+      assertThat(sum).isEqualTo(person1.number!! + person2.number!!)
     }
   }
   
@@ -191,21 +204,6 @@ class TestSearch {
         }
         prev = result
       }
-    }
-  }
-
-  companion object {
-    lateinit var service: Service
-    lateinit var persons: PersonRepository
-    lateinit var likesRepository: RelationshipRepository<Likes>
-
-    @BeforeClass @JvmStatic
-    fun before() {
-      service = TemporaryService()
-      service.connect()
-      TestSuite.prepareData(service)
-      persons = service.repository(Person::class.java)
-      likesRepository = service.repository(Likes::class.java)
     }
   }
 }

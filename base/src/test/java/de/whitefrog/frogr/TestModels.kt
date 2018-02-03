@@ -2,16 +2,25 @@ package de.whitefrog.frogr
 
 import de.whitefrog.frogr.model.rest.FieldList
 import de.whitefrog.frogr.repository.RelationshipRepository
-import de.whitefrog.frogr.test.Likes
-import de.whitefrog.frogr.test.Person
-import de.whitefrog.frogr.test.PersonRepository
 import de.whitefrog.frogr.test.TemporaryService
+import de.whitefrog.frogr.test.model.Likes
+import de.whitefrog.frogr.test.model.Person
+import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
 class TestModels {
+  private var service: Service = TemporaryService()
+  private var repository: PersonRepository
+  private var relationships: RelationshipRepository<Likes>
+
+  init {
+    service.connect()
+    repository = service.repository(Person::class.java)
+    relationships = service.repository(Likes::class.java)
+  }
+  
   @Test
   fun newInstancesInHashSet() {
     service.beginTx().use {
@@ -42,20 +51,6 @@ class TestModels {
       // this should not throw an exception and create no additional relationship
       repository.save(woman)
       repository.fetch(woman, "marriedWith")
-    }
-  }
-
-  companion object {
-    private lateinit var service: Service
-    private lateinit var repository: PersonRepository
-    private lateinit var relationships: RelationshipRepository<Likes>
-
-    @BeforeClass @JvmStatic
-    fun before() {
-      service = TemporaryService()
-      service.connect()
-      repository = service.repository(Person::class.java)
-      relationships = service.repository(Likes::class.java)
     }
   }
 }

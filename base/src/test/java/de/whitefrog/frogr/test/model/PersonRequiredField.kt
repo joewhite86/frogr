@@ -1,4 +1,4 @@
-package de.whitefrog.frogr.test
+package de.whitefrog.frogr.test.model
 
 import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.Required

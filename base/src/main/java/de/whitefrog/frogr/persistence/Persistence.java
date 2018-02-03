@@ -30,7 +30,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 /**
- * Primarily the link between the models and repositories and neo4j itself.
+ * The link between the models and repositories and neo4j itself.
  * Handles every persitent operation required for neo4j to deal with the models and relationships
  * used in frogr. For Relationships the operations are moved to the Relationships class but 
  * some operations common to nodes and relationships are kept here.
@@ -59,11 +59,11 @@ public abstract class Persistence {
   /**
    * Delete a model from repository.
    *
-   * @param repository The repository to delete from.
    * @param model      The model to delete.
    */
-  public static <T extends Model> void delete(ModelRepository<T> repository, T model) {
+  public static <T extends Model> void delete(T model) {
     Node node = getNode(model);
+    
     for(org.neo4j.graphdb.Relationship relationship: node.getRelationships()) {
       relationship.delete();
     }

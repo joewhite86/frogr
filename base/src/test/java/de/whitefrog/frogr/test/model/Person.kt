@@ -1,4 +1,4 @@
-package de.whitefrog.frogr.test
+package de.whitefrog.frogr.test.model
 
 import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.Lazy
@@ -15,7 +15,7 @@ class Person : Entity() {
   var number: Long? = null
   @Lazy
   @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
-  var likes: List<Person>? = null
+  var likes: ArrayList<Person>? = null
   @RelatedTo(direction = Direction.BOTH, type = "MarriedWith")
   var marriedWith: Person? = null
 }
