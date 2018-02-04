@@ -3,31 +3,56 @@ package de.whitefrog.frogr
 import de.whitefrog.frogr.model.rest.Filter
 import de.whitefrog.frogr.model.rest.SearchParameter
 import de.whitefrog.frogr.repository.RelationshipRepository
-import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.Test
+import java.util.*
+
 
 class TestSearch {
-  private val service: Service = TemporaryService()
-  private var persons: PersonRepository
-  private var likesRepository: RelationshipRepository<Likes>
-  private var person1: Person
-  private var person2: Person
+  companion object {
+    private var service = TestSuite.service
+    private lateinit var persons: PersonRepository
+    private lateinit var likesRepository: RelationshipRepository<Likes>
 
-  init {
-    service.connect()
-    val list = TestSuite.prepareData(service)
-    person1 = list[0]
-    person2 = list[1]
-    persons = service.repository(Person::class.java)
-    likesRepository = service.repository(Likes::class.java)
+    @JvmStatic
+    @BeforeClass
+    fun init() {
+      persons = service.repository(Person::class.java)
+      likesRepository = service.repository(Likes::class.java)
+      persons = service.repository(Person::class.java)
+      likesRepository = service.repository(Likes::class.java)
+    }
   }
+
+  fun prepareData(): List<Person> {
+    val person1 = persons.createModel()
+    person1.field = "test1"
+    person1.uniqueField = "test1"
+    person1.number = 10L
+
+    val person2 = persons.createModel()
+    person2.field = "test2"
+    person2.uniqueField = "test2"
+    person2.number = 20L
+
+    persons.save(person1, person2)
+
+    val likes1 = Likes(person1, person2)
+    val likes2 = Likes(person2, person1)
+
+    likesRepository.save(likes1, likes2)
+
+    return Arrays.asList(person1, person2)
+  }
+  
   @Test
   fun startsWith() {
     service.beginTx().use {
+      prepareData()
       val results = persons.search()
         .filter(Filter.StartsWith("field", "test"))
         .list<Person>()
@@ -38,6 +63,7 @@ class TestSearch {
   @Test
   fun endsWith() {
     service.beginTx().use {
+      prepareData()
       val results = persons.search()
         .filter(Filter.EndsWith("field", "t1"))
         .list<Person>()
@@ -48,6 +74,7 @@ class TestSearch {
   @Test
   fun contains() {
     service.beginTx().use {
+      prepareData()
       val results = persons.search()
         .filter(Filter.Contains("field", "est"))
         .list<Person>()
@@ -58,26 +85,94 @@ class TestSearch {
   @Test
   fun ids() {
     service.beginTx().use {
+      val list = prepareData()
       val person = persons.search()
-        .ids(person1.id)
+        .ids(list[0].id)
         .single<Person>()
-      assertThat(person).isEqualTo(person1)
+      assertThat(person).isEqualTo(list[0])
     }
   }
 
   @Test
   fun uuids() {
     service.beginTx().use {
+      val list = prepareData()
       val person = persons.search()
-        .uuids(person1.uuid)
+        .uuids(list[0].uuid)
         .single<Person>()
-      assertThat(person).isEqualTo(person1)
+      assertThat(person).isEqualTo(list[0])
+    }
+  }
+
+  @Test
+  fun enumValue() {
+    service.beginTx().use {
+      val person = Person()
+      person.age = Person.Age.Old
+      persons.save(person)
+      val found: Person = persons.search().filter(Filter.Equals("age", "Old")).single()
+      assertThat(found).isEqualTo(person)
+    }
+  }
+
+  @Test
+  fun dateValue() {
+    service.beginTx().use {
+      val person = Person()
+      val date = Date()
+      person.dateField = date
+      persons.save(person)
+      val found: Person = persons.search().filter(Filter.Equals("dateField", date)).single()
+      assertThat(found).isEqualTo(person)
+    }
+  }
+  
+  @Test
+  fun dateGreaterThan() {
+    service.beginTx().use {
+      val person = Person()
+      val date = Date()
+      person.dateField = date
+      persons.save(person)
+      val cal = Calendar.getInstance()
+      cal.time = date
+      cal.add(Calendar.DAY_OF_MONTH, -1)
+      var found: Person = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
+      assertThat(found).isEqualTo(person)
+
+// throws nullpointerexception in kotlin
+//      cal.time = date
+//      cal.add(Calendar.DAY_OF_MONTH, 1)
+//      found = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
+//      assertThat(found).isNull()
+    }
+  }
+
+  @Test
+  fun dateLessThan() {
+    service.beginTx().use {
+      val person = Person()
+      val date = Date()
+      person.dateField = date
+      persons.save(person)
+      val cal = Calendar.getInstance()
+      cal.time = date
+      cal.add(Calendar.DAY_OF_MONTH, 1)
+      var found: Person = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
+      assertThat(found).isEqualTo(person)
+      
+// throws nullpointerexception in kotlin
+//      cal.time = date
+//      cal.add(Calendar.DAY_OF_MONTH, -1)
+//      found = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
+//      assertThat(found).isNull()
     }
   }
 
   @Test
   fun count() {
     service.beginTx().use {
+      prepareData()
       val count = persons.search().count()
       assertThat(count).isEqualTo(2)
     }
@@ -86,22 +181,36 @@ class TestSearch {
   @Test
   fun sum() {
     service.beginTx().use {
+      val list = prepareData()
       val sum = persons.search().sum("person.number").toLong()
-      assertThat(sum).isEqualTo(person1.number!! + person2.number!!)
+      assertThat(sum).isEqualTo(list[0].number!! + list[1].number!!)
     }
   }
   
   @Test
   fun set() {
-    service.beginTx().use { 
-      val set = persons.search().set<Person>()
-      assertThat(set).isInstanceOfAny(Set::class.java)
+    service.beginTx().use {
+      val list = prepareData()
+      val result = persons.search().set<Person>()
+      assertThat(result).isInstanceOfAny(Set::class.java)
+      assertThat(result).hasSize(list.size)
+    }
+  }
+
+  @Test
+  fun list() {
+    service.beginTx().use {
+      val list = prepareData()
+      val result = persons.search().list<Person>()
+      assertThat(result).isInstanceOfAny(List::class.java)
+      assertThat(result).hasSize(list.size)
     }
   }
 
   @Test
   fun toLong() {
     service.beginTx().use {
+      prepareData()
       val long = persons.search().limit(1).returns("person.number").toLong()
       assertThat(long is Long).isTrue
     }
@@ -110,6 +219,7 @@ class TestSearch {
   @Test(expected = UnsupportedOperationException::class)
   fun toLongTooManyReturns() {
     service.beginTx().use {
+      prepareData()
       persons.search().limit(1).returns("person.number", "person.field").toLong()
     }
   }
@@ -117,6 +227,7 @@ class TestSearch {
   @Test
   fun toInt() {
     service.beginTx().use {
+      prepareData()
       val long = persons.search().limit(1).returns("person.number").toInt()
       assertThat(long is Int).isTrue
     }
@@ -125,13 +236,15 @@ class TestSearch {
   @Test(expected = UnsupportedOperationException::class)
   fun toIntTooManyReturns() {
     service.beginTx().use {
+      prepareData()
       persons.search().limit(1).returns("person.number", "person.field").toInt()
     }
   }
   
   @Test
   fun searchLikedPersons() {
-    service.beginTx().use { 
+    service.beginTx().use {
+      prepareData()
       val result = persons.search()
         .filter(Filter.GreaterThan("likes.number", 0L))
         .returns("likes")
@@ -142,7 +255,8 @@ class TestSearch {
   
   @Test
   fun start() {
-    service.beginTx().use { 
+    service.beginTx().use {
+      prepareData()
       val results = persons.search().list<Person>()
       val result = persons.search().start(1).limit(1).single<Person>()
       assertThat(results[1]).isEqualTo(result)
@@ -152,6 +266,7 @@ class TestSearch {
   @Test
   fun query() {
     service.beginTx().use { 
+      prepareData()
       val results = persons.search().query("test*").list<Person>()
       assertThat(results).isNotEmpty
     }
@@ -160,7 +275,8 @@ class TestSearch {
   @Test
   fun queryConcreteField() {
     service.beginTx().use {
-      val results = persons.search().query("uniqueField:test*").list<Person>()
+      prepareData()
+      val results = persons.search().query("field:test*").list<Person>()
       assertThat(results).isNotEmpty
     }
   }
@@ -168,6 +284,7 @@ class TestSearch {
   @Test
   fun paging() {
     service.beginTx().use { 
+      prepareData()
       val results = persons.search().list<Person>()
       var page = persons.search().limit(1).list<Person>()
       assertThat(page).hasSize(1)
@@ -180,7 +297,8 @@ class TestSearch {
   
   @Test
   fun orderBy() {
-    service.beginTx().use { 
+    service.beginTx().use {
+      prepareData()
       var results = persons.search()
         .orderBy("number", SearchParameter.SortOrder.ASC)
         .fields("number")

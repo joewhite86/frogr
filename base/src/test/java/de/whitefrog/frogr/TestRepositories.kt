@@ -1,30 +1,35 @@
 package de.whitefrog.frogr
 
 import de.whitefrog.frogr.exception.DuplicateEntryException
+import de.whitefrog.frogr.exception.FieldNotFoundException
 import de.whitefrog.frogr.exception.MissingRequiredException
+import de.whitefrog.frogr.model.rest.Filter
 import de.whitefrog.frogr.repository.DefaultRepository
 import de.whitefrog.frogr.repository.ModelRepository
 import de.whitefrog.frogr.repository.RelationshipRepository
-import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonRequiredField
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 
 class TestRepositories {
-  private val service: Service = TemporaryService()
-  private var persons: PersonRepository
-  private var likesRepository: RelationshipRepository<Likes>
-  
-  init {
-    service.connect()
-    persons = service.repository(Person::class.java)
-    likesRepository = service.repository(Likes::class.java)
+  companion object {
+    private var service = TestSuite.service
+    private lateinit var persons: PersonRepository
+    private lateinit var likesRepository: RelationshipRepository<Likes>
+
+    @JvmStatic
+    @BeforeClass
+    fun init() {
+      persons = service.repository(Person::class.java)
+      likesRepository = service.repository(Likes::class.java)
+    }
   }
   
   @Test
@@ -50,6 +55,69 @@ class TestRepositories {
       val repository = service.repository<ModelRepository<PersonRequiredField>, PersonRequiredField>(PersonRequiredField::class.java)
       val model = repository.createModel()
       repository.save(model)
+    }
+  }
+  
+  @Test
+  fun removeProperty() {
+    service.beginTx().use {
+      val person = Person()
+      person.field = "test"
+      persons.save(person)
+      assertThat(persons.find(person.id, "field").field).isEqualTo(person.field)
+      person.removeProperty("field")
+      persons.save(person)
+      assertThat(persons.find(person.id, "field").field).isNull()
+    }
+  }
+  
+  @Test
+  fun nullRemoveProperty() {
+    service.beginTx().use {
+      val person = Person()
+      person.nullRemoveField = "test"
+      persons.save(person)
+      person.nullRemoveField = null
+      persons.save(person)
+      var found = persons.find(person.id, "nullRemoveField")
+      assertThat(found.nullRemoveField).isNull()
+      found= persons.search().filter(Filter.Equals("nullRemoveField", "test")).single()
+      assertThat(found).isNull()
+    }
+  }
+
+  @Test(expected = FieldNotFoundException::class)
+  fun removeNotExistingProperty() {
+    service.beginTx().use {
+      val person = Person()
+      persons.save(person)
+      person.removeProperty("field_xy")
+      persons.save(person)
+    }
+  }
+  
+  @Test
+  fun delete() {
+    service.beginTx().use {
+      val person = Person()
+      persons.save(person)
+      assertThat(persons.find(person.id)).isEqualTo(person)
+      persons.remove(person)
+      assertThat(persons.find(person.id)).isNull()
+    }
+  }
+
+  @Test
+  fun deleteWithRelationship() {
+    service.beginTx().use {
+      val person = Person()
+      val person2 = Person()
+      persons.save(person, person2)
+      person.marriedWith = person2
+      persons.save(person)
+      assertThat(persons.find(person.id, "marriedWith").marriedWith).isEqualTo(person2)
+      persons.remove(person)
+      assertThat(persons.find(person.id)).isNull()
     }
   }
 
@@ -86,11 +154,13 @@ class TestRepositories {
       var likes = Likes(model1, model2)
       likes.field = "test"
       likesRepository.save(likes)
-      likes = likesRepository.find(likes.id, "from", "to", "field")
+      likes = likesRepository.find(likes.id, "from.field", "to.field", "field")
       assertThat(likes).isNotNull
       assertThat(likes.field).isEqualTo("test")
       assertThat(likes.from).isEqualTo(model1)
+      assertThat(likes.from.field).isEqualTo("test1")
       assertThat(likes.to).isEqualTo(model2)
+      assertThat(likes.to.field).isEqualTo("test2")
     }
   }
 

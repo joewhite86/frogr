@@ -21,6 +21,10 @@ class FieldList : HashSet<QueryField>() {
   operator fun get(name: String): QueryField? {
     return this.firstOrNull { it.field == name }
   }
+  
+  fun getOrEmpty(name: String): QueryField {
+    return firstOrNull { it.field == name } ?: QueryField(name)
+  }
 
   companion object {
     @JvmField

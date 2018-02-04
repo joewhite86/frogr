@@ -3,6 +3,7 @@ package de.whitefrog.frogr.model.rest;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.Date;
 import java.util.function.Predicate;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -79,7 +80,7 @@ public interface Filter extends Predicate<Object> {
   }
 
   class GreaterThan extends Default implements Filter, Predicate<Object> {
-      private boolean including = false;
+    private boolean including = false;
 
     public GreaterThan() {
       super();
@@ -90,29 +91,31 @@ public interface Filter extends Predicate<Object> {
     }
 
     @Override
-      public Long getValue() {
-          return (Long) super.getValue();
-      }
+    public Long getValue() {
+      if(super.getValue() instanceof Date)
+        return ((Date) super.getValue()).getTime();
+      return (Long) super.getValue();
+    }
 
-      public boolean isIncluding() {
-          return including;
-      }
+    public boolean isIncluding() {
+      return including;
+    }
 
-      public void setIncluding(boolean value) {
-          including = value;
-      }
+    public void setIncluding(boolean value) {
+      including = value;
+    }
 
-      @Override
-      public boolean test(Object other) {
-          Long otherLong;
-          if(other instanceof Integer) otherLong = new Long((Integer) other);
-          else otherLong = (Long) other;
-          return isIncluding()? otherLong >= getValue(): otherLong > getValue();
-      }
+    @Override
+    public boolean test(Object other) {
+      Long otherLong;
+      if(other instanceof Integer) otherLong = new Long((Integer) other);
+      else otherLong = (Long) other;
+      return isIncluding()? otherLong >= getValue(): otherLong > getValue();
+    }
   }
 
   class LessThan extends Default implements Filter, Predicate<Object> {
-      private boolean including = false;
+    private boolean including = false;
 
     public LessThan() {
       super();
@@ -123,24 +126,26 @@ public interface Filter extends Predicate<Object> {
     }
 
     public Long getValue() {
-          return (Long) super.getValue();
-      }
+      if(super.getValue() instanceof Date)
+        return ((Date) super.getValue()).getTime();
+      return (Long) super.getValue();
+    }
 
-      public boolean isIncluding() {
-          return including;
-      }
+    public boolean isIncluding() {
+      return including;
+    }
 
-      public void setIncluding(boolean value) {
-          including = value;
-      }
+    public void setIncluding(boolean value) {
+      including = value;
+    }
 
-      @Override
-      public boolean test(Object other) {
-          Long otherLong;
-          if(other instanceof Integer) otherLong = new Long((Integer) other);
-          else otherLong = (Long) other;
-          return isIncluding()? otherLong <= getValue(): otherLong < getValue();
-      }
+    @Override
+    public boolean test(Object other) {
+      Long otherLong;
+      if(other instanceof Integer) otherLong = new Long((Integer) other);
+      else otherLong = (Long) other;
+      return isIncluding()? otherLong <= getValue(): otherLong < getValue();
+    }
   }
   
   class StartsWith extends Default implements Filter, Predicate<Object> {
@@ -195,60 +200,64 @@ public interface Filter extends Predicate<Object> {
   }
 
   class Range extends Default implements Filter, Predicate<Object> {
-      private boolean including = true;
-      private long from;
-      private long to;
+    private boolean including = true;
+    private long from;
+    private long to;
 
-      public Range() {
-      }
+    public Range() {}
 
-      public Range(String property, long from, long to) {
-          super(property, from);
-          this.from = from;
-          this.to = to;
-      }
+    public Range(String property, long from, long to) {
+      super(property, from);
+      this.from = from;
+      this.to = to;
+    }
+    public Range(String property, Date from, Date to) {
+      super(property, from);
+      this.from = from.getTime();
+      this.to = to.getTime();
+    }
 
-      public Long getValue() {
-          return from;
-      }
+    public Long getValue() {
+        return from;
+    }
 
-      public void setValue(Object value) {
-      }
+    public void setValue(Object value) {
+    }
 
-      public long getFrom() {
-          return from;
-      }
+    public long getFrom() {
+        return from;
+    }
 
-      public void setFrom(long from) {
-          this.from = from;
-      }
+    public void setFrom(long from) {
+        this.from = from;
+    }
 
-      public long getTo() {
-          return to;
-      }
+    public long getTo() {
+        return to;
+    }
 
-      public void setTo(long to) {
-          this.to = to;
-      }
+    public void setTo(long to) {
+        this.to = to;
+    }
 
-      public boolean isIncluding() {
-          return including;
-      }
+    public boolean isIncluding() {
+        return including;
+    }
 
-      public void setIncluding(boolean value) {
-          including = value;
-      }
+    public void setIncluding(boolean value) {
+        including = value;
+    }
 
-      @Override
-      public boolean test(Object other) {
-          Long otherLong;
-          if(other instanceof Integer) otherLong = new Long((Integer) other);
-          else otherLong = (Long) other;
-          if(isIncluding()) {
-              return otherLong <= getFrom() && otherLong >= getTo();
-          } else {
-              return otherLong < getFrom() && otherLong > getTo();
-          }
+    @Override
+    public boolean test(Object other) {
+      Long otherLong;
+      if(other instanceof Integer) otherLong = new Long((Integer) other);
+      else otherLong = (Long) other;
+      if(isIncluding()) {
+        return otherLong <= getFrom() && otherLong >= getTo();
+      } else {
+        return otherLong < getFrom() && otherLong > getTo();
       }
+    }
   }
 }

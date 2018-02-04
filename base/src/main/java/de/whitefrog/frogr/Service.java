@@ -70,6 +70,7 @@ public class Service implements AutoCloseable {
 
   public void connect(String directory) {
     try {
+      if(state == State.Running) throw new FrogrException("already running");
       this.directory = directory;
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
         .newEmbeddedDatabaseBuilder(new File(directory))

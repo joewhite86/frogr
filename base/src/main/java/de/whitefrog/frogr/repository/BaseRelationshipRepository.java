@@ -49,7 +49,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public T createModel(PropertyContainer node, FieldList fields) {
-    return fetch(Persistence.get(node), false, fields);
+    return Persistence.get(node, fields);
   }
 
   public T find(long id, FieldList fields) {

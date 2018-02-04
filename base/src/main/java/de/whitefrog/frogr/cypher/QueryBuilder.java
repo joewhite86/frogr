@@ -216,14 +216,19 @@ public class QueryBuilder {
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
         String marker = filter.getProperty().replaceAll("\\.", "") + i;
 
+        Object value = filter.getValue();
+        if(value != null && value instanceof Date) {
+          value = ((Date) value).getTime();
+        }
+
         if(filter instanceof Filter.Equals) {
-          if(filter.getValue() == null) {
+          if(value == null) {
             wheres.add(lookup + " IS NULL");
           }
           else {
             String where = "(";
-            if(filter.getValue() instanceof Boolean) {
-              if(filter.getValue() == Boolean.TRUE) {
+            if(value instanceof Boolean) {
+              if(value == Boolean.TRUE) {
                 where+= lookup + " IS NOT NULL AND ";
               }
               else {
@@ -233,44 +238,44 @@ public class QueryBuilder {
             where += lookup + " = {" + marker + "})";
 
             wheres.add(where);
-            queryParams.put(marker, filter.getValue());
+            queryParams.put(marker, value);
           }
         }
         else if(filter instanceof Filter.StartsWith) {
           wheres.add(lookup + " starts with {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.EndsWith) {
           wheres.add(lookup + " ends with {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.Contains) {
           wheres.add(lookup + " contains {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.NotEquals) {
-          if(filter.getValue() == null) {
+          if(value == null) {
             wheres.add(lookup + " IS NOT NULL");
           }
           else {
             String where = "(" + lookup + " <> {" + marker + "}";
-            if(filter.getValue() instanceof Boolean) {
+            if(value instanceof Boolean) {
               where += "OR " + lookup + " IS " +
-                (filter.getValue() == Boolean.FALSE? "NOT": "") + " NULL";
+                (value == Boolean.FALSE? "NOT": "") + " NULL";
             }
             wheres.add(where + ")");
-            queryParams.put(marker, filter.getValue());
+            queryParams.put(marker, value);
           }
         }
         else if(filter instanceof Filter.GreaterThan) {
           String including = ((Filter.GreaterThan) filter).isIncluding()? "=": "";
           wheres.add(lookup + " >" + including + " {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.LessThan) {
           String including = ((Filter.LessThan) filter).isIncluding()? "=": "";
           wheres.add(lookup + " <" + including + " {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.Range) {
           String including = ((Filter.Range) filter).isIncluding()? "=": "";

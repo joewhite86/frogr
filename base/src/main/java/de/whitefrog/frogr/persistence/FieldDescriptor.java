@@ -19,6 +19,9 @@ public class FieldDescriptor<T extends Base> {
 
   public FieldDescriptor(Field field) {
     field.setAccessible(true);
+    this.field = field;
+    this.collection = Collection.class.isAssignableFrom(field.getType());
+    
     AnnotationDescriptor descriptor = new AnnotationDescriptor();
     descriptor.indexed = field.getAnnotation(Indexed.class);
     descriptor.notPersistant = field.isAnnotationPresent(NotPersistant.class);
@@ -31,10 +34,8 @@ public class FieldDescriptor<T extends Base> {
     descriptor.uuid = field.isAnnotationPresent(Uuid.class);
     descriptor.lazy = field.isAnnotationPresent(Lazy.class);
     descriptor.relationshipCount = field.getAnnotation(RelationshipCount.class);
-    
-    this.field = field;
+
     this.annotations = descriptor;
-    this.collection = Collection.class.isAssignableFrom(field.getType());
     
     if(this.collection) {
       this.baseClass = (Class<T>) ReflectionUtil.getGenericClass(field);

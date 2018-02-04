@@ -3,10 +3,7 @@ package de.whitefrog.frogr.persistence;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.DuplicateEntryException;
-import de.whitefrog.frogr.exception.FrogrException;
-import de.whitefrog.frogr.exception.MissingRequiredException;
-import de.whitefrog.frogr.exception.PersistException;
+import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.Model;
@@ -36,7 +33,7 @@ import java.util.*;
  * some operations common to nodes and relationships are kept here.
  */
 @SuppressWarnings("unchecked")
-public abstract class Persistence {
+public class Persistence {
   private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
   private static Service service;
   private static ModelCache cache;
@@ -121,13 +118,6 @@ public abstract class Persistence {
     T model = context.model();
     PropertyContainer node = context.node();
     
-    if(node == null) {
-      throw new NullPointerException("node can not be null");
-    }
-    if(field == null) {
-      throw new NullPointerException("field can not be null");
-    }
-    
     Object value = null;
     try {
       value = field.get(model);
@@ -152,7 +142,7 @@ public abstract class Persistence {
           // handle relationships
           if(annotations.relatedTo != null && valueChanged && Model.class.isAssignableFrom(context.model().getClass())) {
             Relationships.saveField((SaveContext<? extends Model>) context, descriptor);
-            logger.info("{}: updated relationships for \"{}\"", model, field.getName());
+            logger.info("{}: updated relationships \"{}\"", model, field.getName());
           }
 
           // Handle other values
@@ -162,24 +152,25 @@ public abstract class Persistence {
             if(value.getClass().isEnum()) {
               if((!node.hasProperty(field.getName()) || !((Enum<?>) value).name().equals(node.getProperty(field.getName())))) {
                 node.setProperty(field.getName(), ((Enum<?>) value).name());
-                logger.info("{}: set enum value for \"{}\" to \"{}\"", model, field.getName(), ((Enum<?>) value).name());
+                logger.info("{}: set enum value \"{}\" to \"{}\"", model, field.getName(), ((Enum<?>) value).name());
               }
             }
             // store dates as timestamp
             else if(value instanceof Date) {
               node.setProperty(field.getName(), ((Date) value).getTime());
-              logger.info("{}: set date value for \"{}\" to \"{}\"", model, field.getName(), ((Date) value).getTime());
+              logger.info("{}: set date value \"{}\" to \"{}\"", model, field.getName(), ((Date) value).getTime());
             }
             // store all other values
             else if(valueChanged) {
               node.setProperty(field.getName(), value);
-              logger.info("{}: set value for \"{}\" to \"{}\"", model, field.getName(), value);
+              logger.info("{}: set value \"{}\" to \"{}\"", model, field.getName(), value);
             }
           }
         } 
         // if the new value is null and @NullRemove is set on the field,
         // we need to remove the property from the node and the index
         else if(valueChanged && annotations.nullRemove) {
+          logger.info("{}: removed value \"{}\"", model, field.getName());
           node.removeProperty(field.getName());
         }
       }
@@ -227,14 +218,16 @@ public abstract class Persistence {
       } else {
         org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
         Model from = get(rel.getStartNode());
-        if(fields.get("from") != null && fields.get("from").subFields() != null) 
+        if(fields.get("from") != null && !fields.get("from").subFields().isEmpty()) 
           fetch(from, fields.get("from").subFields());
         Model to = get(rel.getEndNode());
-        if(fields.get("to") != null && fields.get("to").subFields() != null)
+        if(fields.get("to") != null && !fields.get("to").subFields().isEmpty())
           fetch(to, fields.get("to").subFields());
         Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
         model = constructor.newInstance(from, to);
         model.setId(rel.getId());
+        fields.remove(new QueryField("from"));
+        fields.remove(new QueryField("to"));
       }
       model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
       service.repository(clazz).fetch(model, false, fields);
@@ -252,9 +245,8 @@ public abstract class Persistence {
    * 
    * @param node Node or relationship to get the corresponding class for
    * @return The correct model class for the node or relationship passed
-   * @throws ClassNotFoundException If no model was found for the particular class name
    */
-  private static Class getClass(PropertyContainer node) throws ClassNotFoundException {
+  private static Class getClass(PropertyContainer node) {
     String className;
     if(node instanceof org.neo4j.graphdb.Relationship) {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
@@ -282,7 +274,7 @@ public abstract class Persistence {
    * @param model Model to remove the property from
    * @param property Property name to remove
    */
-  public static void removeProperty(Model model, String property) {
+  private static void removeProperty(Model model, String property) {
     Node node = getNode(model);
     node.removeProperty(property);
     try {
@@ -290,7 +282,7 @@ public abstract class Persistence {
       if(!field.isAccessible()) field.setAccessible(true);
       field.set(model, null);
     } catch(ReflectiveOperationException e) {
-      throw new FrogrException("field " + property + " could not be found on " + model, e);
+      throw new FieldNotFoundException(property, model);
     }
   }
 
@@ -353,17 +345,7 @@ public abstract class Persistence {
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
         node = Relationships.getRelationship(relModel);
-//        org.neo4j.graphdb.Relationship relationship = (org.neo4j.graphdb.Relationship) node;
-//        if((fields.containsField("from") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getFrom() == null || refetch)) {
-//          ((Relationship) model).setFrom(createRepositoryModel(
-//            relationship.getStartNode(), fields.containsField("from")? fields.get("from").subFields(): new FieldList()
-//          ));
-//        }
-//        if((fields.containsField("to") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getTo() == null || refetch)) {
-//          ((Relationship) model).setTo(createRepositoryModel(
-//            relationship.getEndNode(), fields.containsField("to")? fields.get("to").subFields(): new FieldList()
-//          ));
-//        }
+        
         ignoredFields = Arrays.asList("id", "from", "to");
       } else {
         node = Persistence.getNode((Model) model);
@@ -390,6 +372,17 @@ public abstract class Persistence {
     if(!field.getName().equals(Entity.Type) && !annotations.fetch && !field.getName().equals(Entity.Uuid) &&
       !fields.containsField(Entity.AllFields) && !fields.containsField(field.getName())) return;
     field.setAccessible(true);
+
+    if(node instanceof org.neo4j.graphdb.Relationship) {
+      org.neo4j.graphdb.Relationship relationship = (org.neo4j.graphdb.Relationship) node;
+      Relationship relModel = (Relationship) model;
+      if((fields.containsField("from") || fields.containsField(Entity.AllFields)) && (relModel.getFrom() == null || refetch)) {
+        relModel.setFrom(get(relationship.getStartNode(), fields.getOrEmpty("from").subFields()));
+      }
+      if((fields.containsField("to") || fields.containsField(Entity.AllFields)) && (relModel.getTo() == null || refetch)) {
+        relModel.setTo(get(relationship.getEndNode(), fields.getOrEmpty("to").subFields()));
+      }
+    }
     
     // fetch relationship count only
     if(node instanceof Node && annotations.relationshipCount != null && fields.containsField(field.getName())) {

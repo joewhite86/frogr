@@ -223,7 +223,7 @@ public class Search {
    * @param fields Fields to fetch
    */
   public Search fields(String... fields) {
-    params.fields(fields);
+    params.fields(FieldList.parseFields(fields));
     return this;
   }
 
