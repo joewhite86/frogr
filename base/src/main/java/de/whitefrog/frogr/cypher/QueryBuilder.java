@@ -3,8 +3,8 @@ package de.whitefrog.frogr.cypher;
 import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.rest.Filter;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.Filter;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
 import de.whitefrog.frogr.persistence.ModelCache;
@@ -50,7 +50,7 @@ public class QueryBuilder {
     return repository;
   }
 
-  private String id() {
+  public String id() {
     return repository().queryIdentifier();
   }
 
@@ -380,18 +380,22 @@ public class QueryBuilder {
     if(CollectionUtils.isEmpty(params.returns())) {
       ret.add(id());
     } else {
-      List<String> returns = new ArrayList<>(params.returns());
+      final List<String> returns = new ArrayList<>(params.returns());
 //      if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
 //        returns = returns.stream().map(r -> {
 //          if(r.contains(".to")) return r.replace(".to", "_to");
 //          else return r;
 //        }).collect(Collectors.toList());
 //      }
-      returns = returns.stream().map(r -> {
+      List<String> parsed = returns.stream().map(r -> {
         if(r.contains(".")) return r.replace(".", "_");
+        FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository().getModelClass(), r);
+        if(!id().equals(r) && descriptor.isCollection() && returns.size() > 1) { 
+          r = "collect(" + r + ") as " + r;
+        }
         return r; 
       }).collect(Collectors.toList());
-      ret.add(StringUtils.join(returns, ","));
+      ret.add(StringUtils.join(parsed, ","));
     }
     
     // to order by a relationship count we need to count it in return for cypher

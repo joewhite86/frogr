@@ -2,7 +2,7 @@ package de.whitefrog.frogr.example.rest;
 
 import de.whitefrog.frogr.example.model.Person;
 import de.whitefrog.frogr.example.repository.PersonRepository;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.rest.request.SearchParam;
 import de.whitefrog.frogr.rest.service.CRUDService;
 import org.neo4j.graphdb.Transaction;

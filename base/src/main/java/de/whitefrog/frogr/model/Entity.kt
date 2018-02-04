@@ -56,14 +56,6 @@ abstract class Entity : Model, Comparable<Base> {
    */
   @JsonView(Views.Secure::class)
   private var lastModified: Long? = null
-    private set(value) {
-      field = value
-    }
-  /**
-   * String to display who updated the entity.
-   */
-  @JsonView(Views.Hidden::class)
-  override var modifiedBy: String? = null
 
   /**
    * True, if the id was set automatically. False when set by a database.
@@ -224,9 +216,7 @@ abstract class Entity : Model, Comparable<Base> {
 
   companion object {
     @JvmField val AllFields = "all"
-    @JvmField val GravatarUrl = "gravatarUrl"
     @JvmField val IdProperty = "id"
-    @JvmField val ModifiedBy = "modifiedBy"
     @JvmField val LastModified = "lastModified"
     @JvmField val Created = "created"
     @JvmField val Type = "type"

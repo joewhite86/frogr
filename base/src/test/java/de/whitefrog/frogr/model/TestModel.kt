@@ -1,6 +1,6 @@
-package de.whitefrog.frogr
+package de.whitefrog.frogr.model
 
-import de.whitefrog.frogr.model.rest.FieldList
+import de.whitefrog.frogr.TestSuite
 import de.whitefrog.frogr.repository.RelationshipRepository
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
@@ -10,7 +10,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
-class TestModels {
+class TestModel {
   companion object {
     private var service = TestSuite.service
     private lateinit var persons: PersonRepository

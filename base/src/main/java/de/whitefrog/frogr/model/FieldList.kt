@@ -1,8 +1,7 @@
-package de.whitefrog.frogr.model.rest
+package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import de.whitefrog.frogr.exception.QueryParseException
-import de.whitefrog.frogr.model.Entity
 import java.util.*
 
 /**
@@ -28,7 +27,7 @@ class FieldList : HashSet<QueryField>() {
 
   companion object {
     @JvmField
-    var All = FieldList.parseFields(Entity.AllFields)
+    var All = parseFields(Entity.AllFields)
 
     @JvmStatic
     fun parseFields(vararg fields: String): FieldList {

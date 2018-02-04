@@ -1,7 +1,9 @@
-package de.whitefrog.frogr.model.rest
+package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang.builder.EqualsBuilder
 import org.apache.commons.lang.builder.HashCodeBuilder
 import java.util.*
@@ -10,23 +12,13 @@ import java.util.*
  * Single query field used in rest queries. Can have sub-fields and limit and skip values.
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
-data class QueryField @JvmOverloads constructor(var field: String, val addAll: Boolean = false) {
+class QueryField @JsonCreator constructor(@JsonProperty("field") var field: String) {
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
   private var skip = 0
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
   private var limit = SearchParameter.DefaultLimit
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private var subFields = FieldList()
-
-  init {
-//    if (field.contains(".")) {
-//      val fields = field.split("\\.".toRegex(), 2).toTypedArray()
-//      parseField(fields[0])
-//      this.subFields = FieldList.parseFields(Arrays.asList(fields[1]), addAll)
-//    } else {
-      parseField(field)
-//    }
-  }
 
   private fun parseField(field: String) {
     if (field.contains("(")) {
@@ -101,5 +93,9 @@ data class QueryField @JvmOverloads constructor(var field: String, val addAll: B
       str += "}"
     }
     return str
+  }
+
+  init {
+    parseField(field)
   }
 }

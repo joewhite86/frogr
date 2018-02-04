@@ -6,7 +6,7 @@ import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
 import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.FieldList;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.repository.BaseModelRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;

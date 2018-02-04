@@ -10,13 +10,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 public abstract class Resources {
-  public static InputStream stream(String path) throws IOException, URISyntaxException {
+  public static InputStream stream(String path) throws IOException {
     return Files.newInputStream(path(path));
   }
-  public static BufferedReader reader(String path) throws IOException, URISyntaxException {
+  public static BufferedReader reader(String path) throws IOException {
     return Files.newBufferedReader(path(path));
   }
-  public static Path path(String path) throws IOException, URISyntaxException {
+  public static Path path(String path) throws IOException {
     Path filepath = File.createTempFile("res-cpy", "xyz").toPath();
     Files.copy(ClassLoader.getSystemResourceAsStream(path), filepath, StandardCopyOption.REPLACE_EXISTING);
     return filepath;

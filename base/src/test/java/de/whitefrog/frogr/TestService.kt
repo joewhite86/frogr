@@ -10,7 +10,7 @@ class TestService {
   
   @Test
   fun isConnected() {
-    assertThat(service.isConnected).isTrue
+    assertThat(service.isConnected).isTrue()
   }
   @Test
   fun runningState() {

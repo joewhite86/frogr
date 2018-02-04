@@ -1,4 +1,4 @@
-package de.whitefrog.frogr.model.rest;
+package de.whitefrog.frogr.model;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.whitefrog.frogr.model.Entity;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
@@ -122,15 +121,6 @@ public class SearchParameter implements Serializable {
     return fields;
   }
 
-  public Integer depth() {
-    return depth;
-  }
-
-  public SearchParameter depth(int depth) {
-    this.depth = depth;
-    return this;
-  }
-
   public SearchParameter locale(Locale locale) {
     this.locale = locale;
     return this;
@@ -160,11 +150,12 @@ public class SearchParameter implements Serializable {
     return filters;
   }
 
-  public Filter getFilter(String property) {
+  public List<Filter> getFilter(String property) {
+    List<Filter> filters = new ArrayList<>();
     for(Filter filter : filters()) {
-      if(filter.getProperty().equals(property)) return filter;
+      if(filter.getProperty().equals(property)) filters.add(filter);
     }
-    return null;
+    return filters;
   }
 
   public SearchParameter filter(String property, String value) {
@@ -220,14 +211,8 @@ public class SearchParameter implements Serializable {
     return this;
   }
 
-  @Deprecated
-  public SearchParameter ids(List<Long> ids) {
+  public SearchParameter ids(Collection<Long> ids) {
     this.ids = new HashSet<>(ids);
-    return this;
-  }
-
-  public SearchParameter ids(Set<Long> ids) {
-    this.ids = ids;
     return this;
   }
 
@@ -240,13 +225,8 @@ public class SearchParameter implements Serializable {
     return this;
   }
 
-  public SearchParameter uuids(List<String> uuids) {
+  public SearchParameter uuids(Collection<String> uuids) {
     this.uuids = new HashSet<>(uuids);
-    return this;
-  }
-
-  public SearchParameter uuids(Set<String> uuids) {
-    this.uuids = uuids;
     return this;
   }
 

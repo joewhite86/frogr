@@ -1,7 +1,6 @@
 package de.whitefrog.frogr.model;
 
 import de.whitefrog.frogr.exception.FrogrException;
-import de.whitefrog.frogr.model.rest.FieldList;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
 import de.whitefrog.frogr.persistence.Persistence;

@@ -1,8 +1,8 @@
-package de.whitefrog.frogr
+package de.whitefrog.frogr.repository
 
-import de.whitefrog.frogr.model.rest.Filter
-import de.whitefrog.frogr.model.rest.SearchParameter
-import de.whitefrog.frogr.repository.RelationshipRepository
+import de.whitefrog.frogr.TestSuite
+import de.whitefrog.frogr.model.Filter
+import de.whitefrog.frogr.model.SearchParameter
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
@@ -45,6 +45,9 @@ class TestSearch {
     val likes2 = Likes(person2, person1)
 
     likesRepository.save(likes1, likes2)
+    
+    person1.likes.add(person2)
+    person2.likes.add(person1)
 
     return Arrays.asList(person1, person2)
   }
@@ -137,7 +140,7 @@ class TestSearch {
       val cal = Calendar.getInstance()
       cal.time = date
       cal.add(Calendar.DAY_OF_MONTH, -1)
-      var found: Person = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
+      val found: Person = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
       assertThat(found).isEqualTo(person)
 
 // throws nullpointerexception in kotlin
@@ -158,7 +161,7 @@ class TestSearch {
       val cal = Calendar.getInstance()
       cal.time = date
       cal.add(Calendar.DAY_OF_MONTH, 1)
-      var found: Person = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
+      val found: Person = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
       assertThat(found).isEqualTo(person)
       
 // throws nullpointerexception in kotlin
@@ -212,7 +215,7 @@ class TestSearch {
     service.beginTx().use {
       prepareData()
       val long = persons.search().limit(1).returns("person.number").toLong()
-      assertThat(long is Long).isTrue
+      assertThat(long is Long).isTrue()
     }
   }
 
@@ -229,7 +232,7 @@ class TestSearch {
     service.beginTx().use {
       prepareData()
       val long = persons.search().limit(1).returns("person.number").toInt()
-      assertThat(long is Int).isTrue
+      assertThat(long is Int).isTrue()
     }
   }
 
@@ -244,12 +247,13 @@ class TestSearch {
   @Test
   fun searchLikedPersons() {
     service.beginTx().use {
-      prepareData()
+      val list = prepareData()
       val result = persons.search()
-        .filter(Filter.GreaterThan("likes.number", 0L))
+        .filter(Filter.GreaterThan("likes.number", 10L))
         .returns("likes")
         .list<Person>()
       assertThat(result).isNotEmpty
+      assertThat(result[0]).isEqualTo(list[1])
     }
   }
   
@@ -322,6 +326,17 @@ class TestSearch {
         }
         prev = result
       }
+    }
+  }
+  
+  @Test
+  fun returnRelated() {
+    service.beginTx().use {
+      prepareData()
+      val results = persons.search()
+        .returns("person", "likes")
+        .list<Person>()
+      assertThat(results[0].likes).isNotEmpty
     }
   }
 }

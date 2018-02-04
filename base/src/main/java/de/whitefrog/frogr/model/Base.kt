@@ -19,7 +19,6 @@ interface Base : Serializable {
   var checkedFields: HashSet<String>
   var fetchedFields: HashSet<String>
   var removeProperties: HashSet<String>
-  var modifiedBy: String?
   val persisted: Boolean
   var created: Long?
 

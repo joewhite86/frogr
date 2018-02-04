@@ -1,12 +1,10 @@
-package de.whitefrog.frogr
+package de.whitefrog.frogr.repository
 
+import de.whitefrog.frogr.TestSuite
 import de.whitefrog.frogr.exception.DuplicateEntryException
 import de.whitefrog.frogr.exception.FieldNotFoundException
 import de.whitefrog.frogr.exception.MissingRequiredException
-import de.whitefrog.frogr.model.rest.Filter
-import de.whitefrog.frogr.repository.DefaultRepository
-import de.whitefrog.frogr.repository.ModelRepository
-import de.whitefrog.frogr.repository.RelationshipRepository
+import de.whitefrog.frogr.model.Filter
 import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
@@ -18,7 +16,7 @@ import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 
-class TestRepositories {
+class TestModelRepository {
   companion object {
     private var service = TestSuite.service
     private lateinit var persons: PersonRepository
@@ -44,7 +42,7 @@ class TestRepositories {
       model.field = "test"
       persons.save(model)
       model = persons.find(model.id, "field")
-      assertThat(model).isNotNull
+      assertThat(model).isNotNull()
       assertThat(model.field).isEqualTo("test")
     }
   }
@@ -126,7 +124,7 @@ class TestRepositories {
     service.beginTx().use {
       val model = persons.createModel()
       persons.save(model)
-      assertThat(model.uuid).isNotEmpty
+      assertThat(model.uuid).isNotEmpty()
     }
   }
 
@@ -155,7 +153,7 @@ class TestRepositories {
       likes.field = "test"
       likesRepository.save(likes)
       likes = likesRepository.find(likes.id, "from.field", "to.field", "field")
-      assertThat(likes).isNotNull
+      assertThat(likes).isNotNull()
       assertThat(likes.field).isEqualTo("test")
       assertThat(likes.from).isEqualTo(model1)
       assertThat(likes.from.field).isEqualTo("test1")
@@ -172,12 +170,12 @@ class TestRepositories {
       persons.save(model1, model2)
 
       model1.likes = ArrayList()
-      model1.likes!!.add(model2)
+      model1.likes.add(model2)
       persons.save(model1)
       model1 = persons.find(model1.id, "likes")
-      assertThat(model1).isNotNull
+      assertThat(model1).isNotNull()
       assertThat(model1.likes).hasSize(1)
-      assertThat(model1.likes!![0]).isEqualTo(model2)
+      assertThat(model1.likes[0]).isEqualTo(model2)
     }
   }
 
@@ -192,11 +190,11 @@ class TestRepositories {
       persons.save(model1, model2)
 
       model1.likes = ArrayList()
-      model1.likes!!.add(model2)
+      model1.likes.add(model2)
       persons.save(model1)
 
-      model1.likes!!.clear()
-      model1.likes!!.add(model2)
+      model1.likes.clear()
+      model1.likes.add(model2)
       persons.save(model1)
 
       val duplicate = Likes(model1, model2)
@@ -210,7 +208,7 @@ class TestRepositories {
     service.beginTx().use {
       val person = persons.createModel()
       persons.save(person)
-      assertThat(person.uuid).isNotEmpty
+      assertThat(person.uuid).isNotEmpty()
       val found = persons.findByUuid(person.uuid)
       assertThat(found).isEqualTo(person)
     }

@@ -1,5 +1,7 @@
-package de.whitefrog.frogr.model.rest;
+package de.whitefrog.frogr.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -25,8 +27,8 @@ public interface Filter extends Predicate<Object> {
     private Object value;
     private String property;
     
-    public Default() {}
-    public Default(String property, Object value) {
+    @JsonCreator
+    public Default(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       this.property = property;
       this.value = value;
     }
@@ -51,10 +53,8 @@ public interface Filter extends Predicate<Object> {
   }
 
   class Equals extends Default implements Filter, Predicate<Object> {
-    public Equals() {
-      super();
-    }
-    public Equals(String property, Object value) {
+    @JsonCreator
+    public Equals(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
     }
 
@@ -65,11 +65,8 @@ public interface Filter extends Predicate<Object> {
   }
 
   class NotEquals extends Default implements Filter, Predicate<Object> {
-    public NotEquals() {
-      super();
-    }
-
-    public NotEquals(String property, Object value) {
+    @JsonCreator
+    public NotEquals(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
     }
 
@@ -82,16 +79,20 @@ public interface Filter extends Predicate<Object> {
   class GreaterThan extends Default implements Filter, Predicate<Object> {
     private boolean including = false;
 
-    public GreaterThan() {
-      super();
+    @JsonCreator
+    public GreaterThan(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
+      super(property, value);
     }
 
-    public GreaterThan(String property, Object value) {
+    public GreaterThan(String property, Object value, boolean including) {
       super(property, value);
+      this.including = including;
     }
 
     @Override
     public Long getValue() {
+      if(super.getValue() instanceof Integer)
+        return ((Integer) super.getValue()).longValue();
       if(super.getValue() instanceof Date)
         return ((Date) super.getValue()).getTime();
       return (Long) super.getValue();
@@ -117,15 +118,19 @@ public interface Filter extends Predicate<Object> {
   class LessThan extends Default implements Filter, Predicate<Object> {
     private boolean including = false;
 
-    public LessThan() {
-      super();
-    }
-
-    public LessThan(String property, Object value) {
+    @JsonCreator
+    public LessThan(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
+    }
+    
+    public LessThan(String property, Object value, boolean including) {
+      super(property, value);
+      this.including = including;
     }
 
     public Long getValue() {
+      if(super.getValue() instanceof Integer)
+        return ((Integer) super.getValue()).longValue();
       if(super.getValue() instanceof Date)
         return ((Date) super.getValue()).getTime();
       return (Long) super.getValue();
@@ -149,8 +154,8 @@ public interface Filter extends Predicate<Object> {
   }
   
   class StartsWith extends Default implements Filter, Predicate<Object> {
-    public StartsWith() {}
-    public StartsWith(String property, String value) {
+    @JsonCreator
+    public StartsWith(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
     }
 
@@ -166,8 +171,8 @@ public interface Filter extends Predicate<Object> {
   }
 
   class EndsWith extends Default implements Filter, Predicate<Object> {
-    public EndsWith() {}
-    public EndsWith(String property, String value) {
+    @JsonCreator
+    public EndsWith(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
     }
 
@@ -183,8 +188,8 @@ public interface Filter extends Predicate<Object> {
   }
 
   class Contains extends Default implements Filter, Predicate<Object> {
-    public Contains() {}
-    public Contains(String property, String value) {
+    @JsonCreator
+    public Contains(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       super(property, value);
     }
 
@@ -204,13 +209,13 @@ public interface Filter extends Predicate<Object> {
     private long from;
     private long to;
 
-    public Range() {}
-
-    public Range(String property, long from, long to) {
+    @JsonCreator
+    public Range(@JsonProperty("property") String property, @JsonProperty("from") long from, @JsonProperty("to") long to) {
       super(property, from);
       this.from = from;
       this.to = to;
     }
+    
     public Range(String property, Date from, Date to) {
       super(property, from);
       this.from = from.getTime();

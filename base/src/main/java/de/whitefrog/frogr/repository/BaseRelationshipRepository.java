@@ -6,7 +6,7 @@ import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.rest.FieldList;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;

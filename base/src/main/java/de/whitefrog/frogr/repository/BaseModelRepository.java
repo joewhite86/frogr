@@ -5,7 +5,7 @@ import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.FieldList;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
@@ -45,6 +45,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public T createModel() {
     try {
       return (T) getModelClass().newInstance();
@@ -82,7 +83,6 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public Node getNode(Model model) {
     Validate.notNull(model, "The model is null");
-    Validate.notNull(model.getId(), "ID can not be null.");
     try {
       return service().graph().getNodeById(model.getId());
     } catch(NotFoundException e) {
@@ -102,7 +102,6 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
 
   @Override
   public void remove(T model) throws PersistException {
-    Validate.notNull(model.getId(), "'id' is required");
     Persistence.delete(model);
     logger().info("{} deleted", model);
   }

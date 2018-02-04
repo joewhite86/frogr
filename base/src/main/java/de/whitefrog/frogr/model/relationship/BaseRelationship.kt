@@ -18,12 +18,14 @@ import java.util.*
  * Cannot be abstract, because it is used in DefaultRelationshipRepository as default
  */
 open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To> {
-  lateinit override final var from: From
-  lateinit override final var to: To
+  final override lateinit var from: From
+  final override lateinit var to: To
+  
   constructor(from: From, to: To): this() {
     this.from = from
     this.to = to
   }
+  
   @JsonView(Views.Hidden::class)
   override var id = random.nextLong()
     get() {
@@ -40,8 +42,6 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   override var created: Long? = null
   @JsonView(Views.Secure::class)
   private var lastModified: Long? = null
-  @JsonView(Views.Hidden::class)
-  override var modifiedBy: String? = null
 
   @NotPersistant
   private var initialId = true
@@ -126,20 +126,12 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   }
 
   companion object {
-    @JvmField
-    val AllFields = "all"
-    @JvmField
-    val IdProperty = "id"
-    @JvmField
-    val ModifiedBy = "modifiedBy"
-    @JvmField
-    val LastModified = "lastModified"
-    @JvmField
-    val Created = "created"
-    @JvmField
-    val Type = "type"
-    @JvmField
-    val Uuid = "uuid"
+    @JvmField val AllFields = "all"
+    @JvmField val IdProperty = "id"
+    @JvmField val LastModified = "lastModified"
+    @JvmField val Created = "created"
+    @JvmField val Type = "type"
+    @JvmField val Uuid = "uuid"
     private val random = Random()
   }
 }

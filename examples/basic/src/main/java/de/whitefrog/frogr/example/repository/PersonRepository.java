@@ -2,8 +2,8 @@ package de.whitefrog.frogr.example.repository;
 
 import de.whitefrog.frogr.example.model.MarriedWith;
 import de.whitefrog.frogr.example.model.Person;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.Filter;
+import de.whitefrog.frogr.model.FieldList;
+import de.whitefrog.frogr.model.Filter;
 import de.whitefrog.frogr.repository.BaseModelRepository;
 
 import java.util.Arrays;

@@ -49,6 +49,7 @@ class MatchBuilder {
   }
 
   fun build(): String {
-    return "($from$fromLabel)-[$relationship$relationshipType]-$direction($to$toLabel)"
+    val path = "${from}_$to"
+    return "$path=($from$fromLabel)-[$relationship$relationshipType]-$direction($to$toLabel)"
   }
 }
