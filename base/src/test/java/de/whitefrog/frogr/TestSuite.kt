@@ -10,7 +10,8 @@ import de.whitefrog.frogr.rest.request.TestSearchParameterResolver
 import de.whitefrog.frogr.rest.response.TestExceptionMapper
 import de.whitefrog.frogr.rest.response.TestResponse
 import de.whitefrog.frogr.test.TemporaryService
-import org.junit.BeforeClass
+import de.whitefrog.frogr.patch.TestPatcher
+import de.whitefrog.frogr.persistence.TestPersistence
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
@@ -26,7 +27,8 @@ import org.junit.runners.Suite
   TestSearchParameterResolver::class,
   TestResponse::class,
   TestExceptionMapper::class,
-  TestGraphHealthCheck::class
+  TestGraphHealthCheck::class,
+  TestPatcher::class
 )
 class TestSuite {
   companion object {

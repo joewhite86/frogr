@@ -22,6 +22,7 @@ public class Patcher {
   private static final Logger logger = LoggerFactory.getLogger(Patcher.class);
 
   private static TreeMap<Version, List<Patch>> getPatches(Service service) {
+    int count = 0;
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
       .setScanners(new SubTypesScanner());
     service.registry()
@@ -34,7 +35,7 @@ public class Patcher {
       try {
         Constructor<? extends Patch> constructor = patchClass.getConstructor(Service.class);
         Patch patch = constructor.newInstance(service);
-
+        count++;
         if(patches.containsKey(patch.getVersion())) {
           patches.get(patch.getVersion()).add(patch);
         }
@@ -48,7 +49,7 @@ public class Patcher {
       }
     }
     if(logger.isDebugEnabled()) {
-      logger.debug("Found {} patches:", patches.size());
+      logger.debug("Found {} patches:", count);
       for(Version version: patches.keySet()) {
         logger.debug("@{}", version.getNormalVersion());
         for(Patch patch: patches.get(version)) {
@@ -95,9 +96,8 @@ public class Patcher {
             List<Patch> patchList = patches.get(patchVersion);
             Collections.sort(patchList);
             for(Patch patch : patchList) {
-              patch.setService(service);
               try {
-                logger.info("    Applying {}Patch", patch.getClass().getSimpleName());
+                logger.info("    Applying {}", patch.getClass().getSimpleName());
                 patch.update();
               } catch(Exception e) {
                 logger.error("   {}Patch failed: {}", patch.getClass().getSimpleName(), e.getMessage(), e);

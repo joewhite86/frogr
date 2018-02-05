@@ -5,11 +5,11 @@ import de.whitefrog.frogr.patch.Patch
 import de.whitefrog.frogr.patch.Version
 import de.whitefrog.frogr.test.model.Person
 
-@Version("10.0.0")
+@Version("9.9.99")
 class TestPatch(s: Service) : Patch(s) {
   override fun update() {
     service.beginTx().use { tx ->
-      val person = Person("test")
+      val person = Person("patch1")
       service.repository(Person::class.java).save(person)
       tx.success()
     }

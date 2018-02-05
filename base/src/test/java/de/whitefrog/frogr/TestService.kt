@@ -45,13 +45,4 @@ class TestService {
     service.shutdown()
     service.connect()
   }
-  
-  @Test
-  fun applyPatch() {
-    service.shutdown()
-    System.setProperty("version", "10.0.0")
-    service.connect()
-    assertThat(service.repository(Person::class.java).search().count()).isEqualTo(1)
-    System.clearProperty("version")
-  }
 }

@@ -1,5 +1,6 @@
-package de.whitefrog.frogr
+package de.whitefrog.frogr.persistence
 
+import de.whitefrog.frogr.TestSuite
 import de.whitefrog.frogr.exception.MissingRequiredException
 import de.whitefrog.frogr.model.SaveContext
 import de.whitefrog.frogr.repository.ModelRepository

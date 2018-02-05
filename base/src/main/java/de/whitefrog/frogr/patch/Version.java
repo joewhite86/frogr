@@ -13,4 +13,5 @@ import static java.lang.annotation.ElementType.TYPE;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Version {
   String value();
+  int proority() default 0;
 }
