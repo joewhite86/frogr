@@ -7,7 +7,6 @@ import de.whitefrog.frogr.model.annotation.Fetch
 import de.whitefrog.frogr.model.annotation.NotPersistant
 import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.model.annotation.Uuid
-import de.whitefrog.frogr.persistence.Persistence
 import de.whitefrog.frogr.rest.Views
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.util.*
@@ -111,12 +110,12 @@ abstract class Entity : Model, Comparable<Base> {
       base.type = type()
       base.id = id
       base.uuid = uuid
-      for (descriptor in Persistence.cache().fieldMap(javaClass)) {
-        if (fields.contains(descriptor.name) || descriptor.annotations().relatedTo == null && fields.contains(Entity.AllFields)) {
-          descriptor.field().isAccessible = true
-          descriptor.field().set(base, descriptor.field().get(this))
-        }
-      }
+//      for (descriptor in Persistence.cache().fieldMap(javaClass)) {
+//        if (fields.contains(descriptor.name) || descriptor.annotations().relatedTo == null && fields.contains(Entity.AllFields)) {
+//          descriptor.field().isAccessible = true
+//          descriptor.field().set(base, descriptor.field().get(this))
+//        }
+//      }
     } catch (e: ReflectiveOperationException) {
       throw FrogrException(e.message, e)
     }

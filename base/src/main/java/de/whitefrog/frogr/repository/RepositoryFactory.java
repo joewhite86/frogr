@@ -5,7 +5,6 @@ import de.whitefrog.frogr.exception.RepositoryInstantiationException;
 import de.whitefrog.frogr.exception.RepositoryNotFoundException;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.persistence.Persistence;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -119,7 +118,7 @@ public class RepositoryFactory {
           }
           setRepositoryService(repository);
         } catch(ReflectiveOperationException ex) {
-          throw new RepositoryInstantiationException(e.getCause());
+          throw new RepositoryInstantiationException(e);
         }
       } catch(ReflectiveOperationException e) {
         throw new RepositoryInstantiationException(e.getCause());
@@ -148,7 +147,7 @@ public class RepositoryFactory {
     if(cache.containsKey(name.toLowerCase())) {
       return cache.get(name.toLowerCase());
     }
-    Class clazz = Persistence.cache().getModel(name);
+    Class clazz = service.persistence().cache().getModel(name);
     if(clazz == null) {
       throw new RepositoryNotFoundException(name);
     }

@@ -1,10 +1,10 @@
 package de.whitefrog.frogr.cypher;
 
 import de.whitefrog.frogr.helper.ReflectionUtil;
-import de.whitefrog.frogr.model.Model;
-import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.model.Filter;
+import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
 import de.whitefrog.frogr.persistence.ModelCache;
@@ -35,11 +35,13 @@ public class QueryBuilder {
   private final String type;
   private final Map<String, String> matches = new HashMap<>();
   private final List<String> queryFields = new ArrayList<>();
+  private final Persistence persistence;
 
   public QueryBuilder(Repository repository) {
     this.repository = repository;
+    this.persistence = repository.service().persistence();
     this.type = repository.getModelClass().getSimpleName();
-    Persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
+    persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
       if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
         queryFields.add(descriptor.field().getName());
       }
@@ -59,7 +61,7 @@ public class QueryBuilder {
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".") && !matches.keySet().contains(order.field())) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
+          persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
         if(descriptor.relationshipCount != null) {
           MatchBuilder match = new MatchBuilder()
             .relationship(order.field())
@@ -97,7 +99,7 @@ public class QueryBuilder {
       String returnsKey = returns.contains(" ")? returns.substring(0, returns.indexOf(" ")): returns;
       if(!matches.containsKey(returnsKey)) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), returnsKey);
+          persistence.cache().fieldAnnotations(repository().getModelClass(), returnsKey);
         if(descriptor == null) continue;
         
         if(descriptor.relatedTo != null) {
@@ -148,10 +150,10 @@ public class QueryBuilder {
   private void generateFilterMatch(Filter filter, Class<?> clazz, String id, String fieldName) {
     MatchBuilder match = new MatchBuilder();
     
-    FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(clazz, fieldName);
+    FieldDescriptor descriptor = persistence.cache().fieldDescriptor(clazz, fieldName);
     if(descriptor == null) {
-      for(Class sub: Persistence.cache().subTypesOf(clazz)) {
-        descriptor = Persistence.cache().fieldDescriptor(sub, fieldName);
+      for(Class sub: persistence.cache().subTypesOf(clazz)) {
+        descriptor = persistence.cache().fieldDescriptor(sub, fieldName);
         if(descriptor != null) break;
       }
       if(descriptor == null) {
@@ -207,9 +209,9 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        if(lookup.contains(".to.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
+        if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
           lookup = lookup.replace(".to", "_to");
-        if(lookup.contains(".from.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
+        if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
           lookup = lookup.replace(".from", "_from");
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
@@ -358,7 +360,7 @@ public class QueryBuilder {
     if(!params.orderBy().isEmpty()) {
       List<String> orders = new LinkedList<>();
       for(SearchParameter.OrderBy order : params.orderBy()) {
-        if(!order.field().contains(".") && Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field()).relationshipCount != null) {
+        if(!order.field().contains(".") && persistence.cache().fieldAnnotations(repository().getModelClass(), order.field()).relationshipCount != null) {
           orders.add("count(" + order.field() + ") " + order.dir());
         }
         else if(order.field().contains(".")) {
@@ -381,7 +383,7 @@ public class QueryBuilder {
       ret.add(id());
     } else {
       final List<String> returns = new ArrayList<>(params.returns());
-//      if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
+//      if(persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
 //        returns = returns.stream().map(r -> {
 //          if(r.contains(".to")) return r.replace(".to", "_to");
 //          else return r;
@@ -389,7 +391,7 @@ public class QueryBuilder {
 //      }
       List<String> parsed = returns.stream().map(r -> {
         if(r.contains(".")) return r.replace(".", "_");
-        FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository().getModelClass(), r);
+        FieldDescriptor descriptor = persistence.cache().fieldDescriptor(repository().getModelClass(), r);
         if(!id().equals(r) && descriptor.isCollection() && returns.size() > 1) { 
           r = "collect(" + r + ") as " + r;
         }
@@ -402,7 +404,7 @@ public class QueryBuilder {
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".")) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
+          persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
         if(descriptor.relationshipCount != null) {
           ret.add("count(" + order.field() + ") as " + order.field() + "_c");
         }

@@ -12,7 +12,7 @@ import java.util.*
 
 class TestModel {
   companion object {
-    private var service = TestSuite.service
+    private var service = TestSuite.service()
     private lateinit var persons: PersonRepository
     private lateinit var likesRepository: RelationshipRepository<Likes>
 

@@ -2,7 +2,6 @@ package de.whitefrog.frogr
 
 import de.whitefrog.frogr.exception.MissingRequiredException
 import de.whitefrog.frogr.model.SaveContext
-import de.whitefrog.frogr.persistence.Persistence
 import de.whitefrog.frogr.repository.ModelRepository
 import de.whitefrog.frogr.repository.RelationshipRepository
 import de.whitefrog.frogr.test.model.Likes
@@ -16,7 +15,8 @@ import java.util.*
 
 class TestPersistence {
   companion object {
-    private var service = TestSuite.service
+    private var service = TestSuite.service()
+    private var persistence = service.persistence()
     private lateinit var persons: PersonRepository
     private lateinit var likesRepository: RelationshipRepository<Likes>
 
@@ -33,12 +33,12 @@ class TestPersistence {
     service.beginTx().use {
       val person = Person()
       persons.save(person)
-      val node = Persistence.getNode(person)
+      val node = persistence.getNode(person)
       
       val same = Person()
       same.uuid = person.uuid
       same.type = person.type
-      val sameNode = Persistence.getNode(same)
+      val sameNode = persistence.getNode(same)
       
       assertThat(node).isEqualTo(sameNode)
     }
@@ -49,7 +49,7 @@ class TestPersistence {
     service.beginTx().use {
       val person = Person()
       person.type = "Person"
-      Persistence.getNode(person)
+      persistence.getNode(person)
     }
   }
 
@@ -58,7 +58,7 @@ class TestPersistence {
     service.beginTx().use {
       val repository = service.repository<ModelRepository<PersonRequiredField>, PersonRequiredField>(PersonRequiredField::class.java)
       val model = repository.createModel()
-      Persistence.save(repository, SaveContext(repository, model))
+      persistence.save(repository, SaveContext(repository, model))
     }
   }
   
@@ -78,7 +78,7 @@ class TestPersistence {
       person.age = Person.Age.Old
       persons.save(person)
       person = persons.find(person.id)
-      Persistence.fetch(person, "age")
+      persistence.fetch(person, "age")
       assertThat(person.age).isEqualTo(Person.Age.Old)
     }
   }
@@ -88,7 +88,7 @@ class TestPersistence {
     service.beginTx().use {
       val person = Person()
       person.dateField = Date()
-      Persistence.save(persons, SaveContext(persons, person))
+      persistence.save(persons, SaveContext(persons, person))
     }
   }
   
@@ -97,7 +97,7 @@ class TestPersistence {
     service.beginTx().use {
       val person = Person()
       person.uuid = "123uuid"
-      Persistence.getNode(person)
+      persistence.getNode(person)
     }
   }
 }

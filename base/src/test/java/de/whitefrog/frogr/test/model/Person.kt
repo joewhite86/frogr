@@ -10,6 +10,8 @@ class Person(var field: String? = null) : Entity() {
   @Uuid
   @Unique
   var uniqueField: String? = null
+  @Indexed
+  var fulltext: String? = null
   var number: Long? = null
   var age: Age? = null
   var dateField: Date? = null

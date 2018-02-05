@@ -31,10 +31,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import java.io.File;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Provides a service that handles the communication with frogr repositories and models.
@@ -45,7 +42,7 @@ import java.util.Set;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown}
+  public enum State { Started, Connecting, Running, ShuttingDown}
 
   private static Class mainClass = Application.class;
   private GraphDatabaseService graphDb;
@@ -57,6 +54,7 @@ public class Service implements AutoCloseable {
   private Validator validator;
   private String neo4jConfig = "config/neo4j.properties";
   private State state = State.Started;
+  private Persistence persistence;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -70,13 +68,14 @@ public class Service implements AutoCloseable {
 
   public void connect(String directory) {
     try {
-      if(state == State.Running) throw new FrogrException("already running");
+      if(isConnected()) throw new FrogrException("already running");
+      state = State.Connecting;
       this.directory = directory;
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
         .newEmbeddedDatabaseBuilder(new File(directory))
         .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
       graphDb = builder.newGraphDatabase();
-      Persistence.setService(this);
+      persistence = new Persistence(this);
       
       repositoryFactory = new RepositoryFactory(this);
       graphRepository = new GraphRepository(this);
@@ -128,7 +127,8 @@ public class Service implements AutoCloseable {
   }
   
   public boolean isConnected() {
-    return state.equals(State.Running);
+    return Arrays.asList(State.Connecting, State.Running, State.ShuttingDown)
+      .contains(state);  
   }
   
   public String directory() {
@@ -154,6 +154,10 @@ public class Service implements AutoCloseable {
     return state;
   }
   
+  public Persistence persistence() {
+    return persistence;
+  }
+  
   public Set<String> registry() {
     return packageRegistry;
   }
@@ -167,15 +171,18 @@ public class Service implements AutoCloseable {
 
   @SuppressWarnings("unchecked")
   public <R extends Repository<T>, T extends Base> R repository(Class<T> clazz) {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return (R) repositoryFactory().get(clazz);
   }
 
   @SuppressWarnings("unchecked")
   public <R extends Repository> R repository(String name) {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return (R) repositoryFactory().get(name);
   }
   
   public RepositoryFactory repositoryFactory() {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return repositoryFactory;
   }
 
@@ -214,7 +221,7 @@ public class Service implements AutoCloseable {
   private void initializeSchema() {
     try(Transaction tx = beginTx()) {
       Schema schema = graph().schema();
-      for(Class modelClass : Persistence.cache().getAllModels()) {
+      for(Class modelClass : persistence.cache().getAllModels()) {
         if(!Model.class.isAssignableFrom(modelClass) || Modifier.isAbstract(modelClass.getModifiers())) continue;
         if(!Base.class.isAssignableFrom(modelClass)) 
           throw new FrogrException("model class " + modelClass.getName() + " is not of type Base");
@@ -225,7 +232,7 @@ public class Service implements AutoCloseable {
         List<IndexDefinition> indices = Iterables.asList(
           schema.getIndexes(repository.label()));
         
-        for(FieldDescriptor descriptor : Persistence.cache().fieldMap(modelClass)) {
+        for(FieldDescriptor descriptor : persistence.cache().fieldMap(modelClass)) {
           AnnotationDescriptor annotations = descriptor.annotations();
           ConstraintDefinition existing = null;
           for(ConstraintDefinition constraint : constraints) {
@@ -290,5 +297,6 @@ public class Service implements AutoCloseable {
     state = State.ShuttingDown;
     repositoryFactory().cache().forEach(Repository::dispose);
     if(graphDb != null) graphDb.shutdown();
+    state = State.Started;
   }
 }

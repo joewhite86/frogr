@@ -4,13 +4,8 @@ import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.cypher.Query;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.helper.TimeUtils;
-import de.whitefrog.frogr.model.Base;
-import de.whitefrog.frogr.model.FieldList;
-import de.whitefrog.frogr.model.Filter;
-import de.whitefrog.frogr.model.QueryField;
-import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
-import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.PropertyContainer;
@@ -177,7 +172,7 @@ public class Search {
       (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
       stream = result.stream().map(new ResultMapper<>(repository, params));
     } else if(params.returns().size() == 1 && !params.returns().contains(repository.queryIdentifier())) {
-      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
+      FieldDescriptor descriptor = service.persistence().cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
       Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
       stream = result.stream().map(new ResultMapper<>(otherRepository, params));
@@ -417,14 +412,14 @@ public class Search {
           if(value instanceof Collection) {
             List<Base> related = new ArrayList<>(((Collection) value).size());
             for(PropertyContainer container: (Collection<PropertyContainer>) value) {
-                related.add(Persistence.get(container, fieldList));
+                related.add(repository.service().persistence().get(container, fieldList));
             }
             value = related;
           } else {
             PropertyContainer related = (PropertyContainer) result.get(resultEntry.getKey());
-            value = Persistence.get(related, fieldList);
+            value = repository.service().persistence().get(related, fieldList);
           }
-          FieldDescriptor field = Persistence.cache().fieldDescriptor(model.getClass(), resultEntry.getKey());
+          FieldDescriptor field = repository.service().persistence().cache().fieldDescriptor(model.getClass(), resultEntry.getKey());
 
           try {
             field.field().set(model, value);

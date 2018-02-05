@@ -3,16 +3,15 @@ package de.whitefrog.frogr.persistence;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.*;
-import de.whitefrog.frogr.model.Base;
+import de.whitefrog.frogr.exception.DuplicateEntryException;
+import de.whitefrog.frogr.exception.FieldNotFoundException;
+import de.whitefrog.frogr.exception.MissingRequiredException;
+import de.whitefrog.frogr.exception.PersistException;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.model.Entity;
-import de.whitefrog.frogr.model.Model;
-import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.annotation.RelationshipCount;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.FieldList;
-import de.whitefrog.frogr.model.QueryField;
 import de.whitefrog.frogr.repository.ModelRepository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
@@ -35,22 +34,22 @@ import java.util.*;
 @SuppressWarnings("unchecked")
 public class Persistence {
   private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
-  private static Service service;
-  private static ModelCache cache;
-
-  /**
-   * Set the service to use.
-   *
-   * @param _service Service to use.
-   */
-  public static void setService(Service _service) {
-    service = _service;
-    cache = new ModelCache(_service.registry());
-    Relationships.setService(_service);
+  private Service service;
+  private ModelCache cache;
+  private Relationships relationships;
+  
+  public Persistence(Service service) {
+    this.service = service;
+    cache = new ModelCache(service.registry());
+    relationships = new Relationships(service, this);
   }
 
-  public static ModelCache cache() {
+  public ModelCache cache() {
     return cache;
+  }
+
+  public Relationships relationships() {
+    return relationships;
   }
 
   /**
@@ -58,7 +57,7 @@ public class Persistence {
    *
    * @param model      The model to delete.
    */
-  public static <T extends Model> void delete(T model) {
+  public <T extends Model> void delete(T model) {
     Node node = getNode(model);
     
     for(org.neo4j.graphdb.Relationship relationship: node.getRelationships()) {
@@ -77,7 +76,7 @@ public class Persistence {
    * @return The saved model.
    * @throws MissingRequiredException A required field is missing.
    */
-  public static <T extends Model> T save(ModelRepository<T> repository, SaveContext<T> context) throws MissingRequiredException {
+  public <T extends Model> T save(ModelRepository<T> repository, SaveContext<T> context) throws MissingRequiredException {
     T model = context.model();
     Label label = repository.label();
     boolean create = false;
@@ -112,7 +111,7 @@ public class Persistence {
     return model;
   }
 
-  static <T extends Base> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
+  <T extends Base> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
     Field field = descriptor.field();
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
@@ -141,7 +140,7 @@ public class Persistence {
         if(value != null) {
           // handle relationships
           if(annotations.relatedTo != null && valueChanged && Model.class.isAssignableFrom(context.model().getClass())) {
-            Relationships.saveField((SaveContext<? extends Model>) context, descriptor);
+            relationships.saveField((SaveContext<? extends Model>) context, descriptor);
             logger.info("{}: updated relationships \"{}\"", model, field.getName());
           }
 
@@ -191,7 +190,7 @@ public class Persistence {
    * @return The created model
    * @throws PersistException Is thrown if a field can not be converted
    */
-  public static <T extends Base> T get(PropertyContainer node) throws PersistException {
+  public <T extends Base> T get(PropertyContainer node) throws PersistException {
     return get(node, new FieldList());
   }
 
@@ -203,7 +202,7 @@ public class Persistence {
    * @throws PersistException Is thrown if a field can not be converted
    */
   @SuppressWarnings("unchecked")
-  public static <T extends Base> T get(PropertyContainer node, FieldList fields) throws PersistException {
+  public <T extends Base> T get(PropertyContainer node, FieldList fields) throws PersistException {
     Validate.notNull(node, "node can't be null");
     try {
       Class<T> clazz = (Class<T>) getClass(node);
@@ -246,7 +245,7 @@ public class Persistence {
    * @param node Node or relationship to get the corresponding class for
    * @return The correct model class for the node or relationship passed
    */
-  private static Class getClass(PropertyContainer node) {
+  private Class getClass(PropertyContainer node) {
     String className;
     if(node instanceof org.neo4j.graphdb.Relationship) {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
@@ -262,7 +261,7 @@ public class Persistence {
    *
    * @return Generated uuid.
    */
-  private static String generateUuid() {
+  private String generateUuid() {
     TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator();
     UUID uuid = uuidGenerator.generate();
     return Long.toHexString(uuid.getMostSignificantBits()) + Long.toHexString(uuid.getLeastSignificantBits());
@@ -274,7 +273,7 @@ public class Persistence {
    * @param model Model to remove the property from
    * @param property Property name to remove
    */
-  private static void removeProperty(Model model, String property) {
+  private void removeProperty(Model model, String property) {
     Node node = getNode(model);
     node.removeProperty(property);
     try {
@@ -292,7 +291,7 @@ public class Persistence {
    * @param model Model to search inside the graph
    * @return The neo4j node equivalent for the passed model
    */
-  public static Node getNode(Model model) {
+  public Node getNode(Model model) {
     Validate.notNull(model);
     if(model.getId() > -1) {
       return service.graph().getNodeById(model.getId());
@@ -312,7 +311,7 @@ public class Persistence {
    * @param model The model to fetch the properties for
    * @param fields List of fields to fetch
    */
-  public static <T extends Base> void fetch(T model, String... fields) {
+  public <T extends Base> void fetch(T model, String... fields) {
     fetch(model, FieldList.parseFields(Arrays.asList(fields)), false);
   }
   
@@ -323,7 +322,7 @@ public class Persistence {
    * @param model The model to fetch the properties for
    * @param fields List of fields to fetch as FieldList
    */
-  public static <T extends Base> void fetch(T model, FieldList fields) {
+  public <T extends Base> void fetch(T model, FieldList fields) {
     fetch(model, fields, false);
   }
   
@@ -335,7 +334,7 @@ public class Persistence {
    * @param fields List of fields to fetch as FieldList
    * @param refetch Fetch even if the field was already fetched before
    */
-  public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
+  public <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
     if(!model.getPersisted()) return;
     PropertyContainer node;
@@ -344,11 +343,11 @@ public class Persistence {
       List<String> ignoredFields = Arrays.asList("id");
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
-        node = Relationships.getRelationship(relModel);
+        node = relationships.getRelationship(relModel);
         
         ignoredFields = Arrays.asList("id", "from", "to");
       } else {
-        node = Persistence.getNode((Model) model);
+        node = getNode((Model) model);
       }
       
       for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
@@ -364,7 +363,7 @@ public class Persistence {
     }
   }
 
-  private static <T extends Base> void fetchField(PropertyContainer node, T model, FieldDescriptor descriptor,
+  private <T extends Base> void fetchField(PropertyContainer node, T model, FieldDescriptor descriptor,
                                                   FieldList fields, boolean refetch) throws ReflectiveOperationException {
     if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
     AnnotationDescriptor annotations = descriptor.annotations();
@@ -401,17 +400,17 @@ public class Persistence {
       if(descriptor.isCollection()) {
         Collection related;
         if(descriptor.isModel()) {
-          related = Relationships.getRelatedModels((Model) model, descriptor, fieldDescriptor, subFields);
+          related = relationships.getRelatedModels((Model) model, descriptor, fieldDescriptor, subFields);
         } else {
-          related = Relationships.getRelationships((Model) model, descriptor, fieldDescriptor, subFields);
+          related = relationships.getRelationships((Model) model, descriptor, fieldDescriptor, subFields);
         }
         field.set(model, Set.class.isAssignableFrom(field.getType())? related: new ArrayList<>(related));        
       } else {
         Base related;
         if(descriptor.isModel()) {
-          related = Relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
+          related = relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
         } else {
-          related = Relationships.getRelationship((Model) model, descriptor, subFields);
+          related = relationships.getRelationship((Model) model, descriptor, subFields);
         }
         field.set(model, related);
       }
@@ -438,7 +437,7 @@ public class Persistence {
    * @param uuid The uuid for the model
    * @return The found model or null if none was found
    */
-  public static <T extends Model> T findByUuid(String label, String uuid) {
+  public <T extends Model> T findByUuid(String label, String uuid) {
     ResourceIterator<? extends PropertyContainer> iterator = 
       service.graph().findNodes(Label.label(label), Entity.Uuid, uuid);
     return iterator.hasNext()? get(iterator.next()): null;

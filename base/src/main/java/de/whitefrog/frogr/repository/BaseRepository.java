@@ -5,14 +5,8 @@ import de.whitefrog.frogr.cypher.QueryBuilder;
 import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.helper.ReflectionUtil;
-import de.whitefrog.frogr.model.Base;
-import de.whitefrog.frogr.model.Entity;
-import de.whitefrog.frogr.model.Model;
-import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.FieldList;
-import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
-import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.service.Search;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -20,6 +14,7 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -30,6 +25,7 @@ import java.util.*;
  */
 public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private final Logger logger;
+  @Inject
   private Service service;
   private String type;
   protected Class<?> modelClass;
@@ -61,7 +57,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   @Override
   public Class<?> getModelClass() {
     if(modelClass == null) {
-      modelClass = Persistence.cache().getModel(getType());
+      modelClass = service.persistence().cache().getModel(getType());
     }
 
     return modelClass;
@@ -94,7 +90,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   @Override
   public T fetch(T tag, boolean refetch, FieldList fields) {
-    Persistence.fetch(tag, fields, refetch);
+    service.persistence().fetch(tag, fields, refetch);
     return tag;
   }
 
@@ -159,7 +155,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
           final Field field = ReflectionUtil.getSuperField(clazz, order.field());
           final String dir = order.dir();
           if(!field.isAccessible()) field.setAccessible(true);
-          Collections.sort(list, (o1, o2) -> {
+          list.sort((o1, o2) -> {
             try {
               // just proceed if the already ordered fields aren't equal
               if(!orderedFields.isEmpty()) {
@@ -185,7 +181,8 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
                 if(val1 == null) return -1;
                 else if(val2 == null) return 1;
                 return ((Comparable) val1).compareTo(val2);
-              } else {
+              }
+              else {
                 if(val2 == null) return -1;
                 else if(val1 == null) return 1;
                 return ((Comparable) val2).compareTo(val1);
@@ -206,7 +203,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   public void validateModel(SaveContext<T> context) {
     context.fieldMap().forEach(f -> {
       if(context.model().getCheckedFields().contains(f.getName())) return;
-      AnnotationDescriptor annotations = Persistence.cache().fieldAnnotations(context.model().getClass(), f.getName());
+      AnnotationDescriptor annotations = service.persistence().cache().fieldAnnotations(context.model().getClass(), f.getName());
       // check if required fields are set
       if(!context.model().getPersisted() && annotations.required) {
         try {

@@ -18,12 +18,11 @@ import java.util.*
 
 class TestModelRepository {
   companion object {
-    private var service = TestSuite.service
+    private var service = TestSuite.service()
     private lateinit var persons: PersonRepository
     private lateinit var likesRepository: RelationshipRepository<Likes>
 
-    @JvmStatic
-    @BeforeClass
+    @JvmStatic @BeforeClass
     fun init() {
       persons = service.repository(Person::class.java)
       likesRepository = service.repository(Likes::class.java)

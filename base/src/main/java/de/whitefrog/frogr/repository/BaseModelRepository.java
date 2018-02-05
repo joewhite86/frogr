@@ -3,10 +3,9 @@ package de.whitefrog.frogr.repository;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.FieldList;
-import de.whitefrog.frogr.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Label;
@@ -28,20 +27,10 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   public BaseModelRepository() {
     super();
     this.label = Label.label(getType());
-    if(getModelClass() != null) {
-      this.labels = getModelInterfaces(getModelClass()).stream()
-        .map(Label::label)
-        .collect(Collectors.toSet());
-    } else {
-      logger().warn("no model class found for {}", getClass());
-    }
   }
   public BaseModelRepository(String modelName) {
     super(modelName);
     this.label = Label.label(modelName);
-    this.labels = getModelInterfaces(getModelClass()).stream()
-      .map(Label::label)
-      .collect(Collectors.toSet());
   }
 
   @Override
@@ -60,10 +49,10 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
       throw new TypeMismatchException((Node) node, label());
     }
 
-    return Persistence.get(node, fields);
+    return service().persistence().get(node, fields);
   }
 
-  boolean checkType(Node node) {
+  private boolean checkType(Node node) {
     return node.hasLabel(label());
   }
 
@@ -97,12 +86,17 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
 
   @Override
   public Set<Label> labels() {
+    if(labels == null) {
+      labels = getModelInterfaces(getModelClass()).stream()
+        .map(Label::label)
+        .collect(Collectors.toSet());
+    }
     return labels;
   }
 
   @Override
   public void remove(T model) throws PersistException {
-    Persistence.delete(model);
+    service().persistence().delete(model);
     logger().info("{} deleted", model);
   }
 
@@ -110,7 +104,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   public void save(SaveContext<T> context) throws PersistException {
     validateModel(context);
     boolean create = !context.model().getPersisted();
-    Persistence.save(this, context);
+    service().persistence().save(this, context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }
 }

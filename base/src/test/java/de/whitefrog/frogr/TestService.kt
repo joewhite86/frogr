@@ -2,11 +2,17 @@ package de.whitefrog.frogr
 
 import de.whitefrog.frogr.test.TemporaryService
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.Test
 
 class TestService {
-  private var service: Service = TemporaryService()
-  init { service.connect() }
+  companion object {
+    private var service: Service = TemporaryService()
+    @BeforeClass @JvmStatic
+    fun init() {
+      service.connect()
+    }
+  }
   
   @Test
   fun isConnected() {

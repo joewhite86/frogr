@@ -8,13 +8,14 @@ import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 
 
 class TestSearch {
   companion object {
-    private var service = TestSuite.service
+    private var service = TestSuite.service()
     private lateinit var persons: PersonRepository
     private lateinit var likesRepository: RelationshipRepository<Likes>
 
@@ -28,15 +29,17 @@ class TestSearch {
     }
   }
 
-  fun prepareData(): List<Person> {
+  private fun prepareData(): List<Person> {
     val person1 = persons.createModel()
     person1.field = "test1"
     person1.uniqueField = "test1"
+    person1.fulltext = "test1"
     person1.number = 10L
 
     val person2 = persons.createModel()
     person2.field = "test2"
     person2.uniqueField = "test2"
+    person2.fulltext = "test2"
     person2.number = 20L
 
     persons.save(person1, person2)
@@ -241,6 +244,18 @@ class TestSearch {
     service.beginTx().use {
       prepareData()
       persons.search().limit(1).returns("person.number", "person.field").toInt()
+    }
+  }
+  
+  @Ignore @Test 
+  fun fulltext() {
+    service.beginTx().use {
+      val list = prepareData()
+      val result = persons.search()
+        .filter(Filter.Equals("fulltext", "TEST1"))
+        .list<Person>()
+      assertThat(result).isNotEmpty
+      assertThat(result[0]).isEqualTo(list[0])
     }
   }
   

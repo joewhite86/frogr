@@ -8,6 +8,7 @@ import de.whitefrog.frogr.repository.TestSearch
 import de.whitefrog.frogr.rest.request.TestSearchParameterResolver
 import de.whitefrog.frogr.rest.response.TestResponse
 import de.whitefrog.frogr.test.TemporaryService
+import org.junit.BeforeClass
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
@@ -23,9 +24,14 @@ import org.junit.runners.Suite
   TestSearchParameterResolver::class,
   TestResponse::class
 )
-object TestSuite {
-  var service: Service = TemporaryService()
-  init { 
-    service.connect() 
+class TestSuite {
+  companion object {
+    private val service: Service = TemporaryService()
+    fun service(): Service {
+      if(!service.isConnected) {
+        service.connect()
+      }
+      return service
+    }
   }
 }
