@@ -16,11 +16,6 @@ public abstract class Patch implements Comparable<Patch> {
     this.version = Version.valueOf(getClass().getAnnotation(de.whitefrog.frogr.patch.Version.class).value());
   }
 
-  public Patch(String version, Service service) {
-    this.service = service;
-    this.version = Version.valueOf(version);
-  }
-
   public void setPriority(int priority) {
     this.priority = priority;
   }

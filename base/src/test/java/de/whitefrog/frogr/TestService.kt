@@ -1,6 +1,7 @@
 package de.whitefrog.frogr
 
 import de.whitefrog.frogr.test.TemporaryService
+import de.whitefrog.frogr.test.model.Person
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -36,11 +37,21 @@ class TestService {
   fun snapshotManifestVersion() {
     System.setProperty("version", "1.0.1-SNAPSHOT")
     assertThat(service.manifestVersion).isEqualTo("1.0.1")
+    System.clearProperty("version")
   }
   
   @Test
   fun restartService() {
     service.shutdown()
     service.connect()
+  }
+  
+  @Test
+  fun applyPatch() {
+    service.shutdown()
+    System.setProperty("version", "10.0.0")
+    service.connect()
+    assertThat(service.repository(Person::class.java).search().count()).isEqualTo(1)
+    System.clearProperty("version")
   }
 }

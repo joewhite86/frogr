@@ -79,23 +79,17 @@ public class Service implements AutoCloseable {
       
       repositoryFactory = new RepositoryFactory(this);
       graphRepository = new GraphRepository(this);
+
+      String version = getManifestVersion();
       
       try(Transaction tx = beginTx()) {
         graph = graphRepository.getGraph();
-        String version = getManifestVersion();
         if(graph == null) {
-          graph = graphRepository.create();
-          if(!version.equals("undefined")) graph.setVersion(version);
-          graphRepository.save(graph);
           logger.info("--------------------------------------------");
           logger.info("---   creating fresh database instance   ---");
           logger.info("---   " + directory + "   ---");
           logger.info("--------------------------------------------");
         } else {
-          if(!version.equals("undefined")) {
-            graph.setVersion(version);
-            graphRepository.save(graph);
-          }
           logger.info("--------------------------------------------");
           logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
           logger.info("---   {}   ---", directory);
@@ -106,6 +100,13 @@ public class Service implements AutoCloseable {
 
       Patcher.patch(this);
       initializeSchema();
+
+      try(Transaction tx = beginTx()) {
+        if(graph == null) graph = graphRepository.create();
+        if(!version.equals("undefined")) graph.setVersion(version);
+        graphRepository.save(graph);
+        tx.success();
+      }
 
       registerShutdownHook(this);
       state = State.Running;
@@ -140,9 +141,10 @@ public class Service implements AutoCloseable {
   }
 
   public String getVersion() {
-    return graph != null? graph.getVersion(): null;
+    return graph != null? graph.getVersion(): "0.0.0";
   }
   public void setVersion(String version) {
+    if(graph == null) return;
     try(Transaction tx = beginTx()) {
       graph.setVersion(version);
       graphRepository.save(graph);

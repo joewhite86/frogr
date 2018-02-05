@@ -4,6 +4,9 @@ import com.github.zafarkhaja.semver.Version;
 import de.whitefrog.frogr.Service;
 import org.neo4j.graphdb.Transaction;
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +22,11 @@ public class Patcher {
   private static final Logger logger = LoggerFactory.getLogger(Patcher.class);
 
   private static TreeMap<Version, List<Patch>> getPatches(Service service) {
-    Reflections reflections = new Reflections(Patch.class.getPackage().getName());
+    ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+      .setScanners(new SubTypesScanner());
+    service.registry()
+      .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
+    Reflections reflections = new Reflections(configurationBuilder);
     Set<Class<? extends Patch>> patchClasses = reflections.getSubTypesOf(Patch.class);
     TreeMap<Version, List<Patch>> patches = new TreeMap<>();
 
@@ -38,6 +45,15 @@ public class Patcher {
         }
       } catch(Exception e) {
         logger.error(e.getMessage(), e);
+      }
+    }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Found {} patches:", patches.size());
+      for(Version version: patches.keySet()) {
+        logger.debug("@{}", version.getNormalVersion());
+        for(Patch patch: patches.get(version)) {
+          logger.debug("    {}", patch.getClass().getSimpleName());
+        }
       }
     }
 
