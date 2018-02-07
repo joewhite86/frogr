@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.model.annotation.Fetch
-import de.whitefrog.frogr.model.annotation.NotPersistant
+import de.whitefrog.frogr.model.annotation.NotPersistent
 import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.model.annotation.Uuid
 import de.whitefrog.frogr.rest.Views
@@ -59,24 +59,24 @@ abstract class Entity : Model, Comparable<Base> {
   /**
    * True, if the id was set automatically. False when set by a database.
    */
-  @NotPersistant
+  @NotPersistent
   private var initialId = true
   /**
    * Already checked fields during a save process. Used to prevent
    * double checking.
    */
-  @NotPersistant
+  @NotPersistent
   @JsonIgnore
   override var checkedFields: HashSet<String> = HashSet()
   /**
    * Fields already fetched from database. Used to prevent unneccecary
    * read actions.
    */
-  @NotPersistant
+  @NotPersistent
   @JsonIgnore
   override var fetchedFields: HashSet<String> = HashSet()
 
-  @NotPersistant
+  @NotPersistent
   @JsonIgnore
   override var removeProperties: HashSet<String> = HashSet()
 

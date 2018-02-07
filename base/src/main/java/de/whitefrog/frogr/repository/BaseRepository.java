@@ -7,6 +7,8 @@ import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
+import de.whitefrog.frogr.persistence.Persistence;
+import de.whitefrog.frogr.persistence.Relationships;
 import de.whitefrog.frogr.service.Search;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -28,6 +30,8 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   @Inject
   private Service service;
   private String type;
+  private Persistence persistence;
+  private Relationships relationships;
   protected Class<?> modelClass;
 
   public BaseRepository() {
@@ -79,19 +83,22 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     return logger;
   }
 
-  public T fetch(T tag, String... fields) {
+  public T fetch(Base tag, String... fields) {
     return fetch(tag, FieldList.parseFields(fields));
   }
 
   @Override
-  public T fetch(T tag, FieldList fields) {
+  public T fetch(Base tag, FieldList fields) {
     return fetch(tag, false, fields);
   }
 
   @Override
-  public T fetch(T tag, boolean refetch, FieldList fields) {
+  @SuppressWarnings("unchecked")
+  public T fetch(Base tag, boolean refetch, FieldList fields) {
+    if(tag == null || !getModelClass().isAssignableFrom(tag.getClass())) 
+      throw new IllegalArgumentException(tag + " is not an instanceof " + getModelClass());
     service.persistence().fetch(tag, fields, refetch);
-    return tag;
+    return (T) tag;
   }
 
   @Override
@@ -142,6 +149,18 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   @Override
   public Service service() {
     return service;
+  }
+
+  @Override
+  public Persistence persistence() {
+    if(persistence == null) persistence = service().persistence();
+    return persistence;
+  }
+
+  @Override
+  public Relationships relationships() {
+    if(relationships == null) relationships = service().persistence().relationships();
+    return relationships;
   }
 
   @Override

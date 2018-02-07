@@ -24,7 +24,7 @@ public class FieldDescriptor<T extends Base> {
     
     AnnotationDescriptor descriptor = new AnnotationDescriptor();
     descriptor.indexed = field.getAnnotation(Indexed.class);
-    descriptor.notPersistant = field.isAnnotationPresent(NotPersistant.class);
+    descriptor.notPersistent = field.isAnnotationPresent(NotPersistent.class);
     descriptor.relatedTo = field.getAnnotation(RelatedTo.class);
     descriptor.unique = field.isAnnotationPresent(Unique.class);
     descriptor.fetch = field.isAnnotationPresent(Fetch.class);

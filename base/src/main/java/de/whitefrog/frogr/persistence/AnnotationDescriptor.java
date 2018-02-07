@@ -12,7 +12,7 @@ public class AnnotationDescriptor {
   public Indexed indexed = null;
   public boolean unique = false;
   public RelatedTo relatedTo = null;
-  public boolean notPersistant = false;
+  public boolean notPersistent = false;
   public boolean fetch = false;
   public boolean required = false;
   public boolean nullRemove = false;

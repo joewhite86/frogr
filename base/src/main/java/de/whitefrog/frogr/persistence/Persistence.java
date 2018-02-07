@@ -111,6 +111,7 @@ public class Persistence {
     return model;
   }
 
+  @SuppressWarnings("unchecked")
   <T extends Base> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
     Field field = descriptor.field();
     AnnotationDescriptor annotations = descriptor.annotations();
@@ -128,7 +129,7 @@ public class Persistence {
 
       boolean valueChanged = created || context.fieldChanged(field.getName());
 
-      if(!annotations.notPersistant && !annotations.blob) {
+      if(!annotations.notPersistent && !annotations.blob) {
         // Generate an uuid when the value is actually null
         if(created && annotations.uuid && field.get(model) == null) {
           String uuid = generateUuid();
@@ -217,18 +218,18 @@ public class Persistence {
       } else {
         org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
         Model from = get(rel.getStartNode());
-        if(fields.get("from") != null && !fields.get("from").subFields().isEmpty()) 
-          fetch(from, fields.get("from").subFields());
+        if(fields.get("from") != null && !fields.get("from").subFields().isEmpty()) {
+          service.repository(from.getClass()).fetch(from, fields.get("from").subFields());
+        }
         Model to = get(rel.getEndNode());
         if(fields.get("to") != null && !fields.get("to").subFields().isEmpty())
-          fetch(to, fields.get("to").subFields());
+          service.repository(to.getClass()).fetch(to, fields.get("to").subFields());
         Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
         model = constructor.newInstance(from, to);
         model.setId(rel.getId());
         fields.remove(new QueryField("from"));
         fields.remove(new QueryField("to"));
       }
-      model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
       service.repository(clazz).fetch(model, false, fields);
       return model;
     } catch(IllegalStateException e) {
@@ -340,23 +341,35 @@ public class Persistence {
     PropertyContainer node;
 
     try {
-      List<String> ignoredFields = Arrays.asList("id");
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
         node = relationships.getRelationship(relModel);
-        
-        ignoredFields = Arrays.asList("id", "from", "to");
       } else {
         node = getNode((Model) model);
       }
       
-      for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
-        if(CollectionUtils.isEmpty(fields) && descriptor.annotations().notPersistant) continue;
-        if(ignoredFields.contains(descriptor.field().getName())) continue;
-        boolean fetch = descriptor.annotations().fetch ||
-          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.field().getName());
-        if(!fetch) continue;
-        fetchField(node, model, descriptor, fields, refetch);
+      if(!CollectionUtils.isEmpty(fields)) {
+        // iterate over fields to ensure fields with @Fetch annotation and 'allFields' will be fetched
+        for(FieldDescriptor descriptor : cache.fieldMap(model.getClass())) {
+          // don't fetch the 'id' field and fields annotated with @NotPersistent
+          if(descriptor.getName().equals("id") && descriptor.annotations().notPersistent) continue;
+
+          // always fetch when field is 'type' or 'uuid', or when allFields is set 
+          // or the field list contains the current field
+          boolean fetch = descriptor.annotations().fetch ||
+            descriptor.getName().equals(Entity.Type) || descriptor.getName().equals(Entity.Uuid) ||
+            fields.containsField(Entity.AllFields) || fields.containsField(descriptor.getName());
+
+          if(fetch) {
+            // still fetch if refetch is true or field is not in fetchedFields 
+            // or fields does not contiain field or sub-fields is not empty 
+            if(!refetch && model.getFetchedFields().contains(descriptor.getName()) &&
+              fields.containsField(descriptor.getName()) && fields.get(descriptor.getName()).subFields().isEmpty())
+              continue;
+
+            fetchField(node, model, descriptor, fields);
+          }
+        }
       }
     } catch(ReflectiveOperationException e) {
       logger.error("could not load relations for {}: {}", model, e.getMessage(), e);
@@ -364,22 +377,18 @@ public class Persistence {
   }
 
   private <T extends Base> void fetchField(PropertyContainer node, T model, FieldDescriptor descriptor,
-                                                  FieldList fields, boolean refetch) throws ReflectiveOperationException {
-    if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
+                                                  FieldList fields) throws ReflectiveOperationException {
     AnnotationDescriptor annotations = descriptor.annotations();
-    java.lang.reflect.Field field = descriptor.field();
-    if(!field.getName().equals(Entity.Type) && !annotations.fetch && !field.getName().equals(Entity.Uuid) &&
-      !fields.containsField(Entity.AllFields) && !fields.containsField(field.getName())) return;
+    Field field = descriptor.field();
     field.setAccessible(true);
 
     if(node instanceof org.neo4j.graphdb.Relationship) {
-      org.neo4j.graphdb.Relationship relationship = (org.neo4j.graphdb.Relationship) node;
       Relationship relModel = (Relationship) model;
-      if((fields.containsField("from") || fields.containsField(Entity.AllFields)) && (relModel.getFrom() == null || refetch)) {
-        relModel.setFrom(get(relationship.getStartNode(), fields.getOrEmpty("from").subFields()));
+      if(field.getName().equals("from") && fields.containsField("from") && !fields.get("from").subFields().isEmpty()) {
+        service.repository(relModel.getFrom().getClass()).fetch(relModel.getFrom(), fields.get("from").subFields());
       }
-      if((fields.containsField("to") || fields.containsField(Entity.AllFields)) && (relModel.getTo() == null || refetch)) {
-        relModel.setTo(get(relationship.getEndNode(), fields.getOrEmpty("to").subFields()));
+      if(field.getName().equals("to") && fields.containsField("to") && !fields.get("to").subFields().isEmpty()) {
+        service.repository(relModel.getTo().getClass()).fetch(relModel.getTo(), fields.get("to").subFields());
       }
     }
     

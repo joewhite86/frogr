@@ -6,7 +6,7 @@ import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.model.Base
 import de.whitefrog.frogr.model.Model
 import de.whitefrog.frogr.model.annotation.Fetch
-import de.whitefrog.frogr.model.annotation.NotPersistant
+import de.whitefrog.frogr.model.annotation.NotPersistent
 import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.model.annotation.Uuid
 import de.whitefrog.frogr.rest.Views
@@ -43,13 +43,16 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   @JsonView(Views.Secure::class)
   private var lastModified: Long? = null
 
-  @NotPersistant
+  @NotPersistent
   private var initialId = true
-  @NotPersistant @JsonIgnore
+  @NotPersistent
+  @JsonIgnore
   override var checkedFields: HashSet<String> = HashSet()
-  @NotPersistant @JsonIgnore
+  @NotPersistent
+  @JsonIgnore
   override var fetchedFields: HashSet<String> = HashSet()
-  @NotPersistant @JsonIgnore
+  @NotPersistent
+  @JsonIgnore
   override var removeProperties: HashSet<String> = HashSet()
 
   override fun resetId() {

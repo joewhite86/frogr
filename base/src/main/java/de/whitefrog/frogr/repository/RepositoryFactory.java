@@ -134,6 +134,7 @@ public class RepositoryFactory {
     Field serviceField = BaseRepository.class.getDeclaredField("service");
     serviceField.setAccessible(true);
     serviceField.set(repository, service);
+    BaseRepository.class.getDeclaredMethod("initialize").invoke(repository);
   }
 
   /**

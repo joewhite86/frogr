@@ -7,7 +7,6 @@ import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.apache.commons.lang3.Validate;
