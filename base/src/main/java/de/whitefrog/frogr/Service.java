@@ -66,6 +66,18 @@ public class Service implements AutoCloseable {
     return graph().beginTx();
   }
 
+  public void connect() {
+    try {
+      if(directory == null) {
+        Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
+        directory = properties.getString("graph.location");
+      }
+      connect(directory);
+    } catch (ConfigurationException e) {
+      logger.error("Could not read neo4j.properties", e);
+    }
+  }
+
   public void connect(String directory) {
     try {
       if(isConnected()) throw new FrogrException("already running");
@@ -98,8 +110,8 @@ public class Service implements AutoCloseable {
         tx.success();
       }
 
-      Patcher.patch(this);
       initializeSchema();
+      Patcher.patch(this);
 
       try(Transaction tx = beginTx()) {
         if(graph == null) graph = graphRepository.create();
@@ -112,19 +124,7 @@ public class Service implements AutoCloseable {
       registerShutdownHook(this);
       state = State.Running;
     } catch (ConfigurationException e) {
-      logger.error("Could not read cypher.properties", e);
-    }
-  }
-
-  public void connect() {
-    try {
-      if(directory == null) {
-        Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
-        directory = properties.getString("graph.location");
-      }
-      connect(directory);
-    } catch (ConfigurationException e) {
-      logger.error("Could not read neo4j.properties", e);
+      logger.error("Could not read " + neo4jConfig, e);
     }
   }
   
