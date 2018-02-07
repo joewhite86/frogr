@@ -8,7 +8,7 @@ import org.junit.Test
 
 class TestService {
   companion object {
-    private var service: Service = TemporaryService()
+    private var service: TemporaryService = TemporaryService()
     @BeforeClass @JvmStatic
     fun init() {
       service.connect()
@@ -31,7 +31,7 @@ class TestService {
   @Test
   fun noManifestVersion() {
     System.clearProperty("version")
-    assertThat(service.manifestVersion).isEqualTo("undefined")
+    assertThat(service.manifestVersion).isEqualTo("0.0.0")
   }
   @Test
   fun snapshotManifestVersion() {
@@ -42,7 +42,7 @@ class TestService {
   
   @Test
   fun restartService() {
-    service.shutdown()
+    service.softShutdown()
     service.connect()
   }
 }

@@ -27,6 +27,10 @@ public class TemporaryService extends Service {
       e.printStackTrace();
     }
   }
+  
+  public void softShutdown() {
+    super.shutdown();
+  }
 
   @Override
   public void shutdown() {

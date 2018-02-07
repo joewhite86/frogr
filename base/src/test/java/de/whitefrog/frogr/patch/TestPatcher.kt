@@ -1,6 +1,5 @@
 package de.whitefrog.frogr.patch
 
-import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Person
 import org.assertj.core.api.Assertions.assertThat
@@ -9,7 +8,7 @@ import org.junit.Test
 
 class TestPatcher {
   companion object {
-    private var service: Service = TemporaryService()
+    private var service: TemporaryService = TemporaryService()
     @BeforeClass
     @JvmStatic
     fun init() {
@@ -20,7 +19,7 @@ class TestPatcher {
   @Test
   fun applyPatch() {
     val repository = service.repository(Person::class.java)
-    service.shutdown()
+    service.softShutdown()
     System.setProperty("version", "10.0.0")
     service.connect()
     System.clearProperty("version")
