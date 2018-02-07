@@ -42,9 +42,9 @@ import java.util.*;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
+  public static final String noVersion = "0.0.0";
   public enum State { Started, Connecting, Running, ShuttingDown}
 
-  private static Class mainClass = Application.class;
   private GraphDatabaseService graphDb;
   private String directory;
   private GraphRepository graphRepository;
@@ -86,7 +86,7 @@ public class Service implements AutoCloseable {
         graph = graphRepository.getGraph();
         if(graph == null) {
           logger.info("--------------------------------------------");
-          logger.info("---   creating fresh database instance   ---");
+          logger.info("---   creating database instance {}   ---", version);
           logger.info("---   " + directory + "   ---");
           logger.info("--------------------------------------------");
         } else {
@@ -103,8 +103,9 @@ public class Service implements AutoCloseable {
 
       try(Transaction tx = beginTx()) {
         if(graph == null) graph = graphRepository.create();
-        if(!version.equals("undefined")) graph.setVersion(version);
+        graph.setVersion(version);
         graphRepository.save(graph);
+        logger.debug("graph node created");
         tx.success();
       }
 
@@ -141,7 +142,7 @@ public class Service implements AutoCloseable {
   }
 
   public String getVersion() {
-    return graph != null? graph.getVersion(): "0.0.0";
+    return graph != null? graph.getVersion(): Service.noVersion;
   }
   public void setVersion(String version) {
     if(graph == null) return;
@@ -189,31 +190,43 @@ public class Service implements AutoCloseable {
   }
 
   public GraphDatabaseService graph() {
-    if(graphDb == null) connect();
+    if(!isConnected()) throw new FrogrException("service is not running");
     return graphDb;
   }
 
   public synchronized String getManifestVersion() {
     String version = null;
     
-    if(mainClass != null) {
-      version = mainClass.getPackage().getImplementationVersion();
+    if(getMainClass() != null) {
+      version = getMainClass().getPackage().getImplementationVersion();
     }
     if(version == null) {
-      version = System.getProperty("version", "undefined");
+      version = System.getProperty("version", Service.noVersion);
     }
 
     if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
 
     return version;
   }
-  
-  public static void setMainClass(Class clazz) {
-    mainClass = clazz;
-  }
 
-  public static Class getMainClass() {
-    return mainClass;
+  /**
+   * Searches in stack trace for {@link Application} instances, otherwise returns this class
+   * @return the main class of the application
+   */
+  private Class getMainClass() {
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for(int i = stackTrace.length - 1; i >= 0; i--) {
+      try {
+        Class caller = Class.forName(stackTrace[i].getClassName());
+        if(Application.class.isAssignableFrom(caller)) return caller;
+        // if service is found first, no application did run 
+        // the service as it should appear first in the stack trace
+        if(Service.class.isAssignableFrom(caller)) return caller;
+      } catch(ClassNotFoundException e) {
+        logger.error("error reading stack trace", e);
+      }
+    }
+    return getClass();
   }
 
   /**
@@ -257,11 +270,11 @@ public class Service implements AutoCloseable {
             schema.constraintFor(repository.label())
               .assertPropertyIsUnique(descriptor.getName())
               .create();
-            logger.info("created unique constraint on field \"{}\" for model \"{}\"",
+            logger.debug("created unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           } else if(!annotations.unique && existing != null) {
             existing.drop();
-            logger.info("dropped unique constraint on field \"{}\" for model \"{}\"",
+            logger.debug("dropped unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           }
 
@@ -269,11 +282,11 @@ public class Service implements AutoCloseable {
             schema.indexFor(repository.label())
               .on(descriptor.getName())
               .create();
-            logger.info("created index on field \"{}\" for model \"{}\"",
+            logger.debug("created index on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           } else if(annotations.indexed == null && !annotations.unique && existingIndex != null) {
             existingIndex.drop();
-            logger.info("dropped index on field \"{}\" for model \"{}\"",
+            logger.debug("dropped index on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           }
         }

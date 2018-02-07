@@ -67,7 +67,7 @@ public class Patcher {
    */
   public static void patch(Service service) {
     String version = service.getManifestVersion();
-    if(!version.equals("undefined")) patch(service, version);
+    if(!version.equals(Service.noVersion)) patch(service, version);
   }
 
   private static void patch(Service service, String versionString) {
@@ -75,7 +75,6 @@ public class Patcher {
     Transaction tx = service.beginTx();
 
     Version graphVersion = Version.valueOf(service.getVersion());
-    logger.info("Graph version is {}", graphVersion);
 
     tx.success();
     tx.close();

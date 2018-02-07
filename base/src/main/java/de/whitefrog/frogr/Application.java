@@ -47,9 +47,6 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
   private List<String> packages = new ArrayList<>();
   private ServiceInjector serviceInjector;
 
-  public Application() {
-    Service.setMainClass(getClass());
-  }
   public Service service() {
     return serviceInjector().provide();
   }
