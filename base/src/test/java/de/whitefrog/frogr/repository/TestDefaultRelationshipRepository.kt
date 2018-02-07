@@ -1,14 +1,14 @@
-package de.whitefrog.frogr.patch
+package de.whitefrog.frogr.repository
 
 import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.test.TemporaryService
-import de.whitefrog.frogr.test.model.Person
+import de.whitefrog.frogr.test.model.Likes
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class TestPatcher {
+class TestDefaultRelationshipRepository {
   private lateinit var service: Service
 
   @Before
@@ -22,14 +22,9 @@ class TestPatcher {
   }
 
   @Test
-  fun applyPatch() {
-    val repository = service.repository(Person::class.java)
-    service.shutdown()
-    System.setProperty("version", "10.0.0")
-    service.connect()
-    System.clearProperty("version")
-    service.beginTx().use {
-      assertThat(repository.search().count()).isEqualTo(3)
-    }
+  fun defaultRepository() {
+    val repository = service.repository(Likes::class.java)
+    assertThat(repository).isInstanceOfAny(DefaultRelationshipRepository::class.java)
+    assertThat(service.repositoryFactory().cache()).contains(repository)
   }
 }

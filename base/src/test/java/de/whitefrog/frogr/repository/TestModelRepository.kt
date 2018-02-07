@@ -1,107 +1,35 @@
 package de.whitefrog.frogr.repository
 
-import de.whitefrog.frogr.TestSuite
+import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.DuplicateEntryException
-import de.whitefrog.frogr.exception.FieldNotFoundException
-import de.whitefrog.frogr.exception.MissingRequiredException
-import de.whitefrog.frogr.model.Filter
-import de.whitefrog.frogr.test.model.Clothing
+import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
-import de.whitefrog.frogr.test.model.PersonRequiredField
+import de.whitefrog.frogr.test.model.PersonInterface
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
+import org.junit.After
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import org.neo4j.graphdb.Label
 import java.util.*
 
 class TestModelRepository {
-  companion object {
-    private var service = TestSuite.service()
-    private lateinit var persons: PersonRepository
-    private lateinit var likesRepository: RelationshipRepository<Likes>
+  private lateinit var service: Service
+  private lateinit var persons: PersonRepository
+  private lateinit var likesRepository: RelationshipRepository<Likes>
 
-    @JvmStatic @BeforeClass
-    fun init() {
-      persons = service.repository(Person::class.java)
-      likesRepository = service.repository(Likes::class.java)
-    }
+  @Before
+  fun before() {
+    service = TemporaryService()
+    service.connect()
+    persons = service.repository(Person::class.java)
+    likesRepository = service.repository(Likes::class.java)
   }
-  
-  @Test
-  fun correctLabel() {
-    assertThat(persons.label().name()).isEqualTo("Person")
-  }
-
-  @Test
-  fun createModel() {
-    service.beginTx().use {
-      var model = persons.createModel()
-      model.field = "test"
-      persons.save(model)
-      model = persons.find(model.id, "field")
-      assertThat(model).isNotNull()
-      assertThat(model.field).isEqualTo("test")
-    }
-  }
-
-  @Test(expected = MissingRequiredException::class)
-  fun missingRequiredField() {
-    service.beginTx().use {
-      val repository = service.repository<ModelRepository<PersonRequiredField>, PersonRequiredField>(PersonRequiredField::class.java)
-      val model = repository.createModel()
-      repository.save(model)
-    }
-  }
-  
-  @Test
-  fun removeProperty() {
-    service.beginTx().use {
-      val person = Person()
-      person.field = "test"
-      persons.save(person)
-      assertThat(persons.find(person.id, "field").field).isEqualTo(person.field)
-      person.removeProperty("field")
-      persons.save(person)
-      assertThat(persons.find(person.id, "field").field).isNull()
-    }
-  }
-  
-  @Test
-  fun nullRemoveProperty() {
-    service.beginTx().use {
-      val person = Person()
-      person.nullRemoveField = "test"
-      persons.save(person)
-      person.nullRemoveField = null
-      persons.save(person)
-      var found = persons.find(person.id, "nullRemoveField")
-      assertThat(found.nullRemoveField).isNull()
-      found= persons.search().filter(Filter.Equals("nullRemoveField", "test")).single()
-      assertThat(found).isNull()
-    }
-  }
-
-  @Test(expected = FieldNotFoundException::class)
-  fun removeNotExistingProperty() {
-    service.beginTx().use {
-      val person = Person()
-      persons.save(person)
-      person.removeProperty("field_xy")
-      persons.save(person)
-    }
-  }
-  
-  @Test
-  fun delete() {
-    service.beginTx().use {
-      val person = Person()
-      persons.save(person)
-      assertThat(persons.find(person.id)).isEqualTo(person)
-      persons.remove(person)
-      assertThat(persons.find(person.id)).isNull()
-    }
+  @After
+  fun after() {
+    service.shutdown()
   }
 
   @Test
@@ -115,27 +43,6 @@ class TestModelRepository {
       assertThat(persons.find(person.id, "marriedWith").marriedWith).isEqualTo(person2)
       persons.remove(person)
       assertThat(persons.find(person.id)).isNull()
-    }
-  }
-
-  @Test
-  fun uuid() {
-    service.beginTx().use {
-      val model = persons.createModel()
-      persons.save(model)
-      assertThat(model.uuid).isNotEmpty()
-    }
-  }
-
-  @Test(expected = DuplicateEntryException::class)
-  fun uniqueConstraint() {
-    service.beginTx().use {
-      val model = persons.createModel()
-      model.uniqueField = "unique"
-      persons.save(model)
-      val duplicate = persons.createModel()
-      duplicate.uniqueField = "unique"
-      persons.save(duplicate)
     }
   }
 
@@ -163,31 +70,17 @@ class TestModelRepository {
     }
   }
 
-  @Test
-  fun findByUuid() {
-    service.beginTx().use {
-      val person = persons.createModel()
-      persons.save(person)
-      assertThat(person.uuid).isNotEmpty()
-      val found = persons.findByUuid(person.uuid)
-      assertThat(found).isEqualTo(person)
-    }
-  }
-
 //  @Test(expected = RepositoryInstantiationException::class)
 //  fun invalidRepository() {
 //    service.repository("Invalid")
 //  }
 
-  @Test
-  fun defaultRepository() {
-    val repository = service.repository(Clothing::class.java)
-    assertThat(repository).isInstanceOfAny(DefaultRepository::class.java)
-    assertThat(service.repositoryFactory().cache()).contains(repository)
-  }
 
   @Test
-  fun repositoryCache() {
-    assertThat(service.repositoryFactory().cache()).contains(likesRepository)
+  fun modelWithInterface() {
+    val person = Person()
+    assertThat(person).isInstanceOf(PersonInterface::class.java)
+    assertThat(persons.labels()).hasSize(1)
+    assertThat(persons.labels()).contains(Label.label(PersonInterface::class.java.simpleName))
   }
 }

@@ -1,11 +1,24 @@
 package de.whitefrog.frogr.health
 
-import de.whitefrog.frogr.TestSuite
+import de.whitefrog.frogr.Service
+import de.whitefrog.frogr.test.TemporaryService
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 class TestGraphHealthCheck {
-  val service = TestSuite.service()
+  private lateinit var service: Service
+
+  @Before
+  fun before() {
+    service = TemporaryService()
+    service.connect()
+  }
+  @After
+  fun after() {
+    service.shutdown()
+  }
   
   @Test
   fun check() {

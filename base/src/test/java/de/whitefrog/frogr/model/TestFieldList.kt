@@ -1,8 +1,7 @@
 package de.whitefrog.frogr.model
 
-import de.whitefrog.frogr.model.FieldList
-import org.junit.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
 class TestFieldList {
   @Test

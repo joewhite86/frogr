@@ -1,9 +1,6 @@
 package de.whitefrog.frogr.model;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -300,15 +297,13 @@ public class SearchParameter implements Serializable {
     private String field;
     private String dir = SortOrder.ASC.name();
 
-    public OrderBy() {
-    }
-
-    OrderBy(String field, String dir) {
+    @JsonCreator
+    public OrderBy(@JsonProperty("field") String field, @JsonProperty("dir") String dir) {
       this.field = field;
       this.dir = dir;
     }
 
-    OrderBy(String field, SortOrder dir) {
+    public OrderBy(String field, SortOrder dir) {
       this(field, dir.name());
     }
 

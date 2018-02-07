@@ -308,15 +308,30 @@
             
             <dependency>
                 <groupId>org.neo4j</groupId>
-                <artifactId>neo4j</artifactId>
+                <artifactId>neo4j-kernel</artifactId>
                 <version>${neo4j.version}</version>
-
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-nop</artifactId>
-                    </exclusion>
-                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-kernel</artifactId>
+                <version>${neo4j.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-io</artifactId>
+                <version>${neo4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-io</artifactId>
+                <version>${neo4j.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-cypher</artifactId>
+                <version>${neo4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.neo4j</groupId>

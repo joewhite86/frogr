@@ -13,6 +13,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,18 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
 
   private boolean checkType(Node node) {
     return node.hasLabel(label());
+  }
+
+  private Set<String> getModelInterfaces(Class<?> clazz) {
+    Set<String> output = new HashSet<>();
+    Class<?>[] interfaces = clazz.getInterfaces();
+    for(Class<?> i: interfaces) {
+      if(Model.class.isAssignableFrom(i) && !i.equals(Model.class)) {
+        output.add(i.getSimpleName());
+        output.addAll(getModelInterfaces(i));
+      }
+    }
+    return output;
   }
 
   public T find(long id, FieldList fields) {
@@ -102,6 +115,8 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
 
   @Override
   public void save(SaveContext<T> context) throws PersistException {
+    if(getModelClass().isInterface())
+      throw new PersistException("cannot save in interface repository");
     validateModel(context);
     boolean create = !context.model().getPersisted();
     service().persistence().save(this, context);

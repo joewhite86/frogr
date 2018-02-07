@@ -1,32 +1,38 @@
 package de.whitefrog.frogr.persistence
 
-import de.whitefrog.frogr.TestSuite
+import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.MissingRequiredException
 import de.whitefrog.frogr.model.SaveContext
 import de.whitefrog.frogr.repository.ModelRepository
 import de.whitefrog.frogr.repository.RelationshipRepository
+import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonRequiredField
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import java.util.*
 
 class TestPersistence {
-  companion object {
-    private var service = TestSuite.service()
-    private var persistence = service.persistence()
-    private lateinit var persons: PersonRepository
-    private lateinit var likesRepository: RelationshipRepository<Likes>
+  private lateinit var service: Service
+  private lateinit var persons: PersonRepository
+  private lateinit var likesRepository: RelationshipRepository<Likes>
+  private lateinit var persistence: Persistence
 
-    @JvmStatic
-    @BeforeClass
-    fun init() {
-      persons = service.repository(Person::class.java)
-      likesRepository = service.repository(Likes::class.java)
-    }
+  @Before
+  fun before() {
+    service = TemporaryService()
+    service.connect()
+    persistence = service.persistence()
+    persons = service.repository(Person::class.java)
+    likesRepository = service.repository(Likes::class.java)
+  }
+  @After
+  fun after() {
+    service.shutdown()
   }
   
   @Test

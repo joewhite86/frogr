@@ -5,14 +5,13 @@ import de.whitefrog.frogr.model.annotation.*
 import org.neo4j.graphdb.Direction
 import java.util.*
 
-class Person(var field: String? = null) : Entity() {
+class Person(var field: String? = null, var number: Long? = null) : Entity(), PersonInterface {
   enum class Age { Old, Mature, Child}
   @Uuid
   @Unique
   var uniqueField: String? = null
   @Indexed
   var fulltext: String? = null
-  var number: Long? = null
   var age: Age? = null
   var dateField: Date? = null
   @NullRemove

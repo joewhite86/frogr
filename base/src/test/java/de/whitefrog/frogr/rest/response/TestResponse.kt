@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import de.whitefrog.frogr.test.model.Person
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.util.*
 
 class TestResponse {
   @Test

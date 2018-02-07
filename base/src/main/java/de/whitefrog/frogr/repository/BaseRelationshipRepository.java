@@ -83,6 +83,8 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public void save(SaveContext<T> context) throws PersistException {
+    if(getModelClass().isInterface())
+      throw new PersistException("cannot save in interface repository");
     validateModel(context);
     boolean create = !context.model().getPersisted();
     service().persistence().relationships().save(context);

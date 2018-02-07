@@ -19,7 +19,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base repository for relationship and entities.
@@ -65,18 +67,6 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     }
 
     return modelClass;
-  }
-
-  Set<String> getModelInterfaces(Class<?> clazz) {
-    Set<String> output = new HashSet<>();
-    Class<?>[] interfaces = clazz.getInterfaces();
-    for(Class<?> i: interfaces) {
-      if(Model.class.isAssignableFrom(i) && !i.equals(Model.class)) {
-        output.add(i.getSimpleName());
-        output.addAll(getModelInterfaces(i));
-      }
-    }
-    return output;
   }
   
   public Logger logger() {

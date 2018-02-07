@@ -3,10 +3,7 @@ package de.whitefrog.frogr.persistence;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.DuplicateEntryException;
-import de.whitefrog.frogr.exception.FieldNotFoundException;
-import de.whitefrog.frogr.exception.MissingRequiredException;
-import de.whitefrog.frogr.exception.PersistException;
+import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.annotation.RelationshipCount;
@@ -337,7 +334,7 @@ public class Persistence {
    */
   public <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
-    if(!model.getPersisted()) return;
+    if(!model.getPersisted()) throw new FrogrException("the model " + model + " is not persisted yet");
     PropertyContainer node;
 
     try {

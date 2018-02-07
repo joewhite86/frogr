@@ -1,18 +1,22 @@
 package de.whitefrog.frogr
 
 import de.whitefrog.frogr.test.TemporaryService
-import de.whitefrog.frogr.test.model.Person
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 class TestService {
-  companion object {
-    private var service: TemporaryService = TemporaryService()
-    @BeforeClass @JvmStatic
-    fun init() {
-      service.connect()
-    }
+  private lateinit var service: Service
+
+  @Before
+  fun before() {
+    service = TemporaryService()
+    service.connect()
+  }
+  @After
+  fun after() {
+    service.shutdown()
   }
   
   @Test
@@ -42,7 +46,7 @@ class TestService {
   
   @Test
   fun restartService() {
-    service.softShutdown()
+    service.shutdown()
     service.connect()
   }
 }

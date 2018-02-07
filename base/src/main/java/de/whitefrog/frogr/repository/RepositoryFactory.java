@@ -108,8 +108,8 @@ public class RepositoryFactory {
         try {
           logger.debug("No repository found for " + modelClass.getSimpleName() + ", creating a default one");
           if(!Relationship.class.isAssignableFrom(modelClass)) {
-            Constructor<DefaultRepository> ctor = 
-              DefaultRepository.class.getConstructor(String.class);
+            Constructor<DefaultModelRepository> ctor = 
+              DefaultModelRepository.class.getConstructor(String.class);
             repository = ctor.newInstance(name);
           } else {
             Constructor<DefaultRelationshipRepository> ctor = 

@@ -70,7 +70,9 @@ public class Service implements AutoCloseable {
     try {
       if(directory == null) {
         Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
-        directory = properties.getString("graph.location");
+        if(properties.containsKey("graph.location")) {
+          directory = properties.getString("graph.location");
+        }
       }
       connect(directory);
     } catch (ConfigurationException e) {
@@ -79,52 +81,56 @@ public class Service implements AutoCloseable {
   }
 
   public void connect(String directory) {
+    if(isConnected()) throw new FrogrException("already running");
+    state = State.Connecting;
+    this.directory = directory;
+    graphDb = createGraphDatabase();
+    persistence = new Persistence(this);
+    
+    repositoryFactory = new RepositoryFactory(this);
+    graphRepository = new GraphRepository(this);
+
+    String version = getManifestVersion();
+    
+    try(Transaction tx = beginTx()) {
+      graph = graphRepository.getGraph();
+      if(graph == null) {
+        logger.info("--------------------------------------------");
+        logger.info("---   creating database instance {}   ---", version);
+        if(directory != null) logger.info("---   " + directory + "   ---");
+        logger.info("--------------------------------------------");
+      } else {
+        logger.info("--------------------------------------------");
+        logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
+        if(directory != null) logger.info("---   {}   ---", directory);
+        logger.info("--------------------------------------------");
+      }
+      tx.success();
+    }
+
+    initializeSchema();
+    Patcher.patch(this);
+
+    try(Transaction tx = beginTx()) {
+      if(graph == null) graph = graphRepository.create();
+      graph.setVersion(version);
+      graphRepository.save(graph);
+      logger.debug("graph node created");
+      tx.success();
+    }
+
+    registerShutdownHook(this);
+    state = State.Running;
+  }
+  
+  protected GraphDatabaseService createGraphDatabase() {
     try {
-      if(isConnected()) throw new FrogrException("already running");
-      state = State.Connecting;
-      this.directory = directory;
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
         .newEmbeddedDatabaseBuilder(new File(directory))
         .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
-      graphDb = builder.newGraphDatabase();
-      persistence = new Persistence(this);
-      
-      repositoryFactory = new RepositoryFactory(this);
-      graphRepository = new GraphRepository(this);
-
-      String version = getManifestVersion();
-      
-      try(Transaction tx = beginTx()) {
-        graph = graphRepository.getGraph();
-        if(graph == null) {
-          logger.info("--------------------------------------------");
-          logger.info("---   creating database instance {}   ---", version);
-          logger.info("---   " + directory + "   ---");
-          logger.info("--------------------------------------------");
-        } else {
-          logger.info("--------------------------------------------");
-          logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
-          logger.info("---   {}   ---", directory);
-          logger.info("--------------------------------------------");
-        }
-        tx.success();
-      }
-
-      initializeSchema();
-      Patcher.patch(this);
-
-      try(Transaction tx = beginTx()) {
-        if(graph == null) graph = graphRepository.create();
-        graph.setVersion(version);
-        graphRepository.save(graph);
-        logger.debug("graph node created");
-        tx.success();
-      }
-
-      registerShutdownHook(this);
-      state = State.Running;
-    } catch (ConfigurationException e) {
-      logger.error("Could not read " + neo4jConfig, e);
+      return builder.newGraphDatabase();
+    } catch(ConfigurationException e) {
+      throw new FrogrException(e.getMessage(), e);
     }
   }
   
@@ -218,12 +224,14 @@ public class Service implements AutoCloseable {
     for(int i = stackTrace.length - 1; i >= 0; i--) {
       try {
         Class caller = Class.forName(stackTrace[i].getClassName());
-        if(Application.class.isAssignableFrom(caller)) return caller;
+        if(Application.class.isAssignableFrom(caller)) 
+          return caller;
         // if service is found first, no application did run 
         // the service as it should appear first in the stack trace
-        if(Service.class.isAssignableFrom(caller)) return caller;
+        if(Service.class.isAssignableFrom(caller)) 
+          return caller;
       } catch(ClassNotFoundException e) {
-        logger.error("error reading stack trace", e);
+        logger.debug("error reading stack trace", e);
       }
     }
     return getClass();

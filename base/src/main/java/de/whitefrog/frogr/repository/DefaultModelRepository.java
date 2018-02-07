@@ -5,8 +5,8 @@ import de.whitefrog.frogr.model.Model;
 /**
  * Will be used by {@link RepositoryFactory} method when no other repository was found. 
  */
-public class DefaultRepository<T extends Model> extends BaseModelRepository<T> {
-  public DefaultRepository(String modelName) {
+public class DefaultModelRepository<T extends Model> extends BaseModelRepository<T> {
+  public DefaultModelRepository(String modelName) {
     super(modelName);
   }
 

@@ -1,27 +1,32 @@
 package de.whitefrog.frogr.model
 
-import de.whitefrog.frogr.TestSuite
+import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.repository.RelationshipRepository
+import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import java.util.*
 
 class TestModel {
-  companion object {
-    private var service = TestSuite.service()
-    private lateinit var persons: PersonRepository
-    private lateinit var likesRepository: RelationshipRepository<Likes>
+  private lateinit var service: Service
+  private lateinit var persons: PersonRepository
+  private lateinit var likesRepository: RelationshipRepository<Likes>
 
-    @JvmStatic
-    @BeforeClass
-    fun init() {
-      persons = service.repository(Person::class.java)
-      likesRepository = service.repository(Likes::class.java)
-    }
+  @Before
+  fun before() {
+    service = TemporaryService()
+    service.connect()
+    persons = service.repository(Person::class.java)
+    likesRepository = service.repository(Likes::class.java)
+  }
+  @After
+  fun after() {
+    service.shutdown()
   }
 
   @Test
