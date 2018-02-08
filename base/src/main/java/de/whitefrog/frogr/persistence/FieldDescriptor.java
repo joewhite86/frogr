@@ -13,11 +13,11 @@ public class FieldDescriptor<T extends Base> {
   private AnnotationDescriptor annotations;
   private Field field;
   private boolean collection;
-  private boolean model;
   private boolean relationship;
   private Class<T> baseClass;
 
-  public FieldDescriptor(Field field) {
+  @SuppressWarnings("unchecked")
+  FieldDescriptor(Field field) {
     field.setAccessible(true);
     this.field = field;
     this.collection = Collection.class.isAssignableFrom(field.getType());
@@ -43,7 +43,6 @@ public class FieldDescriptor<T extends Base> {
       this.baseClass = (Class<T>) field.getType();
     }
     
-    this.model = Model.class.isAssignableFrom(baseClass);
     this.relationship = Relationship.class.isAssignableFrom(baseClass);
   }
   
