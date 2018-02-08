@@ -49,6 +49,14 @@ public interface Repository<T extends Base> {
    * @return Updated model instance
    */
   T fetch(Base model, String... fields);
+
+  /**
+   * Fetch fields from database for a model, even if already fetched.
+   * @param model The model to use
+   * @param fields The fields to fetch
+   * @return Updated model instance
+   */
+  T refetch(Base model, String... fields);
   
   /**
    * Fetch fields from database for a model.
@@ -57,6 +65,14 @@ public interface Repository<T extends Base> {
    * @return Updated model instance
    */
   T fetch(Base model, FieldList fields);
+
+  /**
+   * Fetch fields from database for a model, even if already fetched.
+   * @param model The model to use
+   * @param fields The fields to fetch as FieldList
+   * @return Updated model instance
+   */
+  T refetch(Base model, FieldList fields);
 
   /**
    * Fetch fields from database for a model.

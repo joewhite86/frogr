@@ -73,22 +73,33 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     return logger;
   }
 
-  public T fetch(Base tag, String... fields) {
-    return fetch(tag, FieldList.parseFields(fields));
+  @Override
+  public T fetch(Base model, String... fields) {
+    return fetch(model, FieldList.parseFields(fields));
   }
 
   @Override
-  public T fetch(Base tag, FieldList fields) {
-    return fetch(tag, false, fields);
+  public T refetch(Base model, String... fields) {
+    return fetch(model, true, FieldList.parseFields(fields));
+  }
+
+  @Override
+  public T fetch(Base model, FieldList fields) {
+    return fetch(model, false, fields);
+  }
+
+  @Override
+  public T refetch(Base model, FieldList fields) {
+    return fetch(model, true, fields);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public T fetch(Base tag, boolean refetch, FieldList fields) {
-    if(tag == null || !getModelClass().isAssignableFrom(tag.getClass())) 
-      throw new IllegalArgumentException(tag + " is not an instanceof " + getModelClass());
-    service.persistence().fetch(tag, fields, refetch);
-    return (T) tag;
+  public T fetch(Base model, boolean refetch, FieldList fields) {
+    if(model == null || !getModelClass().isAssignableFrom(model.getClass())) 
+      throw new IllegalArgumentException(model + " is not an instanceof " + getModelClass());
+    service.persistence().fetch(model, fields, refetch);
+    return (T) model;
   }
 
   @Override

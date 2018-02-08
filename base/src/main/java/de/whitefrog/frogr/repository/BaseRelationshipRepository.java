@@ -76,8 +76,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public void remove(T model) throws PersistException {
-    Validate.notNull(model.getId(), "'id' is required");
-    service().persistence().relationships().delete(model);
+    relationships().delete(model);
     logger.info("{} deleted", model);
   }
 

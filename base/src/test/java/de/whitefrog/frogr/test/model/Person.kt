@@ -16,9 +16,12 @@ class Person(var field: String? = null, var number: Long? = null) : Entity(), Pe
   var dateField: Date? = null
   @NullRemove
   var nullRemoveField: String? = null
-  @Lazy
-  @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: ArrayList<Person> = ArrayList()
+  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  var likesRelationships: ArrayList<Likes> = ArrayList()
+  @RelationshipCount(direction = Direction.OUTGOING, type = "Likes")
+  var likesCount: Long? = null
   @RelatedTo(direction = Direction.BOTH, type = "MarriedWith")
   var marriedWith: Person? = null
 

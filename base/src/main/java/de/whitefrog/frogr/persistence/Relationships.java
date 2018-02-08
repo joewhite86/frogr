@@ -267,6 +267,12 @@ public class Relationships {
 
     if(!model.getPersisted()) {
       create = true;
+      
+      if(!model.getFrom().getPersisted()) 
+        throw new FrogrException("the model " + model.getFrom() + " is not yet persisted, but used as 'from' in relationship " + model);
+      if(!model.getTo().getPersisted())
+        throw new FrogrException("the model " + model.getTo() + " is not yet persisted, but used as 'to' in relationship " + model);
+      
       Node fromNode = persistence.getNode(model.getFrom());
       Node toNode = persistence.getNode(model.getTo());
       RelationshipType relType = RelationshipType.withName(context.repository().getType());
