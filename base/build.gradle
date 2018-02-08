@@ -1,13 +1,10 @@
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.2.21"
 }
-description = ''
 dependencies {
-    compile(group: 'org.neo4j', name: 'neo4j-community', version:'3.3.1') {
-        exclude(module: 'slf4j-nop')
-    }
-    compile group: 'org.neo4j', name: 'neo4j-bolt', version:'3.3.1'
+    compile group: 'org.neo4j', name: 'neo4j-kernel', version:'3.3.1'
     compile group: 'org.neo4j', name: 'neo4j-shell', version:'3.3.1'
+    compile group: 'org.neo4j', name: 'neo4j-cypher', version:'3.3.1'
 
     compile group: 'io.dropwizard', name: 'dropwizard-core', version:'1.2.2'
     compile group: 'io.dropwizard', name: 'dropwizard-forms', version:'1.2.2'
@@ -33,6 +30,8 @@ dependencies {
     
     testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit', version:'1.2.21'
     testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version:'1.2.21'
+    testCompile group: 'org.neo4j', name: 'neo4j-kernel', version:'3.3.1', classifier: 'tests'
+    testCompile group: 'org.neo4j', name: 'neo4j-io', version:'3.3.1', classifier: 'tests'
     testCompile group: 'com.fasterxml.jackson.module', name: 'jackson-module-kotlin', version: '2.9.0'
     testCompile group: 'io.dropwizard', name: 'dropwizard-testing', version: '1.2.2'
     testCompile group: 'org.springframework', name: 'spring-test', version: '5.0.3.RELEASE'
