@@ -13,24 +13,27 @@ import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonRequiredField
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert.*
-import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 
 class TestBaseRepository {
-  private lateinit var service: Service
-  private lateinit var persons: PersonRepository
-  
-  @Before
-  fun before() {
-    service = TemporaryService()
-    service.connect()
-    persons = service.repository(Person::class.java)
-  }
-  @After
-  fun after() {
-    service.shutdown()
+  companion object {
+    private lateinit var service: Service
+    private lateinit var persons: PersonRepository
+
+    @BeforeClass @JvmStatic
+    fun before() {
+      service = TemporaryService()
+      service.connect()
+      persons = service.repository(Person::class.java)
+    }
+
+    @AfterClass @JvmStatic
+    fun after() {
+      service.shutdown()
+    }
   }
 
   @Test

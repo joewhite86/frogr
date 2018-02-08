@@ -7,21 +7,24 @@ import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonInterface
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Before
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Test
 
 class TestDefaultModelRepository {
-  private lateinit var service: Service
+  companion object {
+    private lateinit var service: Service
 
-  @Before
-  fun before() {
-    service = TemporaryService()
-    service.connect()
-  }
-  @After
-  fun after() {
-    service.shutdown()
+    @BeforeClass @JvmStatic
+    fun before() {
+      service = TemporaryService()
+      service.connect()
+    }
+
+    @AfterClass @JvmStatic
+    fun after() {
+      service.shutdown()
+    }
   }
   
   @Test

@@ -12,32 +12,35 @@ import de.whitefrog.frogr.test.model.MarriedWith
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
 import java.util.*
 
 class TestRelationships {
-  private lateinit var service: Service
-  private lateinit var persons: PersonRepository
-  private lateinit var likesRepository: RelationshipRepository<Likes>
-  private lateinit var persistence: Persistence
+  companion object {
+    private lateinit var service: Service
+    private lateinit var persons: PersonRepository
+    private lateinit var likesRepository: RelationshipRepository<Likes>
+    private lateinit var persistence: Persistence
 
-  @Before
-  fun before() {
-    service = TemporaryService()
-    service.connect()
-    persistence = service.persistence()
-    persons = service.repository(Person::class.java)
-    likesRepository = service.repository(Likes::class.java)
-  }
-  @After
-  fun after() {
-    service.shutdown()
+    @BeforeClass @JvmStatic
+    fun before() {
+      service = TemporaryService()
+      service.connect()
+      persistence = service.persistence()
+      persons = service.repository(Person::class.java)
+      likesRepository = service.repository(Likes::class.java)
+    }
+
+    @AfterClass @JvmStatic
+    fun after() {
+      service.shutdown()
+    }
   }
   
   @Test
@@ -71,7 +74,8 @@ class TestRelationships {
       likes.removeProperty("field")
       likesRepository.save(likes)
       val found = likesRepository.find(likes.id, "field")
-      assertThat(found).isEqualTo("testLike")
+      assertNotNull(found)
+      assertNull(found.field)
     }
   }
   @Test
