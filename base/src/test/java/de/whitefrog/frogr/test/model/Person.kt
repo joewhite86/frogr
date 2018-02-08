@@ -18,12 +18,20 @@ class Person(var field: String? = null, var number: Long? = null) : Entity(), Pe
   var nullRemoveField: String? = null
   @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: ArrayList<Person> = ArrayList()
+  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  var likedBy: ArrayList<Person> = ArrayList()
   @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likesRelationships: ArrayList<Likes> = ArrayList()
+  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  var likedByRelationships: ArrayList<Likes> = ArrayList()
   @RelationshipCount(direction = Direction.OUTGOING, type = "Likes")
   var likesCount: Long? = null
   @RelatedTo(direction = Direction.BOTH, type = "MarriedWith")
   var marriedWith: Person? = null
+  @RelatedTo(direction = Direction.BOTH, type = "MarriedWith")
+  var marriedWithRelationship: MarriedWith? = null
+  @RelatedTo(direction = Direction.OUTGOING, type = "Wears")
+  var wears: ArrayList<Clothing> = ArrayList()
 
   override fun equals(other: Any?): Boolean {
     if(other !is Person) return false

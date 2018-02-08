@@ -28,7 +28,7 @@ public class Relationships {
   private Service service;
   private Persistence persistence;
 
-  public Relationships(Service service, Persistence persistence) {
+  Relationships(Service service, Persistence persistence) {
     this.service = service;
     this.persistence = persistence;
   }
@@ -36,7 +36,7 @@ public class Relationships {
   /**
    * Adds a relationship to a existing node. Tests for multiple relationships and a persisted foreign node. 
    */
-  private <T extends Model> BaseRelationship addRelationship(
+  private <T extends Model> void addRelationship(
         T model, Node node, RelatedTo annotation, Model foreignModel) {
     if(foreignModel.getId() == -1) {
       if(foreignModel.getUuid() != null) {
@@ -49,9 +49,8 @@ public class Relationships {
     Node foreignNode = persistence.getNode(foreignModel);
     RelationshipType relationshipType = RelationshipType.withName(annotation.type());
     if(!annotation.multiple() && hasRelationshipTo(node, foreignNode, relationshipType, annotation.direction())) {
-      return persistence.get(getRelationshipBetween(node, foreignNode, relationshipType, annotation.direction()));
-//      throw new DuplicateEntryException("a relationship " + annotation.type() +
-//        " between " + model + " and " + foreignModel + " already exists", model);
+      // the relationship already exists, no more work to do
+      return;
     }
     RelationshipRepository<BaseRelationship<Model, Model>> repository;
     try {
@@ -80,14 +79,13 @@ public class Relationships {
       relationship = repository.createModel(model, foreignModel);
     }
     repository.save(relationship);
-    
-    return relationship;
   }
 
   public <T extends BaseRelationship> T getRelationshipBetween(
         Model model, Model other, RelationshipType type, Direction dir) {
-    return persistence.get( 
-      getRelationshipBetween(persistence.getNode(model), persistence.getNode(other), type, dir));
+    Relationship relationship = 
+      getRelationshipBetween(persistence.getNode(model), persistence.getNode(other), type, dir);
+    return relationship == null? null: persistence.get(relationship);
   }
 
   public Relationship getRelationshipBetween(Node node, Node other, RelationshipType type, Direction dir) {
@@ -302,6 +300,36 @@ public class Relationships {
 
     return model;
   }
+  
+  @SuppressWarnings("unchecked")
+  private <T extends BaseRelationship> void save(Model model, T relModel, RelatedTo annotation) {
+    if(!relModel.getFrom().getPersisted()) {
+      throw new RelatedNotPersistedException(
+        "the 'from' model " + relModel.getFrom() + " (" + annotation.type() + ") is not yet persisted");
+    }
+    if(!relModel.getTo().getPersisted()) {
+      throw new RelatedNotPersistedException(
+        "the 'to' model " + relModel.getTo() + " (" + annotation.type() + ") is not yet persisted");
+    }
+
+    RelationshipRepository<BaseRelationship> repository =
+      (RelationshipRepository<BaseRelationship>) service.repository(relModel.getClass());
+
+    if(annotation.direction().equals(Direction.INCOMING)) {
+      if(!relModel.getTo().equals(model)) {
+        throw new PersistException(relModel + " should have " + model + " as 'to' field set");
+      }
+    } else if(annotation.direction().equals(Direction.OUTGOING)) {
+      if(!relModel.getFrom().equals(model)) {
+        throw new PersistException(relModel + " should have " + model + " as 'from' field set");
+      }
+    } else if(annotation.direction().equals(Direction.BOTH)) {
+      if(!relModel.getFrom().equals(model) && !relModel.getTo().equals(model)) {
+        throw new PersistException(relModel + "should have " + model + " either set as 'from' or 'to' field");
+      }
+    }
+    repository.save(relModel);
+  }
 
   /**
    * Used only from persistence class with the models save context and field descriptor.
@@ -322,8 +350,13 @@ public class Relationships {
         existing.delete();
       }
 
-      Model foreignModel = (Model) value;
-      addRelationship(model, node, relatedTo, foreignModel);
+      if(descriptor.isModel()) {
+        Model foreignModel = (Model) value;
+        addRelationship(model, node, relatedTo, foreignModel);
+      } else {
+        BaseRelationship relModel = (BaseRelationship) value;
+        save(model, relModel, relatedTo);
+      }
     } 
     // Handle collections
     else {
@@ -343,43 +376,13 @@ public class Relationships {
       // add the relationship if the foreign model is persisted
       if(descriptor.isModel()) {
         for(Model foreignModel : ((Collection<Model>) value)) {
-          if(foreignModel.getId() == -1) {
-            if(foreignModel.getUuid() != null) {
-              foreignModel = service.repository(foreignModel.getClass()).findByUuid(foreignModel.getUuid());
-            }
-            else {
-              throw new RelatedNotPersistedException(
-                "the related field " + foreignModel + " (" + relatedTo.type() + ") is not yet persisted");
-            }
-          }
           addRelationship(model, node, relatedTo, foreignModel);
         }
       }
       // Handle collections of relationship models
       else {
         for(BaseRelationship<Model, Model> relModel: ((Collection<BaseRelationship>) value)) {
-          if(!relModel.getTo().getPersisted()) {
-            throw new RelatedNotPersistedException(
-              "the " + relModel.getTo() + " (" + relatedTo.type() + ") is not yet persisted");
-          }
-          
-          RelationshipRepository<BaseRelationship> repository = 
-            (RelationshipRepository<BaseRelationship>) service.repository(relModel.getClass());
-
-          if(relatedTo.direction().equals(Direction.INCOMING)) {
-            if(!relModel.getTo().equals(model)) {
-              throw new PersistException(relModel + " should have " + model + " as 'to' field set");
-            }
-          } else if(relatedTo.direction().equals(Direction.OUTGOING)) {
-            if(!relModel.getFrom().equals(model)) {
-              throw new PersistException(relModel + " should have " + model + " as 'from' field set");
-            }
-          } else if(relatedTo.direction().equals(Direction.BOTH)) {
-            if(!relModel.getFrom().equals(model) && !relModel.getTo().equals(model)) {
-              throw new PersistException(relModel + "should have " + model + " either set as 'from' or 'to' field");
-            }
-          }
-          repository.save(relModel);
+          save(model, relModel, relatedTo);
         }
       }
     }
