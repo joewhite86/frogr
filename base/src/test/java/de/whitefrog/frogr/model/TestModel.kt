@@ -1,13 +1,13 @@
 package de.whitefrog.frogr.model
 
 import de.whitefrog.frogr.Service
-import de.whitefrog.frogr.repository.RelationshipRepository
 import de.whitefrog.frogr.test.TemporaryService
-import de.whitefrog.frogr.test.model.Likes
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import org.junit.Test
 import java.util.*
 
 class TestModel {
@@ -52,8 +52,9 @@ class TestModel {
       man.marriedWith = woman
       persons.save(man)
       persons.fetch(woman, "marriedWith")
+      
       assertThat(woman.marriedWith).isEqualTo(man)
-      persons.fetch(man, true, FieldList.parseFields("marriedWith"))
+      persons.refetch(man, FieldList.parseFields("marriedWith"))
       assertThat(man.marriedWith).isEqualTo(woman)
       // this should not throw an exception and create no additional relationship
       persons.save(woman)

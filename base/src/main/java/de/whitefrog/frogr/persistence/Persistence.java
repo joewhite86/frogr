@@ -10,7 +10,6 @@ import de.whitefrog.frogr.model.annotation.RelationshipCount;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.repository.ModelRepository;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.neo4j.graphdb.*;
@@ -138,14 +137,12 @@ public class Persistence {
 
         if(value != null) {
           // handle relationships
-          if(annotations.relatedTo != null && valueChanged && Model.class.isAssignableFrom(context.model().getClass())) {
+          if(annotations.relatedTo != null && valueChanged && model instanceof Model) {
             relationships.saveField((SaveContext<? extends Model>) context, descriptor);
             logger.info("{}: updated relationships \"{}\"", model, field.getName());
           }
-
           // Handle other values
-          if(!(value instanceof Collection) && !(value instanceof Model)) {
-            
+          else if(!(value instanceof Collection) && !(value instanceof Model)) {
             // store enum names
             if(value.getClass().isEnum()) {
               if((!node.hasProperty(field.getName()) || !((Enum<?>) value).name().equals(node.getProperty(field.getName())))) {
@@ -228,7 +225,7 @@ public class Persistence {
         fields.remove(new QueryField("from"));
         fields.remove(new QueryField("to"));
       }
-      service.repository(clazz).fetch(model, false, fields);
+      service.repository(clazz).fetch(model, fields);
       return model;
     } catch(IllegalStateException e) {
       throw e;
@@ -346,27 +343,25 @@ public class Persistence {
         node = getNode((Model) model);
       }
       
-      if(!CollectionUtils.isEmpty(fields)) {
-        // iterate over fields to ensure fields with @Fetch annotation and 'allFields' will be fetched
-        for(FieldDescriptor descriptor : cache.fieldMap(model.getClass())) {
-          // don't fetch the 'id' field and fields annotated with @NotPersistent
-          if(descriptor.getName().equals("id") && descriptor.annotations().notPersistent) continue;
+      // iterate over fields to ensure fields with @Fetch annotation and 'allFields' will be fetched
+      for(FieldDescriptor descriptor : cache.fieldMap(model.getClass())) {
+        // don't fetch the 'id' field and fields annotated with @NotPersistent
+        if(descriptor.getName().equals("id") && descriptor.annotations().notPersistent) continue;
 
-          // always fetch when field is 'type' or 'uuid', or when allFields is set 
-          // or the field list contains the current field
-          boolean fetch = descriptor.annotations().fetch ||
-            descriptor.getName().equals(Entity.Type) || descriptor.getName().equals(Entity.Uuid) ||
-            fields.containsField(Entity.AllFields) || fields.containsField(descriptor.getName());
+        // always fetch when field is 'type' or 'uuid', or when allFields is set 
+        // or the field list contains the current field
+        boolean fetch = descriptor.annotations().fetch ||
+          descriptor.getName().equals(Entity.Type) || descriptor.getName().equals(Entity.Uuid) ||
+          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.getName());
 
-          if(fetch) {
-            // still fetch if refetch is true or field is not in fetchedFields 
-            // or fields does not contiain field or sub-fields is not empty 
-            if(!refetch && model.getFetchedFields().contains(descriptor.getName()) &&
-              fields.containsField(descriptor.getName()) && fields.get(descriptor.getName()).subFields().isEmpty())
-              continue;
+        if(fetch) {
+          // still fetch if refetch is true or field is not in fetchedFields 
+          // or fields does not contiain field or sub-fields is not empty 
+          if(!refetch && model.getFetchedFields().contains(descriptor.getName()) &&
+            fields.containsField(descriptor.getName()) && fields.get(descriptor.getName()).subFields().isEmpty())
+            continue;
 
-            fetchField(node, model, descriptor, fields);
-          }
+          fetchField(node, model, descriptor, fields);
         }
       }
     } catch(ReflectiveOperationException e) {
