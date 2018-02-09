@@ -2,17 +2,20 @@ package de.whitefrog.frogr.auth.model
 
 import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.frogr.model.Entity
-import de.whitefrog.frogr.model.annotation.*
+import de.whitefrog.frogr.model.annotation.Fetch
+import de.whitefrog.frogr.model.annotation.Indexed
+import de.whitefrog.frogr.model.annotation.Required
+import de.whitefrog.frogr.model.annotation.Unique
 import de.whitefrog.frogr.rest.Views
-
-import javax.security.auth.Subject
 import java.security.Principal
+import javax.security.auth.Subject
 
 open class BaseUser : Entity(), Principal {
   @Unique @Fetch @Required
   open var login: String? = null
   @JsonView(Views.Hidden::class)
   open var password: String? = null
+  @JsonView(Views.Hidden::class)
   var role: String? = null
   @Indexed
   @JsonView(Views.Secure::class)
