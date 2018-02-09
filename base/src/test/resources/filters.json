@@ -1,0 +1,14 @@
+[{
+  "type": "eq",
+  "property": "test",
+  "value": "test"
+}, {
+  "type": "gt",
+  "property": "test",
+  "value": 10
+}, {
+  "type": "range",
+  "property": "test",
+  "from": 10,
+  "to": 20
+}]

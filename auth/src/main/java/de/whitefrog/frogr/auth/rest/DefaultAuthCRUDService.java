@@ -6,7 +6,7 @@ import de.whitefrog.frogr.auth.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
 import de.whitefrog.frogr.rest.response.Response;

@@ -3,9 +3,9 @@ package de.whitefrog.frogr.rest.request;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.Filter;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.FieldList;
+import de.whitefrog.frogr.model.Filter;
+import de.whitefrog.frogr.model.SearchParameter;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.server.internal.inject.AbstractContainerRequestValueFactory;
 import org.glassfish.jersey.server.internal.inject.AbstractValueFactoryProvider;
@@ -20,7 +20,6 @@ import javax.mail.internet.MimeUtility;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -44,11 +43,13 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
 
   public static final String ParameterName = "params";
 
-  private static final class SearchParameterValueFactory extends AbstractContainerRequestValueFactory<SearchParameter> {
+  public static final class SearchParameterValueFactory extends AbstractContainerRequestValueFactory<SearchParameter> {
     @Context
     private ResourceContext context;
-    @Context
-    private HttpHeaders headers;
+    
+    public void setContext(ResourceContext context) {
+      this.context = context;
+    }
 
     /**
      * Fetch the Identity object from the request. Since HttpServletRequest is not directly available, we need to get it via
@@ -62,9 +63,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       // params object serialized as json in header
       if(request.getHeader(ParameterName) != null) {
         params = resolve(request.getHeader(ParameterName));
-      } else if(request.getParameter(ParameterName) != null) {
-        // .. in query parameter: ?params={fields:...}
-        params = resolve(request.getParameter(ParameterName));
       } else {
         // .. as query parameters
         Enumeration<String> keys = request.getParameterNames();
@@ -125,7 +123,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     }
   }
 
-  public static SearchParameter resolveParameter(SearchParameter params, String key, String value) {
+  public static void resolveParameter(SearchParameter params, String key, String value) {
     String[] split;
     switch(key) {
       case "q":
@@ -150,9 +148,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       case "locale":
         params.locale(new Locale(value));
         break;
-      case "depth":
-        params.depth(Integer.parseInt(value));
-        break;
       case "order":
       case "orderBy":
       case "sort":
@@ -170,7 +165,6 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         params.returns(value);
         break;
     }
-    return params;
   }
 
   private static FieldList resolveFields(String value) {

@@ -4,6 +4,9 @@ import com.github.zafarkhaja.semver.Version;
 import de.whitefrog.frogr.Service;
 import org.neo4j.graphdb.Transaction;
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +22,12 @@ public class Patcher {
   private static final Logger logger = LoggerFactory.getLogger(Patcher.class);
 
   private static TreeMap<Version, List<Patch>> getPatches(Service service) {
-    Reflections reflections = new Reflections(Patch.class.getPackage().getName());
+    int count = 0;
+    ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+      .setScanners(new SubTypesScanner());
+    service.registry()
+      .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
+    Reflections reflections = new Reflections(configurationBuilder);
     Set<Class<? extends Patch>> patchClasses = reflections.getSubTypesOf(Patch.class);
     TreeMap<Version, List<Patch>> patches = new TreeMap<>();
 
@@ -27,7 +35,7 @@ public class Patcher {
       try {
         Constructor<? extends Patch> constructor = patchClass.getConstructor(Service.class);
         Patch patch = constructor.newInstance(service);
-
+        count++;
         if(patches.containsKey(patch.getVersion())) {
           patches.get(patch.getVersion()).add(patch);
         }
@@ -40,6 +48,15 @@ public class Patcher {
         logger.error(e.getMessage(), e);
       }
     }
+    if(logger.isDebugEnabled()) {
+      logger.debug("Found {} patches:", count);
+      for(Version version: patches.keySet()) {
+        logger.debug("@{}", version.getNormalVersion());
+        for(Patch patch: patches.get(version)) {
+          logger.debug("    {}", patch.getClass().getSimpleName());
+        }
+      }
+    }
 
     return patches;
   }
@@ -50,7 +67,7 @@ public class Patcher {
    */
   public static void patch(Service service) {
     String version = service.getManifestVersion();
-    if(!version.equals("undefined")) patch(service, version);
+    if(!version.equals(Service.noVersion)) patch(service, version);
   }
 
   private static void patch(Service service, String versionString) {
@@ -58,7 +75,6 @@ public class Patcher {
     Transaction tx = service.beginTx();
 
     Version graphVersion = Version.valueOf(service.getVersion());
-    logger.info("Graph version is {}", graphVersion);
 
     tx.success();
     tx.close();
@@ -79,9 +95,8 @@ public class Patcher {
             List<Patch> patchList = patches.get(patchVersion);
             Collections.sort(patchList);
             for(Patch patch : patchList) {
-              patch.setService(service);
               try {
-                logger.info("    Applying {}Patch", patch.getClass().getSimpleName());
+                logger.info("    Applying {}", patch.getClass().getSimpleName());
                 patch.update();
               } catch(Exception e) {
                 logger.error("   {}Patch failed: {}", patch.getClass().getSimpleName(), e.getMessage(), e);

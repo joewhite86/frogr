@@ -13,15 +13,18 @@ public class FieldDescriptor<T extends Base> {
   private AnnotationDescriptor annotations;
   private Field field;
   private boolean collection;
-  private boolean model;
   private boolean relationship;
   private Class<T> baseClass;
 
-  public FieldDescriptor(Field field) {
+  @SuppressWarnings("unchecked")
+  FieldDescriptor(Field field) {
     field.setAccessible(true);
+    this.field = field;
+    this.collection = Collection.class.isAssignableFrom(field.getType());
+    
     AnnotationDescriptor descriptor = new AnnotationDescriptor();
     descriptor.indexed = field.getAnnotation(Indexed.class);
-    descriptor.notPersistant = field.isAnnotationPresent(NotPersistant.class);
+    descriptor.notPersistent = field.isAnnotationPresent(NotPersistent.class);
     descriptor.relatedTo = field.getAnnotation(RelatedTo.class);
     descriptor.unique = field.isAnnotationPresent(Unique.class);
     descriptor.fetch = field.isAnnotationPresent(Fetch.class);
@@ -31,10 +34,8 @@ public class FieldDescriptor<T extends Base> {
     descriptor.uuid = field.isAnnotationPresent(Uuid.class);
     descriptor.lazy = field.isAnnotationPresent(Lazy.class);
     descriptor.relationshipCount = field.getAnnotation(RelationshipCount.class);
-    
-    this.field = field;
+
     this.annotations = descriptor;
-    this.collection = Collection.class.isAssignableFrom(field.getType());
     
     if(this.collection) {
       this.baseClass = (Class<T>) ReflectionUtil.getGenericClass(field);
@@ -42,7 +43,6 @@ public class FieldDescriptor<T extends Base> {
       this.baseClass = (Class<T>) field.getType();
     }
     
-    this.model = Model.class.isAssignableFrom(baseClass);
     this.relationship = Relationship.class.isAssignableFrom(baseClass);
   }
   

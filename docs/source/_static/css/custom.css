@@ -48,6 +48,7 @@ code, .rst-content tt, .rst-content code {
   border: none;
   font-size: 93%;
   color: #CF6A4C;
+  padding: 0;
 }
 
 dt, strong {
@@ -73,7 +74,7 @@ div[class^='highlight'] pre {
   color: #5F5A60;
 }
 
-.kc {
+.kc, .mi {
   color: #CF6A4C;
 }
 
@@ -81,7 +82,7 @@ div[class^='highlight'] pre {
   color: #F9EE98;
 }
 
-.n, .mi {
+.n {
   color: #f8f8f8;
 }
 

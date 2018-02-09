@@ -3,10 +3,9 @@ package de.whitefrog.frogr.repository;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.persistence.Persistence;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Label;
@@ -14,6 +13,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,23 +28,14 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   public BaseModelRepository() {
     super();
     this.label = Label.label(getType());
-    if(getModelClass() != null) {
-      this.labels = getModelInterfaces(getModelClass()).stream()
-        .map(Label::label)
-        .collect(Collectors.toSet());
-    } else {
-      logger().warn("no model class found for {}", getClass());
-    }
   }
   public BaseModelRepository(String modelName) {
     super(modelName);
     this.label = Label.label(modelName);
-    this.labels = getModelInterfaces(getModelClass()).stream()
-      .map(Label::label)
-      .collect(Collectors.toSet());
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public T createModel() {
     try {
       return (T) getModelClass().newInstance();
@@ -59,11 +50,23 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
       throw new TypeMismatchException((Node) node, label());
     }
 
-    return Persistence.get(node, fields);
+    return service().persistence().get(node, fields);
   }
 
-  boolean checkType(Node node) {
+  private boolean checkType(Node node) {
     return node.hasLabel(label());
+  }
+
+  private Set<String> getModelInterfaces(Class<?> clazz) {
+    Set<String> output = new HashSet<>();
+    Class<?>[] interfaces = clazz.getInterfaces();
+    for(Class<?> i: interfaces) {
+      if(Model.class.isAssignableFrom(i) && !i.equals(Model.class)) {
+        output.add(i.getSimpleName());
+        output.addAll(getModelInterfaces(i));
+      }
+    }
+    return output;
   }
 
   public T find(long id, FieldList fields) {
@@ -82,7 +85,6 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
   @Override
   public Node getNode(Model model) {
     Validate.notNull(model, "The model is null");
-    Validate.notNull(model.getId(), "ID can not be null.");
     try {
       return service().graph().getNodeById(model.getId());
     } catch(NotFoundException e) {
@@ -97,21 +99,27 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
 
   @Override
   public Set<Label> labels() {
+    if(labels == null) {
+      labels = getModelInterfaces(getModelClass()).stream()
+        .map(Label::label)
+        .collect(Collectors.toSet());
+    }
     return labels;
   }
 
   @Override
   public void remove(T model) throws PersistException {
-    Validate.notNull(model.getId(), "'id' is required");
-    Persistence.delete(this, model);
+    service().persistence().delete(model);
     logger().info("{} deleted", model);
   }
 
   @Override
   public void save(SaveContext<T> context) throws PersistException {
+    if(getModelClass().isInterface())
+      throw new PersistException("cannot save in interface repository");
     validateModel(context);
     boolean create = !context.model().getPersisted();
-    Persistence.save(this, context);
+    service().persistence().save(this, context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }
 }

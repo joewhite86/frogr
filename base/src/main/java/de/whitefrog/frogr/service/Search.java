@@ -2,14 +2,10 @@ package de.whitefrog.frogr.service;
 
 import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.cypher.Query;
+import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.helper.TimeUtils;
-import de.whitefrog.frogr.model.Base;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.Filter;
-import de.whitefrog.frogr.model.rest.QueryField;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
-import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.repository.Repository;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.PropertyContainer;
@@ -91,7 +87,9 @@ public class Search {
   /**
    * Get a {@link List list} of results.
    * @return A {@link List list} of results
+   * @throws ClassCastException when the {@link SearchParameter#returns} value was not matching the class to return
    */
+  @SuppressWarnings("unchecked")
   public <T extends Base> List<T> list() {
     Stream<T> stream = (Stream<T>) search(params);
     List<T> list = stream.collect(Collectors.toList());
@@ -102,7 +100,9 @@ public class Search {
   /**
    * Get a {@link Set set} of results.
    * @return A {@link Set set} of results
+   * @throws ClassCastException when the {@link SearchParameter#returns} value was not matching the class to return
    */
+  @SuppressWarnings("unchecked")
   public <T extends Base> Set<T> set() {
     Stream<T> stream = (Stream<T>) search(params);
     Set<T> set = stream.collect(Collectors.toSet());
@@ -113,7 +113,9 @@ public class Search {
   /**
    * Get a single result.
    * @return A single result
+   * @throws ClassCastException when the {@link SearchParameter#returns} value was not matching the class to return
    */
+  @SuppressWarnings("unchecked")
   public <T extends Base> T single() {
     Stream<T> result = (Stream<T>) search(params.limit(1));
     Optional<T> optional = result.findFirst();
@@ -169,14 +171,13 @@ public class Search {
     if(CollectionUtils.isEmpty(params.returns()) ||
       (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
       stream = result.stream().map(new ResultMapper<>(repository, params));
-    } else if(params.returns().size() == 1) {
-      FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(repository.getModelClass(),
+    } else if(params.returns().size() == 1 && !params.returns().contains(repository.queryIdentifier())) {
+      FieldDescriptor descriptor = service.persistence().cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
       Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
       stream = result.stream().map(new ResultMapper<>(otherRepository, params));
-    } else {
-      // TODO: Handle correctly
-      throw new UnsupportedOperationException();
+    } else { // params.returns().size() > 0, first return should be identifier
+      stream = result.stream().map(new ResultMapper<>(repository, params));
     }
 
     return stream.onClose(result::close);
@@ -213,17 +214,12 @@ public class Search {
     return this;
   }
 
-  public Search depth(int depth) {
-    params.depth(depth);
-    return this;
-  }
-
   /**
    * Fields to fetch on results.
    * @param fields Fields to fetch
    */
   public Search fields(String... fields) {
-    params.fields(fields);
+    params.fields(FieldList.parseFields(fields));
     return this;
   }
 
@@ -318,7 +314,7 @@ public class Search {
    * Filter results by ids.
    * @param ids Ids to include in results as set
    */
-  public Search ids(Set<Long> ids) {
+  public Search ids(Collection<Long> ids) {
     params.ids(ids);
     return this;
   }
@@ -336,16 +332,7 @@ public class Search {
    * Filter results by uuids.
    * @param uuids UUIDs to include in results as list
    */
-  public Search uuids(List<String> uuids) {
-    params.uuids(uuids);
-    return this;
-  }
-
-  /**
-   * Filter results by uuids.
-   * @param uuids UUIDs to include in results as set
-   */
-  public Search uuids(Set<String> uuids) {
+  public Search uuids(Collection<String> uuids) {
     params.uuids(uuids);
     return this;
   }
@@ -407,17 +394,41 @@ public class Search {
       this.params = params;
     }
     @Override
+    @SuppressWarnings("unchecked")
     public T apply(Map<String, Object> result) {
       String identifier = CollectionUtils.isEmpty(params.returns())?
         repository.queryIdentifier(): params.returns().get(0);
+      
       if(identifier.contains(".")) identifier = identifier.replace(".", "_");
       PropertyContainer node = (PropertyContainer) result.get(identifier);
       T model = repository.createModel(node, params.fieldList());
   
       // when some fields are fetched in query result already they will be added to the model
       if(result.size() > 1) {
-        // TODO
+        for(Map.Entry<String, Object> resultEntry : result.entrySet()) {
+          if(resultEntry.getKey().equals(identifier)) continue;
+          Object value = result.get(resultEntry.getKey());
+          FieldList fieldList = params.fieldList().getOrEmpty(resultEntry.getKey()).subFields();
+          if(value instanceof Collection) {
+            List<Base> related = new ArrayList<>(((Collection) value).size());
+            for(PropertyContainer container: (Collection<PropertyContainer>) value) {
+                related.add(repository.service().persistence().get(container, fieldList));
+            }
+            value = related;
+          } else {
+            PropertyContainer related = (PropertyContainer) result.get(resultEntry.getKey());
+            value = repository.service().persistence().get(related, fieldList);
+          }
+          FieldDescriptor field = repository.service().persistence().cache().fieldDescriptor(model.getClass(), resultEntry.getKey());
+
+          try {
+            field.field().set(model, value);
+          } catch(IllegalAccessException e) {
+            throw new FrogrException(e);
+          }
+        }
       }
+      
       return model;
     }
   }

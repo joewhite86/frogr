@@ -6,7 +6,7 @@ import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.auth.model.BaseUser;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
@@ -71,15 +71,6 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
     }
 
     return models;
-  }
-
-  @GET
-  @Path("{id: [0-9]+}")
-  @RolesAllowed({Role.User})
-  @SuppressWarnings("unchecked")
-  public M read(@Auth U user, @PathParam("id") long id,
-                @SearchParam SearchParameter params) {
-    return (M) search(user, params.ids(id)).singleton();
   }
 
   @GET

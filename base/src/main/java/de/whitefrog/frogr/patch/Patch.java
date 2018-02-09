@@ -9,20 +9,12 @@ import de.whitefrog.frogr.Service;
 public abstract class Patch implements Comparable<Patch> {
   private Service service;
   private final Version version;
-  private int priority = 0;
+  private final int priority;
 
   public Patch(Service service) {
     this.service = service;
     this.version = Version.valueOf(getClass().getAnnotation(de.whitefrog.frogr.patch.Version.class).value());
-  }
-
-  public Patch(String version, Service service) {
-    this.service = service;
-    this.version = Version.valueOf(version);
-  }
-
-  public void setPriority(int priority) {
-    this.priority = priority;
+    this.priority = getClass().getAnnotation(de.whitefrog.frogr.patch.Version.class).proority();
   }
 
   public int getPriority() {
@@ -31,10 +23,6 @@ public abstract class Patch implements Comparable<Patch> {
 
   public Service getService() {
     return service;
-  }
-
-  public void setService(Service service) {
-    this.service = service;
   }
 
   public abstract void update();

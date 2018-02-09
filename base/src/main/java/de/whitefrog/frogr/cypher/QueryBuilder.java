@@ -1,10 +1,10 @@
 package de.whitefrog.frogr.cypher;
 
 import de.whitefrog.frogr.helper.ReflectionUtil;
+import de.whitefrog.frogr.model.Filter;
 import de.whitefrog.frogr.model.Model;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.rest.Filter;
-import de.whitefrog.frogr.model.rest.SearchParameter;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
 import de.whitefrog.frogr.persistence.ModelCache;
@@ -35,11 +35,13 @@ public class QueryBuilder {
   private final String type;
   private final Map<String, String> matches = new HashMap<>();
   private final List<String> queryFields = new ArrayList<>();
+  private final Persistence persistence;
 
   public QueryBuilder(Repository repository) {
     this.repository = repository;
+    this.persistence = repository.service().persistence();
     this.type = repository.getModelClass().getSimpleName();
-    Persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
+    persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
       if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
         queryFields.add(descriptor.field().getName());
       }
@@ -50,7 +52,7 @@ public class QueryBuilder {
     return repository;
   }
 
-  private String id() {
+  public String id() {
     return repository().queryIdentifier();
   }
 
@@ -59,7 +61,7 @@ public class QueryBuilder {
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".") && !matches.keySet().contains(order.field())) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
+          persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
         if(descriptor.relationshipCount != null) {
           MatchBuilder match = new MatchBuilder()
             .relationship(order.field())
@@ -97,7 +99,7 @@ public class QueryBuilder {
       String returnsKey = returns.contains(" ")? returns.substring(0, returns.indexOf(" ")): returns;
       if(!matches.containsKey(returnsKey)) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), returnsKey);
+          persistence.cache().fieldAnnotations(repository().getModelClass(), returnsKey);
         if(descriptor == null) continue;
         
         if(descriptor.relatedTo != null) {
@@ -148,10 +150,10 @@ public class QueryBuilder {
   private void generateFilterMatch(Filter filter, Class<?> clazz, String id, String fieldName) {
     MatchBuilder match = new MatchBuilder();
     
-    FieldDescriptor descriptor = Persistence.cache().fieldDescriptor(clazz, fieldName);
+    FieldDescriptor descriptor = persistence.cache().fieldDescriptor(clazz, fieldName);
     if(descriptor == null) {
-      for(Class sub: Persistence.cache().subTypesOf(clazz)) {
-        descriptor = Persistence.cache().fieldDescriptor(sub, fieldName);
+      for(Class sub: persistence.cache().subTypesOf(clazz)) {
+        descriptor = persistence.cache().fieldDescriptor(sub, fieldName);
         if(descriptor != null) break;
       }
       if(descriptor == null) {
@@ -207,23 +209,28 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        if(lookup.contains(".to.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
+        if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
           lookup = lookup.replace(".to", "_to");
-        if(lookup.contains(".from.") && Persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
+        if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
           lookup = lookup.replace(".from", "_from");
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
         String marker = filter.getProperty().replaceAll("\\.", "") + i;
 
+        Object value = filter.getValue();
+        if(value != null && value instanceof Date) {
+          value = ((Date) value).getTime();
+        }
+
         if(filter instanceof Filter.Equals) {
-          if(filter.getValue() == null) {
+          if(value == null) {
             wheres.add(lookup + " IS NULL");
           }
           else {
             String where = "(";
-            if(filter.getValue() instanceof Boolean) {
-              if(filter.getValue() == Boolean.TRUE) {
+            if(value instanceof Boolean) {
+              if(value == Boolean.TRUE) {
                 where+= lookup + " IS NOT NULL AND ";
               }
               else {
@@ -233,44 +240,44 @@ public class QueryBuilder {
             where += lookup + " = {" + marker + "})";
 
             wheres.add(where);
-            queryParams.put(marker, filter.getValue());
+            queryParams.put(marker, value);
           }
         }
         else if(filter instanceof Filter.StartsWith) {
           wheres.add(lookup + " starts with {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.EndsWith) {
           wheres.add(lookup + " ends with {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.Contains) {
           wheres.add(lookup + " contains {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.NotEquals) {
-          if(filter.getValue() == null) {
+          if(value == null) {
             wheres.add(lookup + " IS NOT NULL");
           }
           else {
             String where = "(" + lookup + " <> {" + marker + "}";
-            if(filter.getValue() instanceof Boolean) {
+            if(value instanceof Boolean) {
               where += "OR " + lookup + " IS " +
-                (filter.getValue() == Boolean.FALSE? "NOT": "") + " NULL";
+                (value == Boolean.FALSE? "NOT": "") + " NULL";
             }
             wheres.add(where + ")");
-            queryParams.put(marker, filter.getValue());
+            queryParams.put(marker, value);
           }
         }
         else if(filter instanceof Filter.GreaterThan) {
           String including = ((Filter.GreaterThan) filter).isIncluding()? "=": "";
           wheres.add(lookup + " >" + including + " {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.LessThan) {
           String including = ((Filter.LessThan) filter).isIncluding()? "=": "";
           wheres.add(lookup + " <" + including + " {" + marker + "}");
-          queryParams.put(marker, filter.getValue());
+          queryParams.put(marker, value);
         }
         else if(filter instanceof Filter.Range) {
           String including = ((Filter.Range) filter).isIncluding()? "=": "";
@@ -353,7 +360,7 @@ public class QueryBuilder {
     if(!params.orderBy().isEmpty()) {
       List<String> orders = new LinkedList<>();
       for(SearchParameter.OrderBy order : params.orderBy()) {
-        if(!order.field().contains(".") && Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field()).relationshipCount != null) {
+        if(!order.field().contains(".") && persistence.cache().fieldAnnotations(repository().getModelClass(), order.field()).relationshipCount != null) {
           orders.add("count(" + order.field() + ") " + order.dir());
         }
         else if(order.field().contains(".")) {
@@ -375,25 +382,29 @@ public class QueryBuilder {
     if(CollectionUtils.isEmpty(params.returns())) {
       ret.add(id());
     } else {
-      List<String> returns = new ArrayList<>(params.returns());
-//      if(Persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
+      final List<String> returns = new ArrayList<>(params.returns());
+//      if(persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) {
 //        returns = returns.stream().map(r -> {
 //          if(r.contains(".to")) return r.replace(".to", "_to");
 //          else return r;
 //        }).collect(Collectors.toList());
 //      }
-      returns = returns.stream().map(r -> {
+      List<String> parsed = returns.stream().map(r -> {
         if(r.contains(".")) return r.replace(".", "_");
+        FieldDescriptor descriptor = persistence.cache().fieldDescriptor(repository().getModelClass(), r);
+        if(!id().equals(r) && descriptor.isCollection() && returns.size() > 1) { 
+          r = "collect(" + r + ") as " + r;
+        }
         return r; 
       }).collect(Collectors.toList());
-      ret.add(StringUtils.join(returns, ","));
+      ret.add(StringUtils.join(parsed, ","));
     }
     
     // to order by a relationship count we need to count it in return for cypher
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".")) {
         AnnotationDescriptor descriptor =
-          Persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
+          persistence.cache().fieldAnnotations(repository().getModelClass(), order.field());
         if(descriptor.relationshipCount != null) {
           ret.add("count(" + order.field() + ") as " + order.field() + "_c");
         }

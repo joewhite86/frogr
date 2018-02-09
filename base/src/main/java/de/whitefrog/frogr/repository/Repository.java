@@ -4,8 +4,10 @@ import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.cypher.QueryBuilder;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.FieldList;
+import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.persistence.Persistence;
+import de.whitefrog.frogr.persistence.Relationships;
 import de.whitefrog.frogr.service.Search;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.PropertyContainer;
@@ -46,7 +48,15 @@ public interface Repository<T extends Base> {
    * @param fields The fields to fetch
    * @return Updated model instance
    */
-  T fetch(T model, String... fields);
+  T fetch(Base model, String... fields);
+
+  /**
+   * Fetch fields from database for a model, even if already fetched.
+   * @param model The model to use
+   * @param fields The fields to fetch
+   * @return Updated model instance
+   */
+  T refetch(Base model, String... fields);
   
   /**
    * Fetch fields from database for a model.
@@ -54,7 +64,15 @@ public interface Repository<T extends Base> {
    * @param fields The fields to fetch as FieldList
    * @return Updated model instance
    */
-  T fetch(T model, FieldList fields);
+  T fetch(Base model, FieldList fields);
+
+  /**
+   * Fetch fields from database for a model, even if already fetched.
+   * @param model The model to use
+   * @param fields The fields to fetch as FieldList
+   * @return Updated model instance
+   */
+  T refetch(Base model, FieldList fields);
 
   /**
    * Fetch fields from database for a model.
@@ -63,7 +81,7 @@ public interface Repository<T extends Base> {
    * @param fields The fields to fetch as FieldList
    * @return Updated model instance
    */
-  T fetch(T model, boolean refetch, FieldList fields);
+  T fetch(Base model, boolean refetch, FieldList fields);
 
   /**
    * Find a entity by ID.
@@ -149,6 +167,10 @@ public interface Repository<T extends Base> {
    * @return Service instance
    */
   Service service();
+
+  Persistence persistence();
+
+  Relationships relationships();
 
   /**
    * Sort a list like you would in a database call.

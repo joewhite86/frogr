@@ -5,14 +5,10 @@ import de.whitefrog.frogr.cypher.QueryBuilder;
 import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.helper.ReflectionUtil;
-import de.whitefrog.frogr.model.Base;
-import de.whitefrog.frogr.model.Entity;
-import de.whitefrog.frogr.model.Model;
-import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.Persistence;
+import de.whitefrog.frogr.persistence.Relationships;
 import de.whitefrog.frogr.service.Search;
 import org.apache.commons.collections.CollectionUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -20,9 +16,12 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base repository for relationship and entities.
@@ -30,8 +29,11 @@ import java.util.*;
  */
 public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private final Logger logger;
+  @Inject
   private Service service;
   private String type;
+  private Persistence persistence;
+  private Relationships relationships;
   protected Class<?> modelClass;
 
   public BaseRepository() {
@@ -61,41 +63,43 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   @Override
   public Class<?> getModelClass() {
     if(modelClass == null) {
-      modelClass = Persistence.cache().getModel(getType());
+      modelClass = service.persistence().cache().getModel(getType());
     }
 
     return modelClass;
-  }
-
-  Set<String> getModelInterfaces(Class<?> clazz) {
-    Set<String> output = new HashSet<>();
-    Class<?>[] interfaces = clazz.getInterfaces();
-    for(Class<?> i: interfaces) {
-      if(Model.class.isAssignableFrom(i) && !i.equals(Model.class)) {
-        output.add(i.getSimpleName());
-        output.addAll(getModelInterfaces(i));
-      }
-    }
-    return output;
   }
   
   public Logger logger() {
     return logger;
   }
 
-  public T fetch(T tag, String... fields) {
-    return fetch(tag, FieldList.parseFields(fields));
+  @Override
+  public T fetch(Base model, String... fields) {
+    return fetch(model, FieldList.parseFields(fields));
   }
 
   @Override
-  public T fetch(T tag, FieldList fields) {
-    return fetch(tag, false, fields);
+  public T refetch(Base model, String... fields) {
+    return fetch(model, true, FieldList.parseFields(fields));
   }
 
   @Override
-  public T fetch(T tag, boolean refetch, FieldList fields) {
-    Persistence.fetch(tag, fields, refetch);
-    return tag;
+  public T fetch(Base model, FieldList fields) {
+    return fetch(model, false, fields);
+  }
+
+  @Override
+  public T refetch(Base model, FieldList fields) {
+    return fetch(model, true, fields);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public T fetch(Base model, boolean refetch, FieldList fields) {
+    if(model == null || !getModelClass().isAssignableFrom(model.getClass())) 
+      throw new IllegalArgumentException(model + " is not an instanceof " + getModelClass());
+    service.persistence().fetch(model, fields, refetch);
+    return (T) model;
   }
 
   @Override
@@ -149,6 +153,18 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   }
 
   @Override
+  public Persistence persistence() {
+    if(persistence == null) persistence = service().persistence();
+    return persistence;
+  }
+
+  @Override
+  public Relationships relationships() {
+    if(relationships == null) relationships = service().persistence().relationships();
+    return relationships;
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public void sort(List<T> list, List<SearchParameter.OrderBy> orderBy) {
     if(orderBy != null && !list.isEmpty()) {
@@ -159,7 +175,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
           final Field field = ReflectionUtil.getSuperField(clazz, order.field());
           final String dir = order.dir();
           if(!field.isAccessible()) field.setAccessible(true);
-          Collections.sort(list, (o1, o2) -> {
+          list.sort((o1, o2) -> {
             try {
               // just proceed if the already ordered fields aren't equal
               if(!orderedFields.isEmpty()) {
@@ -185,7 +201,8 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
                 if(val1 == null) return -1;
                 else if(val2 == null) return 1;
                 return ((Comparable) val1).compareTo(val2);
-              } else {
+              }
+              else {
                 if(val2 == null) return -1;
                 else if(val1 == null) return 1;
                 return ((Comparable) val2).compareTo(val1);
@@ -206,7 +223,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   public void validateModel(SaveContext<T> context) {
     context.fieldMap().forEach(f -> {
       if(context.model().getCheckedFields().contains(f.getName())) return;
-      AnnotationDescriptor annotations = Persistence.cache().fieldAnnotations(context.model().getClass(), f.getName());
+      AnnotationDescriptor annotations = service.persistence().cache().fieldAnnotations(context.model().getClass(), f.getName());
       // check if required fields are set
       if(!context.model().getPersisted() && annotations.required) {
         try {

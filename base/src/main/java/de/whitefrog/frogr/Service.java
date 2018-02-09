@@ -31,10 +31,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import java.io.File;
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Provides a service that handles the communication with frogr repositories and models.
@@ -45,9 +42,9 @@ import java.util.Set;
 public class Service implements AutoCloseable {
   private static final Logger logger = LoggerFactory.getLogger(Service.class);
   private static final String snapshotSuffix = "-SNAPSHOT";
-  public enum State { Started, Running, ShuttingDown}
+  public static final String noVersion = "0.0.0";
+  public enum State { Started, Connecting, Running, ShuttingDown}
 
-  private static Class mainClass = Application.class;
   private GraphDatabaseService graphDb;
   private String directory;
   private GraphRepository graphRepository;
@@ -57,6 +54,7 @@ public class Service implements AutoCloseable {
   private Validator validator;
   private String neo4jConfig = "config/neo4j.properties";
   private State state = State.Started;
+  private Persistence persistence;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -68,66 +66,77 @@ public class Service implements AutoCloseable {
     return graph().beginTx();
   }
 
-  public void connect(String directory) {
-    try {
-      this.directory = directory;
-      GraphDatabaseBuilder builder = new GraphDatabaseFactory()
-        .newEmbeddedDatabaseBuilder(new File(directory))
-        .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
-      graphDb = builder.newGraphDatabase();
-      Persistence.setService(this);
-      
-      repositoryFactory = new RepositoryFactory(this);
-      graphRepository = new GraphRepository(this);
-      
-      try(Transaction tx = beginTx()) {
-        graph = graphRepository.getGraph();
-        String version = getManifestVersion();
-        if(graph == null) {
-          graph = graphRepository.create();
-          if(!version.equals("undefined")) graph.setVersion(version);
-          graphRepository.save(graph);
-          logger.info("--------------------------------------------");
-          logger.info("---   creating fresh database instance   ---");
-          logger.info("---   " + directory + "   ---");
-          logger.info("--------------------------------------------");
-        } else {
-          if(!version.equals("undefined")) {
-            graph.setVersion(version);
-            graphRepository.save(graph);
-          }
-          logger.info("--------------------------------------------");
-          logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
-          logger.info("---   {}   ---", directory);
-          logger.info("--------------------------------------------");
-        }
-        tx.success();
-      }
-
-      Patcher.patch(this);
-      initializeSchema();
-
-      registerShutdownHook(this);
-      state = State.Running;
-    } catch (ConfigurationException e) {
-      logger.error("Could not read cypher.properties", e);
-    }
-  }
-
   public void connect() {
     try {
       if(directory == null) {
         Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
-        directory = properties.getString("graph.location");
+        if(properties.containsKey("graph.location")) {
+          directory = properties.getString("graph.location");
+        }
       }
       connect(directory);
     } catch (ConfigurationException e) {
       logger.error("Could not read neo4j.properties", e);
     }
   }
+
+  public void connect(String directory) {
+    if(isConnected()) throw new FrogrException("already running");
+    state = State.Connecting;
+    this.directory = directory;
+    graphDb = createGraphDatabase();
+    persistence = new Persistence(this);
+    
+    repositoryFactory = new RepositoryFactory(this);
+    graphRepository = new GraphRepository(this);
+
+    String version = getManifestVersion();
+    
+    try(Transaction tx = beginTx()) {
+      graph = graphRepository.getGraph();
+      if(graph == null) {
+        logger.info("--------------------------------------------");
+        logger.info("---   creating database instance {}   ---", version);
+        if(directory != null) logger.info("---   " + directory + "   ---");
+        logger.info("--------------------------------------------");
+      } else {
+        logger.info("--------------------------------------------");
+        logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
+        if(directory != null) logger.info("---   {}   ---", directory);
+        logger.info("--------------------------------------------");
+      }
+      tx.success();
+    }
+
+    initializeSchema();
+    Patcher.patch(this);
+
+    try(Transaction tx = beginTx()) {
+      if(graph == null) graph = graphRepository.create();
+      graph.setVersion(version);
+      graphRepository.save(graph);
+      logger.debug("graph node created");
+      tx.success();
+    }
+
+    registerShutdownHook(this);
+    state = State.Running;
+  }
+  
+  protected GraphDatabaseService createGraphDatabase() {
+    try {
+      GraphDatabaseBuilder builder = new GraphDatabaseFactory()
+        .newEmbeddedDatabaseBuilder(new File(directory))
+        .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
+      return builder.newGraphDatabase();
+    } catch(ConfigurationException e) {
+      throw new FrogrException(e.getMessage(), e);
+    }
+  }
   
   public boolean isConnected() {
-    return state.equals(State.Running);
+    return Arrays.asList(State.Connecting, State.Running, State.ShuttingDown)
+      .contains(state);  
   }
   
   public String directory() {
@@ -139,9 +148,10 @@ public class Service implements AutoCloseable {
   }
 
   public String getVersion() {
-    return graph != null? graph.getVersion(): null;
+    return graph != null? graph.getVersion(): Service.noVersion;
   }
   public void setVersion(String version) {
+    if(graph == null) return;
     try(Transaction tx = beginTx()) {
       graph.setVersion(version);
       graphRepository.save(graph);
@@ -151,6 +161,10 @@ public class Service implements AutoCloseable {
   
   public State getState() {
     return state;
+  }
+  
+  public Persistence persistence() {
+    return persistence;
   }
   
   public Set<String> registry() {
@@ -166,44 +180,61 @@ public class Service implements AutoCloseable {
 
   @SuppressWarnings("unchecked")
   public <R extends Repository<T>, T extends Base> R repository(Class<T> clazz) {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return (R) repositoryFactory().get(clazz);
   }
 
   @SuppressWarnings("unchecked")
   public <R extends Repository> R repository(String name) {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return (R) repositoryFactory().get(name);
   }
   
   public RepositoryFactory repositoryFactory() {
+    if(!isConnected()) throw new FrogrException("service is not running");
     return repositoryFactory;
   }
 
   public GraphDatabaseService graph() {
-    if(graphDb == null) connect();
+    if(!isConnected()) throw new FrogrException("service is not running");
     return graphDb;
   }
 
   public synchronized String getManifestVersion() {
     String version = null;
     
-    if(mainClass != null) {
-      version = mainClass.getPackage().getImplementationVersion();
+    if(getMainClass() != null) {
+      version = getMainClass().getPackage().getImplementationVersion();
     }
     if(version == null) {
-      version = System.getProperty("version", "undefined");
+      version = System.getProperty("version", Service.noVersion);
     }
 
     if(version.endsWith(snapshotSuffix)) version = version.replace(snapshotSuffix, StringUtils.EMPTY);
 
     return version;
   }
-  
-  public static void setMainClass(Class clazz) {
-    mainClass = clazz;
-  }
 
-  public static Class getMainClass() {
-    return mainClass;
+  /**
+   * Searches in stack trace for {@link Application} instances, otherwise returns this class
+   * @return the main class of the application
+   */
+  private Class getMainClass() {
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for(int i = stackTrace.length - 1; i >= 0; i--) {
+      try {
+        Class caller = Class.forName(stackTrace[i].getClassName());
+        if(Application.class.isAssignableFrom(caller)) 
+          return caller;
+        // if service is found first, no application did run 
+        // the service as it should appear first in the stack trace
+        if(Service.class.isAssignableFrom(caller)) 
+          return caller;
+      } catch(ClassNotFoundException e) {
+        logger.debug("error reading stack trace", e);
+      }
+    }
+    return getClass();
   }
 
   /**
@@ -213,7 +244,7 @@ public class Service implements AutoCloseable {
   private void initializeSchema() {
     try(Transaction tx = beginTx()) {
       Schema schema = graph().schema();
-      for(Class modelClass : Persistence.cache().getAllModels()) {
+      for(Class modelClass : persistence.cache().getAllModels()) {
         if(!Model.class.isAssignableFrom(modelClass) || Modifier.isAbstract(modelClass.getModifiers())) continue;
         if(!Base.class.isAssignableFrom(modelClass)) 
           throw new FrogrException("model class " + modelClass.getName() + " is not of type Base");
@@ -224,7 +255,7 @@ public class Service implements AutoCloseable {
         List<IndexDefinition> indices = Iterables.asList(
           schema.getIndexes(repository.label()));
         
-        for(FieldDescriptor descriptor : Persistence.cache().fieldMap(modelClass)) {
+        for(FieldDescriptor descriptor : persistence.cache().fieldMap(modelClass)) {
           AnnotationDescriptor annotations = descriptor.annotations();
           ConstraintDefinition existing = null;
           for(ConstraintDefinition constraint : constraints) {
@@ -247,11 +278,11 @@ public class Service implements AutoCloseable {
             schema.constraintFor(repository.label())
               .assertPropertyIsUnique(descriptor.getName())
               .create();
-            logger.info("created unique constraint on field \"{}\" for model \"{}\"",
+            logger.debug("created unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           } else if(!annotations.unique && existing != null) {
             existing.drop();
-            logger.info("dropped unique constraint on field \"{}\" for model \"{}\"",
+            logger.debug("dropped unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           }
 
@@ -259,11 +290,11 @@ public class Service implements AutoCloseable {
             schema.indexFor(repository.label())
               .on(descriptor.getName())
               .create();
-            logger.info("created index on field \"{}\" for model \"{}\"",
+            logger.debug("created index on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           } else if(annotations.indexed == null && !annotations.unique && existingIndex != null) {
             existingIndex.drop();
-            logger.info("dropped index on field \"{}\" for model \"{}\"",
+            logger.debug("dropped index on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           }
         }
@@ -289,5 +320,6 @@ public class Service implements AutoCloseable {
     state = State.ShuttingDown;
     repositoryFactory().cache().forEach(Repository::dispose);
     if(graphDb != null) graphDb.shutdown();
+    state = State.Started;
   }
 }

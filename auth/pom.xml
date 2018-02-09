@@ -7,7 +7,7 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>frogr-parent</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1</version>
         <relativePath>..</relativePath>
     </parent>
     <artifactId>frogr-auth</artifactId>
@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
+            <artifactId>kotlin-test-junit</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

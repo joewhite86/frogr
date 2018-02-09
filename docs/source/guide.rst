@@ -11,7 +11,7 @@ Maven
   <dependency>
       <groupId>de.whitefrog</groupId>
       <artifactId>frogr-base</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
   </dependency>
 
 Application
@@ -19,7 +19,7 @@ Application
 
 Next we will create the main entry point for the service.
 
-.. literalinclude:: ../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/MyApplication.java
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/MyApplication.java
   :language: java
   :lines: 6-
 
@@ -38,14 +38,14 @@ By default these configs should be in your project in a directory 'config'.
 
 ``config/example.yml``
 
-.. literalinclude:: ../../base/examples/basic/config/example.yml
+.. literalinclude:: ../../examples/basic/config/example.yml
   :language: yaml
 
 Reference: `Dropwizard Configuration`_
 
 ``config/neo4j.properties``
 
-.. literalinclude:: ../../base/examples/basic/config/neo4j.properties
+.. literalinclude:: ../../examples/basic/config/neo4j.properties
   :language: properties
 
 Reference: `Neo4j Configuration`_
@@ -56,7 +56,7 @@ RelationshipTypes
 We should add a class that holds our relationship types, so that we have consistent and convienient access.
 This is not a requirement but I highly recommend it. Doing so we don't have to deal with string in Java code, which is never a good choice, right?
 
-.. literalinclude:: ../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/RelationshipTypes.java
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/RelationshipTypes.java
   :language: java
   :lines: 5-
 
@@ -66,7 +66,7 @@ Model
 Now, let's create a :doc:`model <documentation/models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
 
-.. literalinclude:: ../../base/examples/basic/src/main/kotlin/de/whitefrog/frogr/example/model/Person.kt
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/model/Person.kt
   :language: kotlin
   :lines: 9-
 
@@ -86,12 +86,18 @@ Next we'll have to create the REST :doc:`service <documentation/services>` layer
 basic CRUD operations, so you only have to add methods for special cases. Of course you
 can also use any other JAX-RS annotated class.
 
-.. literalinclude:: ../../base/examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
   :language: java
   :lines: 14-26,35
+
+Examples
+--------
+
+You can find the code used in this guide and more examples at Github_
 
 .. _Kotlin: https://kotlinlang.org
 .. _Dropwizard: http://www.dropwizard.io
 .. _`Dropwizard Configuration`: http://www.dropwizard.io/0.7.1/docs/manual/configuration.html
 .. _Neo4j: http://neo4j.com
 .. _`Neo4j Configuration`: https://neo4j.com/docs/operations-manual/3.3/configuration/
+.. _Github: https://github.com/joewhite86/frogr/tree/master/examples

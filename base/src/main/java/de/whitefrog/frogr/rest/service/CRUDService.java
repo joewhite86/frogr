@@ -4,7 +4,7 @@ import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.rest.SearchParameter;
+import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;

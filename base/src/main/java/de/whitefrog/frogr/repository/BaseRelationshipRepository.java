@@ -2,13 +2,11 @@ package de.whitefrog.frogr.repository;
 
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.persistence.Persistence;
-import de.whitefrog.frogr.persistence.Relationships;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.apache.commons.lang3.Validate;
@@ -49,7 +47,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public T createModel(PropertyContainer node, FieldList fields) {
-    return fetch(Persistence.get(node), false, fields);
+    return service().persistence().get(node, fields);
   }
 
   public T find(long id, FieldList fields) {
@@ -78,16 +76,17 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public void remove(T model) throws PersistException {
-    Validate.notNull(model.getId(), "'id' is required");
-    Relationships.delete(model);
+    relationships().delete(model);
     logger.info("{} deleted", model);
   }
 
   @Override
   public void save(SaveContext<T> context) throws PersistException {
+    if(getModelClass().isInterface())
+      throw new PersistException("cannot save in interface repository");
     validateModel(context);
     boolean create = !context.model().getPersisted();
-    Relationships.save(context);
+    service().persistence().relationships().save(context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }
 }

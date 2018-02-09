@@ -5,6 +5,8 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -14,13 +16,15 @@ import java.util.*;
  * Model cache to reduce reflection usage for models to a minimum.
  */
 public class ModelCache {
+  private static final Logger logger = LoggerFactory.getLogger(ModelCache.class);
   private Map<Class, List<FieldDescriptor>> cache = new HashMap<>();
   private Map<String, Class> modelCache = new HashMap<>();
   private List<String> ignoreFields = Arrays.asList(
     "id", "initialId", "checkedFields", "fetchedFields");
   private Reflections reflections;
-
-  public ModelCache(Collection<String> packages) {
+  
+  public void scan(Collection<String> packages) {
+    modelCache.clear();
     ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
       .setScanners(new SubTypesScanner());
     packages
@@ -28,6 +32,41 @@ public class ModelCache {
     reflections = new Reflections(configurationBuilder);
     for(Class clazz : reflections.getSubTypesOf(Base.class)) {
       modelCache.put(clazz.getSimpleName(), clazz);
+
+      List<FieldDescriptor> descriptors = new ArrayList<>();
+      Class traverse = clazz;
+
+      while(traverse != null && Base.class.isAssignableFrom(traverse)) {
+        for(Field field : traverse.getDeclaredFields()) {
+          if(!ignoreFields.contains(field.getName()) &&
+            !Modifier.isStatic(field.getModifiers()) &&
+            !containsField(descriptors, field.getName())) {
+            descriptors.add(new FieldDescriptor<>(field));
+          }
+        }
+        traverse = traverse.getSuperclass();
+      }
+
+      cache.put(clazz, descriptors);
+    }
+    
+    validateAnnotations();
+  }
+  
+  private void validateAnnotations() {
+    for(Class modelClass: cache.keySet()) {
+      for(FieldDescriptor descriptor: cache.get(modelClass)) {
+        AnnotationDescriptor annotations = descriptor.annotations();
+        // check annotations for validity
+        if(annotations.indexed != null && annotations.relatedTo != null) {
+          logger.warn("annotations @Indexed and @RelatedTo should not be used together ({}->{})",
+            modelClass.getSimpleName(), descriptor.getName());
+        }
+        if(annotations.nullRemove && annotations.required) {
+          logger.warn("annotations @NullRemove and @Required should not be used together ({}->{})",
+            modelClass.getSimpleName(), descriptor.getName());
+        }
+      }
     }
   }
   
@@ -61,25 +100,7 @@ public class ModelCache {
   }
 
   public List<FieldDescriptor> fieldMap(Class clazz) {
-    if(cache.containsKey(clazz)) return cache.get(clazz);
-
-    List<FieldDescriptor> descriptors = new ArrayList<>();
-    Class traverse = clazz;
-
-    while(traverse != null && Base.class.isAssignableFrom(traverse)) {
-      for(Field field : traverse.getDeclaredFields()) {
-        if(!ignoreFields.contains(field.getName()) &&
-            !Modifier.isStatic(field.getModifiers()) &&
-            !containsField(descriptors, field.getName())) {
-          descriptors.add(new FieldDescriptor<>(field));
-        }
-      }
-      traverse = traverse.getSuperclass();
-    }
-
-    cache.put(clazz, descriptors);
-
-    return descriptors;
+    return cache.get(clazz);
   }
   
   private <M extends Base> boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
@@ -113,5 +134,4 @@ public class ModelCache {
   public Class getModel(String name) {
     return modelCache.get(name);
   }
-
 }

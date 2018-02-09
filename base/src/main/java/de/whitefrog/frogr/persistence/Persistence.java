@@ -3,21 +3,13 @@ package de.whitefrog.frogr.persistence;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.exception.DuplicateEntryException;
-import de.whitefrog.frogr.exception.FrogrException;
-import de.whitefrog.frogr.exception.MissingRequiredException;
-import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.model.Base;
+import de.whitefrog.frogr.exception.*;
+import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.model.Entity;
-import de.whitefrog.frogr.model.Model;
-import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.annotation.RelationshipCount;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
-import de.whitefrog.frogr.model.rest.FieldList;
-import de.whitefrog.frogr.model.rest.QueryField;
 import de.whitefrog.frogr.repository.ModelRepository;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.commons.lang.reflect.ConstructorUtils;
 import org.neo4j.graphdb.*;
@@ -30,40 +22,41 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 /**
- * Primarily the link between the models and repositories and neo4j itself.
+ * The link between the models and repositories and neo4j itself.
  * Handles every persitent operation required for neo4j to deal with the models and relationships
  * used in frogr. For Relationships the operations are moved to the Relationships class but 
  * some operations common to nodes and relationships are kept here.
  */
 @SuppressWarnings("unchecked")
-public abstract class Persistence {
+public class Persistence {
   private static final Logger logger = LoggerFactory.getLogger(Persistence.class);
-  private static Service service;
-  private static ModelCache cache;
-
-  /**
-   * Set the service to use.
-   *
-   * @param _service Service to use.
-   */
-  public static void setService(Service _service) {
-    service = _service;
-    cache = new ModelCache(_service.registry());
-    Relationships.setService(_service);
+  private Service service;
+  private ModelCache cache;
+  private Relationships relationships;
+  
+  public Persistence(Service service) {
+    this.service = service;
+    cache = new ModelCache();
+    cache.scan(service.registry());
+    relationships = new Relationships(service, this);
   }
 
-  public static ModelCache cache() {
+  public ModelCache cache() {
     return cache;
+  }
+
+  public Relationships relationships() {
+    return relationships;
   }
 
   /**
    * Delete a model from repository.
    *
-   * @param repository The repository to delete from.
    * @param model      The model to delete.
    */
-  public static <T extends Model> void delete(ModelRepository<T> repository, T model) {
+  public <T extends Model> void delete(T model) {
     Node node = getNode(model);
+    
     for(org.neo4j.graphdb.Relationship relationship: node.getRelationships()) {
       relationship.delete();
     }
@@ -80,7 +73,7 @@ public abstract class Persistence {
    * @return The saved model.
    * @throws MissingRequiredException A required field is missing.
    */
-  public static <T extends Model> T save(ModelRepository<T> repository, SaveContext<T> context) throws MissingRequiredException {
+  public <T extends Model> T save(ModelRepository<T> repository, SaveContext<T> context) throws MissingRequiredException {
     T model = context.model();
     Label label = repository.label();
     boolean create = false;
@@ -115,18 +108,12 @@ public abstract class Persistence {
     return model;
   }
 
-  static <T extends Base> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
+  @SuppressWarnings("unchecked")
+  <T extends Base> void saveField(SaveContext<T> context, FieldDescriptor descriptor, boolean created) {
     Field field = descriptor.field();
     AnnotationDescriptor annotations = descriptor.annotations();
     T model = context.model();
     PropertyContainer node = context.node();
-    
-    if(node == null) {
-      throw new NullPointerException("node can not be null");
-    }
-    if(field == null) {
-      throw new NullPointerException("field can not be null");
-    }
     
     Object value = null;
     try {
@@ -139,7 +126,7 @@ public abstract class Persistence {
 
       boolean valueChanged = created || context.fieldChanged(field.getName());
 
-      if(!annotations.notPersistant && !annotations.blob) {
+      if(!annotations.notPersistent && !annotations.blob) {
         // Generate an uuid when the value is actually null
         if(created && annotations.uuid && field.get(model) == null) {
           String uuid = generateUuid();
@@ -150,36 +137,35 @@ public abstract class Persistence {
 
         if(value != null) {
           // handle relationships
-          if(annotations.relatedTo != null && valueChanged && Model.class.isAssignableFrom(context.model().getClass())) {
-            Relationships.saveField((SaveContext<? extends Model>) context, descriptor);
-            logger.info("{}: updated relationships for \"{}\"", model, field.getName());
+          if(annotations.relatedTo != null && valueChanged && model instanceof Model) {
+            relationships.saveField((SaveContext<? extends Model>) context, descriptor);
+            logger.info("{}: updated relationships \"{}\"", model, field.getName());
           }
-
           // Handle other values
-          if(!(value instanceof Collection) && !(value instanceof Model)) {
-            
+          else if(!(value instanceof Collection) && !(value instanceof Model)) {
             // store enum names
             if(value.getClass().isEnum()) {
               if((!node.hasProperty(field.getName()) || !((Enum<?>) value).name().equals(node.getProperty(field.getName())))) {
                 node.setProperty(field.getName(), ((Enum<?>) value).name());
-                logger.info("{}: set enum value for \"{}\" to \"{}\"", model, field.getName(), ((Enum<?>) value).name());
+                logger.info("{}: set enum value \"{}\" to \"{}\"", model, field.getName(), ((Enum<?>) value).name());
               }
             }
             // store dates as timestamp
             else if(value instanceof Date) {
               node.setProperty(field.getName(), ((Date) value).getTime());
-              logger.info("{}: set date value for \"{}\" to \"{}\"", model, field.getName(), ((Date) value).getTime());
+              logger.info("{}: set date value \"{}\" to \"{}\"", model, field.getName(), ((Date) value).getTime());
             }
             // store all other values
             else if(valueChanged) {
               node.setProperty(field.getName(), value);
-              logger.info("{}: set value for \"{}\" to \"{}\"", model, field.getName(), value);
+              logger.info("{}: set value \"{}\" to \"{}\"", model, field.getName(), value);
             }
           }
         } 
         // if the new value is null and @NullRemove is set on the field,
         // we need to remove the property from the node and the index
         else if(valueChanged && annotations.nullRemove) {
+          logger.info("{}: removed value \"{}\"", model, field.getName());
           node.removeProperty(field.getName());
         }
       }
@@ -200,7 +186,7 @@ public abstract class Persistence {
    * @return The created model
    * @throws PersistException Is thrown if a field can not be converted
    */
-  public static <T extends Base> T get(PropertyContainer node) throws PersistException {
+  public <T extends Base> T get(PropertyContainer node) throws PersistException {
     return get(node, new FieldList());
   }
 
@@ -212,7 +198,7 @@ public abstract class Persistence {
    * @throws PersistException Is thrown if a field can not be converted
    */
   @SuppressWarnings("unchecked")
-  public static <T extends Base> T get(PropertyContainer node, FieldList fields) throws PersistException {
+  public <T extends Base> T get(PropertyContainer node, FieldList fields) throws PersistException {
     Validate.notNull(node, "node can't be null");
     try {
       Class<T> clazz = (Class<T>) getClass(node);
@@ -227,17 +213,19 @@ public abstract class Persistence {
       } else {
         org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
         Model from = get(rel.getStartNode());
-        if(fields.get("from") != null && fields.get("from").subFields() != null) 
-          fetch(from, fields.get("from").subFields());
+        if(fields.get("from") != null && !fields.get("from").subFields().isEmpty()) {
+          service.repository(from.getClass()).fetch(from, fields.get("from").subFields());
+        }
         Model to = get(rel.getEndNode());
-        if(fields.get("to") != null && fields.get("to").subFields() != null)
-          fetch(to, fields.get("to").subFields());
+        if(fields.get("to") != null && !fields.get("to").subFields().isEmpty())
+          service.repository(to.getClass()).fetch(to, fields.get("to").subFields());
         Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
         model = constructor.newInstance(from, to);
         model.setId(rel.getId());
+        fields.remove(new QueryField("from"));
+        fields.remove(new QueryField("to"));
       }
-      model.setId(node instanceof Node? ((Node) node).getId(): ((org.neo4j.graphdb.Relationship) node).getId());
-      service.repository(clazz).fetch(model, false, fields);
+      service.repository(clazz).fetch(model, fields);
       return model;
     } catch(IllegalStateException e) {
       throw e;
@@ -252,9 +240,8 @@ public abstract class Persistence {
    * 
    * @param node Node or relationship to get the corresponding class for
    * @return The correct model class for the node or relationship passed
-   * @throws ClassNotFoundException If no model was found for the particular class name
    */
-  private static Class getClass(PropertyContainer node) throws ClassNotFoundException {
+  private Class getClass(PropertyContainer node) {
     String className;
     if(node instanceof org.neo4j.graphdb.Relationship) {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
@@ -270,7 +257,7 @@ public abstract class Persistence {
    *
    * @return Generated uuid.
    */
-  private static String generateUuid() {
+  private String generateUuid() {
     TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator();
     UUID uuid = uuidGenerator.generate();
     return Long.toHexString(uuid.getMostSignificantBits()) + Long.toHexString(uuid.getLeastSignificantBits());
@@ -282,7 +269,7 @@ public abstract class Persistence {
    * @param model Model to remove the property from
    * @param property Property name to remove
    */
-  public static void removeProperty(Model model, String property) {
+  private void removeProperty(Model model, String property) {
     Node node = getNode(model);
     node.removeProperty(property);
     try {
@@ -290,7 +277,7 @@ public abstract class Persistence {
       if(!field.isAccessible()) field.setAccessible(true);
       field.set(model, null);
     } catch(ReflectiveOperationException e) {
-      throw new FrogrException("field " + property + " could not be found on " + model, e);
+      throw new FieldNotFoundException(property, model);
     }
   }
 
@@ -300,7 +287,7 @@ public abstract class Persistence {
    * @param model Model to search inside the graph
    * @return The neo4j node equivalent for the passed model
    */
-  public static Node getNode(Model model) {
+  public Node getNode(Model model) {
     Validate.notNull(model);
     if(model.getId() > -1) {
       return service.graph().getNodeById(model.getId());
@@ -320,7 +307,7 @@ public abstract class Persistence {
    * @param model The model to fetch the properties for
    * @param fields List of fields to fetch
    */
-  public static <T extends Base> void fetch(T model, String... fields) {
+  public <T extends Base> void fetch(T model, String... fields) {
     fetch(model, FieldList.parseFields(Arrays.asList(fields)), false);
   }
   
@@ -331,7 +318,7 @@ public abstract class Persistence {
    * @param model The model to fetch the properties for
    * @param fields List of fields to fetch as FieldList
    */
-  public static <T extends Base> void fetch(T model, FieldList fields) {
+  public <T extends Base> void fetch(T model, FieldList fields) {
     fetch(model, fields, false);
   }
   
@@ -343,53 +330,60 @@ public abstract class Persistence {
    * @param fields List of fields to fetch as FieldList
    * @param refetch Fetch even if the field was already fetched before
    */
-  public static <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
+  public <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
-    if(!model.getPersisted()) return;
+    if(!model.getPersisted()) throw new FrogrException("the model " + model + " is not persisted yet");
     PropertyContainer node;
 
     try {
-      List<String> ignoredFields = Arrays.asList("id");
       if(model instanceof Relationship) {
         BaseRelationship relModel = (BaseRelationship) model;
-        node = Relationships.getRelationship(relModel);
-//        org.neo4j.graphdb.Relationship relationship = (org.neo4j.graphdb.Relationship) node;
-//        if((fields.containsField("from") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getFrom() == null || refetch)) {
-//          ((Relationship) model).setFrom(createRepositoryModel(
-//            relationship.getStartNode(), fields.containsField("from")? fields.get("from").subFields(): new FieldList()
-//          ));
-//        }
-//        if((fields.containsField("to") || fields.containsField(Base.Companion.getAllFields())) && (relModel.getTo() == null || refetch)) {
-//          ((Relationship) model).setTo(createRepositoryModel(
-//            relationship.getEndNode(), fields.containsField("to")? fields.get("to").subFields(): new FieldList()
-//          ));
-//        }
-        ignoredFields = Arrays.asList("id", "from", "to");
+        node = relationships.getRelationship(relModel);
       } else {
-        node = Persistence.getNode((Model) model);
+        node = getNode((Model) model);
       }
       
-      for(FieldDescriptor descriptor: cache.fieldMap(model.getClass())) {
-        if(CollectionUtils.isEmpty(fields) && descriptor.annotations().notPersistant) continue;
-        if(ignoredFields.contains(descriptor.field().getName())) continue;
+      // iterate over fields to ensure fields with @Fetch annotation and 'allFields' will be fetched
+      for(FieldDescriptor descriptor : cache.fieldMap(model.getClass())) {
+        // don't fetch the 'id' field and fields annotated with @NotPersistent
+        if(descriptor.getName().equals("id") && descriptor.annotations().notPersistent) continue;
+
+        // always fetch when field is 'type' or 'uuid', or when allFields is set 
+        // or the field list contains the current field
         boolean fetch = descriptor.annotations().fetch ||
-          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.field().getName());
-        if(!fetch) continue;
-        fetchField(node, model, descriptor, fields, refetch);
+          descriptor.getName().equals(Entity.Type) || descriptor.getName().equals(Entity.Uuid) ||
+          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.getName());
+
+        if(fetch) {
+          // still fetch if refetch is true or field is not in fetchedFields 
+          // or fields does not contiain field or sub-fields is not empty 
+          if(!refetch && model.getFetchedFields().contains(descriptor.getName()) &&
+            fields.containsField(descriptor.getName()) && fields.get(descriptor.getName()).subFields().isEmpty())
+            continue;
+
+          fetchField(node, model, descriptor, fields);
+        }
       }
     } catch(ReflectiveOperationException e) {
       logger.error("could not load relations for {}: {}", model, e.getMessage(), e);
     }
   }
 
-  private static <T extends Base> void fetchField(PropertyContainer node, T model, FieldDescriptor descriptor,
-                                                  FieldList fields, boolean refetch) throws ReflectiveOperationException {
-    if(!refetch && model.getFetchedFields().contains(descriptor.field().getName())) return;
+  private <T extends Base> void fetchField(PropertyContainer node, T model, FieldDescriptor descriptor,
+                                                  FieldList fields) throws ReflectiveOperationException {
     AnnotationDescriptor annotations = descriptor.annotations();
-    java.lang.reflect.Field field = descriptor.field();
-    if(!field.getName().equals(Entity.Type) && !annotations.fetch && !field.getName().equals(Entity.Uuid) &&
-      !fields.containsField(Entity.AllFields) && !fields.containsField(field.getName())) return;
+    Field field = descriptor.field();
     field.setAccessible(true);
+
+    if(node instanceof org.neo4j.graphdb.Relationship) {
+      Relationship relModel = (Relationship) model;
+      if(field.getName().equals("from") && fields.containsField("from") && !fields.get("from").subFields().isEmpty()) {
+        service.repository(relModel.getFrom().getClass()).fetch(relModel.getFrom(), fields.get("from").subFields());
+      }
+      if(field.getName().equals("to") && fields.containsField("to") && !fields.get("to").subFields().isEmpty()) {
+        service.repository(relModel.getTo().getClass()).fetch(relModel.getTo(), fields.get("to").subFields());
+      }
+    }
     
     // fetch relationship count only
     if(node instanceof Node && annotations.relationshipCount != null && fields.containsField(field.getName())) {
@@ -408,17 +402,17 @@ public abstract class Persistence {
       if(descriptor.isCollection()) {
         Collection related;
         if(descriptor.isModel()) {
-          related = Relationships.getRelatedModels((Model) model, descriptor, fieldDescriptor, subFields);
+          related = relationships.getRelatedModels((Model) model, descriptor, fieldDescriptor, subFields);
         } else {
-          related = Relationships.getRelationships((Model) model, descriptor, fieldDescriptor, subFields);
+          related = relationships.getRelationships((Model) model, descriptor, fieldDescriptor, subFields);
         }
         field.set(model, Set.class.isAssignableFrom(field.getType())? related: new ArrayList<>(related));        
       } else {
         Base related;
         if(descriptor.isModel()) {
-          related = Relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
+          related = relationships.getRelatedModel((Model) model, annotations.relatedTo, subFields);
         } else {
-          related = Relationships.getRelationship((Model) model, descriptor, subFields);
+          related = relationships.getRelationship((Model) model, descriptor, subFields);
         }
         field.set(model, related);
       }
@@ -445,7 +439,7 @@ public abstract class Persistence {
    * @param uuid The uuid for the model
    * @return The found model or null if none was found
    */
-  public static <T extends Model> T findByUuid(String label, String uuid) {
+  public <T extends Model> T findByUuid(String label, String uuid) {
     ResourceIterator<? extends PropertyContainer> iterator = 
       service.graph().findNodes(Label.label(label), Entity.Uuid, uuid);
     return iterator.hasNext()? get(iterator.next()): null;
