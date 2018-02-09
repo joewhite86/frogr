@@ -14,6 +14,7 @@ import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.helpers.collection.Iterators;
+import org.neo4j.helpers.collection.MapUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,10 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
     }
   }
 
+  public void register(U user) {
+    user.setRole(Role.User);
+    save(user);
+  }
 
   @Override
   public void save(SaveContext<U> context) throws PersistException {
@@ -94,6 +99,9 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
     if(!user.getPersisted()) {
       if(user.getPassword() == null || user.getPassword().isEmpty()) {
         throw new MissingRequiredException("must provide a password");
+      }
+      if(user.getRole() == null) {
+        throw new MissingRequiredException("no role specified");
       }
     }
     if(context.fieldChanged(BaseUser.Password)) {
