@@ -47,11 +47,11 @@ public class SearchParameter implements Serializable {
     clone.locale = locale;
     clone.ids = ids;
     clone.uuids = uuids;
-    clone.filters = filters().stream().collect(Collectors.toList());
-    clone.orderBy = orderBy().stream().collect(Collectors.toList());
+    clone.filters = new ArrayList<>(filters());
+    clone.orderBy = new ArrayList<>(orderBy());
     clone.fields = new FieldList();
+    clone.fields.addAll(fields);
     clone.returns = returns;
-    fields.forEach(clone.fields::add);
     return clone;
   }
 
@@ -85,13 +85,6 @@ public class SearchParameter implements Serializable {
     return false;
   }
 
-  public boolean containsOrder(String field) {
-    for(OrderBy order : orderBy()) {
-      if(order.field().equals(field)) return true;
-    }
-    return false;
-  }
-
   public SearchParameter fields(String... fields) {
     for(String field: fields) {
       this.fields.add(new QueryField(field));
@@ -110,8 +103,7 @@ public class SearchParameter implements Serializable {
   }
 
   public List<String> fields() {
-    List<String> fields = this.fields.stream().map(QueryField::field).collect(Collectors.toList());
-    return new ArrayList<>(fields);
+    return this.fields.stream().map(QueryField::field).collect(Collectors.toList());
   }
 
   public FieldList fieldList() {
@@ -166,13 +158,7 @@ public class SearchParameter implements Serializable {
   }
 
   public SearchParameter removeFilter(String property) {
-    Iterator<Filter> iterator = filters().iterator();
-
-    while(iterator.hasNext()) {
-      Filter filter = iterator.next();
-      if(filter.getProperty().equalsIgnoreCase(property)) iterator.remove();
-    }
-
+    filters().removeIf(filter -> filter.getProperty().equalsIgnoreCase(property));
     return this;
   }
 
@@ -189,14 +175,6 @@ public class SearchParameter implements Serializable {
   @JsonIgnore
   public boolean isFiltered() {
     return !filters.isEmpty();
-  }
-
-  /**
-   * Only request the id field
-   */
-  public SearchParameter idOnly() {
-    fields(Entity.IdProperty);
-    return this;
   }
 
   public List<Long> ids() {
