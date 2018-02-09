@@ -15,6 +15,7 @@ import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
+import kotlin.test.assertNotNull
 
 class TestPersistence {
   companion object {
@@ -69,6 +70,32 @@ class TestPersistence {
       val repository = service.repository<ModelRepository<PersonRequiredField>, PersonRequiredField>(PersonRequiredField::class.java)
       val model = repository.createModel()
       persistence.save(repository, SaveContext(repository, model))
+    }
+  }
+  
+  @Test
+  fun autoFetchTypeAndUuid() {
+    service.beginTx().use {
+      val person = Person("test1")
+      persons.save(person)
+      val found = persons.find(person.id, "field")
+      assertNotNull(found.uuid)
+      assertNotNull(found.type)
+    }
+  }
+  
+  @Test
+  fun autoFetchTypeAndUuidOnRelatedModels() {
+    service.beginTx().use {
+      val person1 = Person("test")
+      val person2 = Person("test")
+      persons.save(person1, person2)
+      person1.marriedWith = person2
+      persons.save(person1)
+      val found = persons.find(person1.id, "marriedWith")
+      assertNotNull(found.marriedWith)
+      assertNotNull(found.marriedWith!!.uuid)
+      assertNotNull(found.marriedWith!!.type)
     }
   }
   
