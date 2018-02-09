@@ -37,7 +37,8 @@ public class Persistence {
   
   public Persistence(Service service) {
     this.service = service;
-    cache = new ModelCache(service.registry());
+    cache = new ModelCache();
+    cache.scan(service.registry());
     relationships = new Relationships(service, this);
   }
 
