@@ -12,7 +12,6 @@ import de.whitefrog.frogr.repository.GraphRepository;
 import de.whitefrog.frogr.repository.ModelRepository;
 import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.repository.RepositoryFactory;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +45,6 @@ public class Service implements AutoCloseable {
   public enum State { Started, Connecting, Running, ShuttingDown}
 
   private GraphDatabaseService graphDb;
-  private String directory;
   private GraphRepository graphRepository;
   private Graph graph;
   private RepositoryFactory repositoryFactory;
@@ -55,6 +53,7 @@ public class Service implements AutoCloseable {
   private String neo4jConfig = "config/neo4j.properties";
   private State state = State.Started;
   private Persistence persistence;
+  private String directory;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -67,23 +66,8 @@ public class Service implements AutoCloseable {
   }
 
   public void connect() {
-    try {
-      if(directory == null) {
-        Configuration properties = new PropertiesConfiguration("config/neo4j.properties");
-        if(properties.containsKey("graph.location")) {
-          directory = properties.getString("graph.location");
-        }
-      }
-      connect(directory);
-    } catch (ConfigurationException e) {
-      logger.error("Could not read neo4j.properties", e);
-    }
-  }
-
-  public void connect(String directory) {
     if(isConnected()) throw new FrogrException("already running");
     state = State.Connecting;
-    this.directory = directory;
     graphDb = createGraphDatabase();
     persistence = new Persistence(this);
     
@@ -94,16 +78,10 @@ public class Service implements AutoCloseable {
     
     try(Transaction tx = beginTx()) {
       graph = graphRepository.getGraph();
-      if(graph == null) {
-        logger.info("--------------------------------------------");
-        logger.info("---   creating database instance {}   ---", version);
-        if(directory != null) logger.info("---   " + directory + "   ---");
-        logger.info("--------------------------------------------");
-      } else {
-        logger.info("--------------------------------------------");
-        logger.info("---   starting database instance {}   ---", graph.getVersion() != null? graph.getVersion(): "");
-        if(directory != null) logger.info("---   {}   ---", directory);
-        logger.info("--------------------------------------------");
+      if(logger.isInfoEnabled()) {
+        String outputVersion = graph == null? version: (graph.getVersion() != null? graph.getVersion(): "");
+        logger.info("Creating database instance {}", outputVersion);
+        if(directory != null) logger.info("Graph location: {}", new File(directory).getAbsolutePath());
       }
       tx.success();
     }
@@ -124,23 +102,33 @@ public class Service implements AutoCloseable {
   }
   
   protected GraphDatabaseService createGraphDatabase() {
+    PropertiesConfiguration config;
+    File file;
     try {
+      config = new PropertiesConfiguration(neo4jConfig);
+      directory = config.containsKey("graph.location")? config.getString("graph.location"): "graph.db";
+      file = new File(directory);
       GraphDatabaseBuilder builder = new GraphDatabaseFactory()
-        .newEmbeddedDatabaseBuilder(new File(directory))
-        .loadPropertiesFromURL(new PropertiesConfiguration(neo4jConfig).getURL());
+        .newEmbeddedDatabaseBuilder(file)
+        .loadPropertiesFromURL(config.getURL());
       return builder.newGraphDatabase();
     } catch(ConfigurationException e) {
-      throw new FrogrException(e.getMessage(), e);
+      // config not found
+      if(!e.getMessage().startsWith("Cannot locate")) {
+        throw new FrogrException(e.getMessage(), e);
+      }
+      directory = "graph.db";
+      file = new File(directory);
+      logger.info("No neo4j.properties found, creating graph in {}", file.getAbsolutePath());
+      GraphDatabaseBuilder builder = new GraphDatabaseFactory()
+        .newEmbeddedDatabaseBuilder(file);
+      return builder.newGraphDatabase();
     }
   }
   
   public boolean isConnected() {
     return Arrays.asList(State.Connecting, State.Running, State.ShuttingDown)
       .contains(state);  
-  }
-  
-  public String directory() {
-    return directory;
   }
   
   public void setConfig(String configFile) {

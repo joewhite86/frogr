@@ -48,6 +48,7 @@ Reference: `Dropwizard Configuration`_
 .. literalinclude:: ../../examples/basic/config/neo4j.properties
   :language: properties
 
+This file is not required, by default the graph.location is "graph.db" inside your working directory.
 Reference: `Neo4j Configuration`_
 
 RelationshipTypes
