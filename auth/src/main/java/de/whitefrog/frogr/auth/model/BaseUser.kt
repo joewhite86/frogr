@@ -16,7 +16,7 @@ open class BaseUser : Entity(), Principal {
   @JsonView(Views.Hidden::class)
   open var password: String? = null
   @JsonView(Views.Hidden::class)
-  var role: String? = null
+  open var role: String? = null
   @Indexed
   @JsonView(Views.Secure::class)
   var accessToken: String? = null

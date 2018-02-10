@@ -87,7 +87,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   @JsonView({ Views.Public.class })
   @SuppressWarnings("unchecked")
   public Response search(@Auth U user, @SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response response = new Response<>();
 
     try(Transaction tx = service().beginTx()) {

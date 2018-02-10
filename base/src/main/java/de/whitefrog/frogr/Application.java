@@ -113,7 +113,7 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
   public List<String> registry() {
     return packages;
   }
-
+  
   public void shutdown() {
     if(service() != null) service().shutdown();
     else logger.error("service not initialized");

@@ -35,6 +35,21 @@
             <artifactId>kotlin-test-junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>de.whitefrog</groupId>
+            <artifactId>frogr-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-testing</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 

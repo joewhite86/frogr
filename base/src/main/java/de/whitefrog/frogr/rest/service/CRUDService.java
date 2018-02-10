@@ -73,7 +73,7 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   @GET
   @JsonView({ Views.Public.class })
   public Response search(@SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response response = new Response<>();
 
     try(Transaction tx = service().beginTx()) {

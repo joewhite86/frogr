@@ -70,15 +70,6 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   }
 
   @GET
-  @Path("{id: [0-9]+}")
-  @RolesAllowed({Role.User})
-  @SuppressWarnings("unchecked")
-  public M read(@Auth U user, @PathParam("id") long id,
-                @SearchParam SearchParameter params) {
-    return (M) search(user, params.ids(id)).singleton();
-  }
-
-  @GET
   @Path("{uuid: [a-zA-Z0-9]+}")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
@@ -91,7 +82,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @RolesAllowed({Role.User})
   @JsonView({ Views.Public.class })
   public Response<M> search(@Auth U user, @SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response<M> response = new Response<>();
 
     try(Transaction tx = service().beginTx()) {
