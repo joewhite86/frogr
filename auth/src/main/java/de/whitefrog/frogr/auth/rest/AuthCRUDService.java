@@ -2,10 +2,10 @@ package de.whitefrog.frogr.auth.rest;
 
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
+import de.whitefrog.frogr.auth.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.auth.model.BaseUser;
 import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.rest.Views;
@@ -27,7 +27,8 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
 
   @POST
   @RolesAllowed({Role.User})
-  public List<M> create(@Auth U user, List<M> models) {
+  @JsonView(Views.Secure.class)
+  public javax.ws.rs.core.Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
@@ -46,11 +47,14 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
       tx.success();
     }
 
-    return models;
+    return javax.ws.rs.core.Response
+      .status(javax.ws.rs.core.Response.Status.CREATED)
+      .entity(Response.build(models)).build();
   }
 
   @PUT
   @RolesAllowed({Role.User})
+  @JsonView(Views.Secure.class)
   public List<M> update(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
@@ -90,7 +94,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response response = new Response<>();
 
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
       if(params.limit() > 0) {
         List<M> list = repository().search().params(params).list();
@@ -139,5 +143,10 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
    */
   public void authorize(U user, M model, SaveContext<M> context) {}
 
+  /**
+   * Called on delete to verify the user has access to the resource.
+   * @param user Authenticated user
+   * @param model Model to delete
+   */
   public void authorizeDelete(U user, M model) {}
 }

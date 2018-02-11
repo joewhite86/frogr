@@ -28,7 +28,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
 
   @POST
   @RolesAllowed({Role.User})
-  public List<M> create(@Auth U user, List<M> models) {
+  public javax.ws.rs.core.Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
@@ -45,7 +45,9 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
       tx.success();
     }
 
-    return models;
+    return javax.ws.rs.core.Response
+      .status(javax.ws.rs.core.Response.Status.CREATED)
+      .entity(Response.build(models)).build();
   }
 
   @PUT
@@ -54,7 +56,6 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         SaveContext<M> context = new SaveContext<>(repository(), model);
-        authorize(user, model, context);
         try {
           repository().save(context);
         } catch(Exception e) {
@@ -85,7 +86,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response<M> response = new Response<>();
 
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
       if(params.limit() > 0) {
         List<M> list = repository().search().params(params).list();
@@ -116,7 +117,6 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
     try(Transaction tx = service().beginTx()) {
       M model = repository().findByUuid(uuid);
       if(model == null) throw new NotFoundException();
-      authorizeDelete(user, model);
       repository().remove(model);
       tx.success();
     }
@@ -125,8 +125,4 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @POST
   @Path("authorize")
   public void authorize(@Validated Model model) {}
-  
-  public void authorize(U user, M model, SaveContext<M> context) {}
-
-  public void authorizeDelete(U user, M model) {}
 }

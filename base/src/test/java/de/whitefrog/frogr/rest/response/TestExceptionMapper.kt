@@ -53,7 +53,7 @@ class TestExceptionMapper {
   fun mapMissingRequired() {
     val person = Person("test")
     val response = mapper.toResponse(MissingRequiredException(person, "requiredField"))
-    assertThat(response.status).isEqualTo(Status.OK.statusCode)
+    assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
     val entity = response.entity as Response<Any>
     assertThat(entity.isSuccess).isFalse()
@@ -63,7 +63,7 @@ class TestExceptionMapper {
   fun mapDuplicateEntry() {
     val person = Person("test")
     val response = mapper.toResponse(DuplicateEntryException("testmsg", person))
-    assertThat(response.status).isEqualTo(Status.OK.statusCode)
+    assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
     val entity = response.entity as Response<Any>
     assertThat(entity.isSuccess).isFalse()

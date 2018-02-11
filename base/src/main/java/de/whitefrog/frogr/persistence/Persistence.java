@@ -4,6 +4,7 @@ import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.*;
+import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.annotation.RelationshipCount;
@@ -247,7 +248,7 @@ public class Persistence {
       className = ((org.neo4j.graphdb.Relationship) node).getType().name();
     } else {
       className = (String) node.getProperty(
-        node.hasProperty(Model.Companion.getModel())? Entity.Model: Entity.Type);
+        node.hasProperty(Model.Model)? Entity.Model: Entity.Type);
     }
     return cache().getModel(className);
   }
@@ -273,7 +274,7 @@ public class Persistence {
     Node node = getNode(model);
     node.removeProperty(property);
     try {
-      Field field = model.getClass().getDeclaredField(property);
+      Field field = ReflectionUtil.getSuperField(model.getClass(), property);
       if(!field.isAccessible()) field.setAccessible(true);
       field.set(model, null);
     } catch(ReflectiveOperationException e) {

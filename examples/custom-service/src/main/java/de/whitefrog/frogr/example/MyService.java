@@ -14,10 +14,10 @@ public class MyService extends Service {
   private Configuration config;
 
   @Override
-  public void connect(String directory) {
+  public void connect() {
     try {
       config = new PropertiesConfiguration(appConfig);
-      super.connect(directory);
+      super.connect();
     } catch(ConfigurationException e) {
       logger.error(e.getMessage(), e);
       throw new RuntimeException(e);

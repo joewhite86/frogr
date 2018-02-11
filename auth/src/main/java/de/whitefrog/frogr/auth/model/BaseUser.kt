@@ -26,12 +26,12 @@ open class BaseUser : Entity(), Principal {
   }
 
   override fun implies(subject: Subject?): Boolean {
-    return subject!!.principals.any { p -> p.name == name }
+    return subject!!.principals.any { p -> (p as BaseUser).id == id }
   }
   companion object {
-    @JvmField val Login = "login"
-    @JvmField val Password = "password"
-    @JvmField val AccessToken = "accessToken"
-    @JvmField val Roles = "role"
+    const val Login = "login"
+    const val Password = "password"
+    const val AccessToken = "accessToken"
+    const val Roles = "role"
   }
 }
