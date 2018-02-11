@@ -23,7 +23,7 @@ in :doc:`Service <services>` methods using the ``@Auth`` annotation.
 
 .. literalinclude:: ../../../examples/oauth/src/main/java/de/whitefrog/frogr/auth/example/model/User.kt
   :language: kotlin
-  :lines: 9-
+  :lines: 5-
 
 As you can see the annotation ``@JsonView(Views.Secure::class)`` is used on the ``friends`` field.
 These views can be used on ``Service`` methods too, and describe what can be seen by the user.
