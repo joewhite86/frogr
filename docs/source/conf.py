@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Frogr'
-copyright = '2018, Jochen Weis'
-author = 'Jochen Weis'
+copyright = '2018, Jochen Weis <jochen@whitefrog.de>'
+author = 'Jochen Weis <jochen@whitefrog.de>'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

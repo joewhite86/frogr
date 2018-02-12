@@ -5,29 +5,31 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.SearchParameter;
-import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
 import de.whitefrog.frogr.rest.response.Response;
+import io.dropwizard.validation.Validated;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-public abstract class CRUDService<R extends Repository<M>, M extends Model> extends RestService<R, M> {
-  private static final Logger logger = LoggerFactory.getLogger(CRUDService.class);
+@Produces(MediaType.APPLICATION_JSON)
+public abstract class DefaultCRUDService<M extends Model> extends DefaultRestService<M> {
+  private static final Logger logger = LoggerFactory.getLogger(DefaultCRUDService.class);
+
   @POST
   public javax.ws.rs.core.Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
-          throw new ForbiddenException("the model is not yet persisted");
+          throw new WebApplicationException(javax.ws.rs.core.Response.Status.FORBIDDEN);
         }
-        SaveContext<M> context = new SaveContext<>(repository(), model);
         try {
-          repository().save(context);
+          repository().save(model);
         } catch(Exception e) {
           logger.error("failed to save {}", model);
           throw e;
@@ -46,9 +48,6 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   public List<M> update(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(!model.getPersisted()) {
-          throw new ForbiddenException("the model has to be created first");
-        }
         SaveContext<M> context = new SaveContext<>(repository(), model);
         try {
           repository().save(context);
@@ -74,11 +73,11 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
 
   @GET
   @JsonView({ Views.Public.class })
-  public Response search(@SearchParam SearchParameter params) {
+  public Response<M> search(@SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
-    Response response = new Response<>();
+    Response<M> response = new Response<>();
 
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
       if(params.limit() > 0) {
         List<M> list = repository().search().params(params).list();
@@ -93,11 +92,11 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
 
     return response;
   }
-
+  
   @POST
   @Path("search")
   @JsonView({Views.Public.class})
-  public Response searchPost(SearchParameter params) {
+  public Response<M> searchPost(SearchParameter params) {
     return search(params);
   }
 
@@ -111,4 +110,8 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
       tx.success();
     }
   }
+
+  @POST
+  @Path("authorize")
+  public void authorize(@Validated Model model) {}
 }

@@ -22,7 +22,6 @@ import java.lang.reflect.Type;
 public abstract class RestService<Repo extends Repository<M>, M extends Model> {
   private static final Logger logger = LoggerFactory.getLogger(RestService.class);
   private Repo repository = null;
-  private Class repositoryClass;
   private Class modelClass;
   public static final MetricRegistry metrics = new MetricRegistry();
 
@@ -51,13 +50,5 @@ public abstract class RestService<Repo extends Repository<M>, M extends Model> {
       modelClass = ReflectionUtil.getClass(parameterizedTypes[1]);
     }
     return modelClass;
-  }
-
-  private Class getRepositoryClass() throws ClassNotFoundException {
-    if(repositoryClass == null) {
-      Type[] parameterizedTypes = ReflectionUtil.getParameterizedTypes(this);
-      repositoryClass = ReflectionUtil.getClass(parameterizedTypes[0]);
-    }
-    return repositoryClass;
   }
 }

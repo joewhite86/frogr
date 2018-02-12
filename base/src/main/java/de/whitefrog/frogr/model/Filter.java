@@ -35,7 +35,7 @@ public interface Filter extends Predicate<Object> {
     private String property;
     
     @JsonCreator
-    public Default(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
+    Default(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       this.property = property;
       this.value = value;
     }

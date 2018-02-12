@@ -34,8 +34,10 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
         if(model.getPersisted()) {
           throw new WebApplicationException(javax.ws.rs.core.Response.Status.FORBIDDEN);
         }
+        SaveContext<M> context = new SaveContext<>(repository(), model);
+        authorize(user, model, context);
         try {
-          repository().save(model);
+          repository().save(context);
         } catch(Exception e) {
           logger.error("failed to save {}", model);
           throw e;
@@ -56,6 +58,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         SaveContext<M> context = new SaveContext<>(repository(), model);
+        authorize(user, model, context);
         try {
           repository().save(context);
         } catch(Exception e) {
@@ -117,6 +120,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
     try(Transaction tx = service().beginTx()) {
       M model = repository().findByUuid(uuid);
       if(model == null) throw new NotFoundException();
+      authorizeDelete(user, model);
       repository().remove(model);
       tx.success();
     }
@@ -125,4 +129,19 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @POST
   @Path("authorize")
   public void authorize(@Validated Model model) {}
+
+  /**
+   * Called on create and update to verify the user has access to the resource.
+   * @param user Authenticated user
+   * @param model Model to create or update
+   * @param context The created save context
+   */
+  public void authorize(U user, M model, SaveContext<M> context) {}
+
+  /**
+   * Called on delete to verify the user has access to the resource.
+   * @param user Authenticated user
+   * @param model Model to delete
+   */
+  public void authorizeDelete(U user, M model) {}
 }
