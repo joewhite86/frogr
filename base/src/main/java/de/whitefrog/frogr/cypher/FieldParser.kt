@@ -1,6 +1,7 @@
 package de.whitefrog.frogr.cypher
 
 import de.whitefrog.frogr.model.Base
+import de.whitefrog.frogr.model.annotation.IndexType
 import de.whitefrog.frogr.persistence.FieldDescriptor
 import de.whitefrog.frogr.repository.Repository
 import java.util.*
@@ -24,5 +25,10 @@ class FieldParser(val repository: Repository<*>) {
     }
     
     return descriptors
+  }
+  
+  fun isLowerCase(value: String): Boolean {
+    val field = parse(value).last()
+    return field.annotations().indexed != null && field.annotations().indexed.type == IndexType.LowerCase
   }
 }

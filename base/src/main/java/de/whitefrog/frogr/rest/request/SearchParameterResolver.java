@@ -127,6 +127,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     String[] split;
     switch(key) {
       case "q":
+      case "query":
         params.query(value);
         break;
       case "uuids":
@@ -195,8 +196,14 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       String value = splitted[1];
       Filter filter;
       if(value.startsWith("!")) {
-        filter = new Filter.NotEquals(field, guessType(value.substring(1)));
-      } else if(value.startsWith("<")) {
+        Object typedValue = guessType(value.substring(1));
+        if(typedValue instanceof String) {
+          filter = Filter.getStringFilter(field, value.substring(1));
+        } else {
+          filter = new Filter.Equals(field, typedValue);
+        }
+      } 
+      else if(value.startsWith("<")) {
         if(value.substring(1, 2).equals("=")) {
           filter = new Filter.LessThan(field, Long.parseLong(value.substring(2)));
           ((Filter.LessThan) filter).setIncluding(true);
@@ -204,7 +211,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
           filter = new Filter.LessThan(field, Long.parseLong(value.substring(1)));
           ((Filter.LessThan) filter).setIncluding(false);
         }
-      } else if(value.startsWith(">")) {
+      } 
+      else if(value.startsWith(">")) {
         if(value.substring(1, 2).equals("=")) {
           filter = new Filter.GreaterThan(field, Long.parseLong(value.substring(2)));
           ((Filter.GreaterThan) filter).setIncluding(true);
@@ -212,13 +220,21 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
           filter = new Filter.GreaterThan(field, Long.parseLong(value.substring(1)));
           ((Filter.GreaterThan) filter).setIncluding(false);
         }
-      } else if(value.startsWith("(") && value.contains("-") && value.endsWith(")")) {
+      } 
+      else if(value.startsWith("(") && value.contains("-") && value.endsWith(")")) {
         String[] range = value.substring(1, value.length() - 1).split("-");
         filter = new Filter.Range(field, Long.parseLong(range[0]), Long.parseLong(range[1]));
-      } else if(value.startsWith("=")) {
-        filter = new Filter.Equals(field, guessType(value.substring(1)));
-      } else {
-        filter = new Filter.Equals(field, guessType(value));
+      } 
+      else {
+        if(value.startsWith("=")) {
+          value = value.substring(1);
+        }
+        Object typedValue = guessType(value);
+        if(typedValue instanceof String) {
+          filter = Filter.getStringFilter(field, value);  
+        } else {
+          filter = new Filter.Equals(field, typedValue);
+        }
       }
       params.filter(filter);
     }

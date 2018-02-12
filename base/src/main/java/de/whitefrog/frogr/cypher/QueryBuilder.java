@@ -212,7 +212,7 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        List<FieldDescriptor<?>> fields = fieldParser.parse(lookup);
+        boolean lowerCaseIndex = fieldParser.isLowerCase(lookup);
         if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
           lookup = lookup.replace(".to", "_to");
         if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
@@ -220,8 +220,7 @@ public class QueryBuilder {
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
-        if(fields.get(fields.size() - 1).annotations().indexed != null && 
-            fields.get(fields.size() - 1).annotations().indexed.type() == IndexType.LowerCase) {
+        if(lowerCaseIndex) {
           lookup += "_lower";
         }
         
@@ -232,9 +231,7 @@ public class QueryBuilder {
           value = ((Date) value).getTime();
         }
         // for fulltext searches we have to convert to lower case
-        if(value != null && value instanceof String && 
-            fields.get(fields.size() - 1).annotations().indexed != null && 
-            fields.get(fields.size() - 1).annotations().indexed.type() == IndexType.LowerCase) {
+        if(value != null && value instanceof String && lowerCaseIndex) {
           value = ((String) value).toLowerCase();
         }
 
@@ -311,6 +308,7 @@ public class QueryBuilder {
         String[] split = params.query().split(":", 2);
         String field = split[0].trim();
         String query = split[1].trim();
+        if(fieldParser.isLowerCase(field)) field+= "_lower";
         if(query.isEmpty()) {
           throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
         }
@@ -324,6 +322,7 @@ public class QueryBuilder {
         String comparator = getQueryComparator(params.query());
         List<String> queries = new LinkedList<>();  
         for(String queryField: queryFields) {
+          if(fieldParser.isLowerCase(queryField)) queryField+= "_lower";
           queries.add(MessageFormat.format("{0}.{1} {2} '{'query'}'", id(), queryField, comparator));
         }
         wheres.add("(" + StringUtils.join(queries, " OR ") + ")");
