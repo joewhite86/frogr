@@ -28,7 +28,7 @@ public class Persons extends CRUDService<PersonRepository, Person> {
   @GET
   @Path("custom-search")
   public List<Person> customSearch(@SearchParam SearchParameter params) {
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       return repository().search().params(params).list();
     }
   }

@@ -4,6 +4,7 @@ import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Graph;
 import de.whitefrog.frogr.model.Model;
+import de.whitefrog.frogr.model.annotation.IndexType;
 import de.whitefrog.frogr.patch.Patcher;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
@@ -245,41 +246,44 @@ public class Service implements AutoCloseable {
         
         for(FieldDescriptor descriptor : persistence.cache().fieldMap(modelClass)) {
           AnnotationDescriptor annotations = descriptor.annotations();
-          ConstraintDefinition existing = null;
+          ConstraintDefinition existingConstraint = null;
+          String indexName = descriptor.getName() + 
+            (annotations.indexed != null && annotations.indexed.type().equals(IndexType.LowerCase)? "_lower": "");
+          
           for(ConstraintDefinition constraint : constraints) {
             String property = Iterables.single(constraint.getPropertyKeys());
-            if(property.equals(descriptor.getName())) {
-              existing = constraint;
+            if(property.equals(indexName)) {
+              existingConstraint = constraint;
               break;
             }
           }
           IndexDefinition existingIndex = null;
           for(IndexDefinition index : indices) {
             String property = Iterables.single(index.getPropertyKeys());
-            if(property.equals(descriptor.getName())) {
+            if(property.equals(indexName)) {
               existingIndex = index;
               break;
             }
           }
 
-          if(annotations.unique && existing == null) {
+          if(annotations.unique && existingConstraint == null) {
             schema.constraintFor(repository.label())
-              .assertPropertyIsUnique(descriptor.getName())
+              .assertPropertyIsUnique(indexName)
               .create();
             logger.debug("created unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
-          } else if(!annotations.unique && existing != null) {
-            existing.drop();
+          } else if(!annotations.unique && existingConstraint != null) {
+            existingConstraint.drop();
             logger.debug("dropped unique constraint on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
           }
 
           if(annotations.indexed != null && !annotations.unique && existingIndex == null) {
             schema.indexFor(repository.label())
-              .on(descriptor.getName())
+              .on(indexName)
               .create();
-            logger.debug("created index on field \"{}\" for model \"{}\"",
-              descriptor.getName(), repository.getModelClass().getSimpleName());
+            logger.debug("created {} index on field \"{}\" for model \"{}\"",
+              annotations.indexed.type(), descriptor.getName(), repository.getModelClass().getSimpleName());
           } else if(annotations.indexed == null && !annotations.unique && existingIndex != null) {
             existingIndex.drop();
             logger.debug("dropped index on field \"{}\" for model \"{}\"",

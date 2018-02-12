@@ -10,8 +10,8 @@ class Person(var field: String? = null, @Indexed var number: Long? = null) : Ent
   @Uuid
   @Unique
   var uniqueField: String? = null
-  @Indexed
-  var fulltext: String? = null
+  @Indexed(type = IndexType.LowerCase)
+  var lowerCaseIndex: String? = null
   var age: Age? = null
   var dateField: Date? = null
   @NullRemove

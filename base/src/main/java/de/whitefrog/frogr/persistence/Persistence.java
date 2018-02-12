@@ -7,6 +7,7 @@ import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.model.Entity;
+import de.whitefrog.frogr.model.annotation.IndexType;
 import de.whitefrog.frogr.model.annotation.RelationshipCount;
 import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
@@ -160,6 +161,10 @@ public class Persistence {
             else if(valueChanged) {
               node.setProperty(field.getName(), value);
               logger.info("{}: set value \"{}\" to \"{}\"", model, field.getName(), value);
+              if(value instanceof String && annotations.indexed != null && annotations.indexed.type().equals(IndexType.LowerCase)) {
+                node.setProperty(field.getName() + "_lower", ((String) value).toLowerCase());
+                logger.info("{}: set value \"{}\" to \"{}\"", model, field.getName() + "_lower", ((String) value).toLowerCase());
+              }
             }
           }
         } 
@@ -168,6 +173,9 @@ public class Persistence {
         else if(valueChanged && annotations.nullRemove) {
           logger.info("{}: removed value \"{}\"", model, field.getName());
           node.removeProperty(field.getName());
+          if(annotations.indexed != null && annotations.indexed.type().equals(IndexType.LowerCase)) {
+            node.removeProperty(field.getName() + "_lower");
+          }
         }
       }
     } catch(ReflectiveOperationException e) {
@@ -271,8 +279,14 @@ public class Persistence {
    * @param property Property name to remove
    */
   private void removeProperty(Model model, String property) {
+    FieldDescriptor descriptor = cache().fieldDescriptor(model.getClass(), property);
+    if(descriptor == null) throw new FieldNotFoundException(property, model);
+    
     Node node = getNode(model);
     node.removeProperty(property);
+    if(descriptor.annotations().indexed != null && descriptor.annotations().indexed.type().equals(IndexType.LowerCase)) {
+      node.removeProperty(property + "_lower");
+    }
     try {
       Field field = ReflectionUtil.getSuperField(model.getClass(), property);
       if(!field.isAccessible()) field.setAccessible(true);

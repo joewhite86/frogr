@@ -3,6 +3,7 @@ package de.whitefrog.frogr
 import de.whitefrog.frogr.test.TemporaryService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
+import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -30,6 +31,16 @@ class TestService {
   fun runningState() {
     assertThat(service.state).isEqualTo(Service.State.Running)
   }
+  
+  @Test
+  fun indexesCreated() {
+    service.beginTx().use {
+      val schema = service.graph().schema()
+      assertTrue(schema.indexes.any { it!!.propertyKeys.first() == "number" })
+      assertTrue(schema.indexes.asSequence().any { it!!.propertyKeys.first() == "lowerCaseIndex_lower" })
+    }
+  }
+  
   @Test
   fun setVersion() {
     service.version = "1.0.1"
