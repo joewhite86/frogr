@@ -55,7 +55,7 @@ RelationshipTypes
 -----------------
 
 We should add a class that holds our relationship types, so that we have consistent and convienient access.
-This is not a requirement but I highly recommend it. Doing so we don't have to deal with string in Java code, which is never a good choice, right?
+This is not a requirement but I highly recommend it. Doing so we don't have to deal with strings in Java code, which is never a good choice, right?
 
 .. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/RelationshipTypes.java
   :language: java

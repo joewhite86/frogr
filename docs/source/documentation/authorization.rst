@@ -23,7 +23,7 @@ in :doc:`Service <services>` methods using the ``@Auth`` annotation.
 
 .. literalinclude:: ../../../examples/oauth/src/main/java/de/whitefrog/frogr/auth/example/model/User.kt
   :language: kotlin
-  :lines: 5-
+  :lines: 10-
 
 As you can see the annotation ``@JsonView(Views.Secure::class)`` is used on the ``friends`` field.
 These views can be used on ``Service`` methods too, and describe what can be seen by the user.
@@ -39,7 +39,8 @@ Fields without ``@JsonView`` annotation are always visible.
 You can write your own User class, but then you'll have to create your own oAuth implementation.
 
 **Warning:** Be cautious with ``Views.Secure`` on ``Service`` methods, as it could reveal sensitive data. 
-So it's best to have custom methods like ``findFriendsOfFriends`` for example to get all friends of the users friends.
+So it's best to have custom methods like ``findFriendsOfFriends`` for example to get all friends of the users friends 
+instead of the common search function.
 
 User Repository
 ^^^^^^^^^^^^^^^
