@@ -81,8 +81,8 @@ class TestSearchParameterResolver {
     assertThat(params.getFilter("name")[0]).isInstanceOf(Filter.Equals::class.java)
     assertThat(params.getFilter("name")[0].value).isEqualTo("Rick Sanchez")
 
-    assertThat(params.getFilter("name")[1]).isInstanceOf(Filter.NotEquals::class.java)
-    assertThat(params.getFilter("name")[1].value).isEqualTo("*Smith")
+    assertThat(params.getFilter("name")[1]).isInstanceOf(Filter.EndsWith::class.java)
+    assertThat(params.getFilter("name")[1].value).isEqualTo("Smith")
     
     assertThat(params.getFilter("age")[0]).isInstanceOf(Filter.GreaterThan::class.java)
     assertThat(params.getFilter("age")[0].value).isEqualTo(10L)

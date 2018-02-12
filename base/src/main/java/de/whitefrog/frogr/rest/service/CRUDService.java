@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class CRUDService<R extends Repository<M>, M extends Model> extends RestService<R, M> {
   private static final Logger logger = LoggerFactory.getLogger(CRUDService.class);
   @POST
-  public List<M> create(List<M> models) {
+  public javax.ws.rs.core.Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
@@ -37,7 +37,9 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
       tx.success();
     }
 
-    return models;
+    return javax.ws.rs.core.Response
+      .status(javax.ws.rs.core.Response.Status.CREATED)
+      .entity(Response.build(models)).build();
   }
 
   @PUT
@@ -73,7 +75,7 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   @GET
   @JsonView({ Views.Public.class })
   public Response search(@SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response response = new Response<>();
 
     try(Transaction tx = service().beginTx()) {

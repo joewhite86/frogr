@@ -18,7 +18,7 @@ class TestExceptionMapper {
     val response = mapper.toResponse(ForbiddenException())
     assertThat(response.status).isEqualTo(Status.FORBIDDEN.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(403)
   }
@@ -27,7 +27,7 @@ class TestExceptionMapper {
     val response = mapper.toResponse(NotAuthorizedException(javax.ws.rs.core.Response.noContent()))
     assertThat(response.status).isEqualTo(Status.UNAUTHORIZED.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(401)
   }
@@ -36,7 +36,7 @@ class TestExceptionMapper {
     val response = mapper.toResponse(BadRequestException())
     assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(400)
   }
@@ -45,7 +45,7 @@ class TestExceptionMapper {
     val response = mapper.toResponse(NotFoundException())
     assertThat(response.status).isEqualTo(Status.NOT_FOUND.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(404)
   }
@@ -53,9 +53,9 @@ class TestExceptionMapper {
   fun mapMissingRequired() {
     val person = Person("test")
     val response = mapper.toResponse(MissingRequiredException(person, "requiredField"))
-    assertThat(response.status).isEqualTo(Status.OK.statusCode)
+    assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(601)
   }
@@ -63,9 +63,9 @@ class TestExceptionMapper {
   fun mapDuplicateEntry() {
     val person = Person("test")
     val response = mapper.toResponse(DuplicateEntryException("testmsg", person))
-    assertThat(response.status).isEqualTo(Status.OK.statusCode)
+    assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
     assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<Any>
+    val entity = response.entity as Response<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(602)
   }

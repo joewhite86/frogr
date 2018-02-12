@@ -35,11 +35,11 @@ public class UserRepository extends BaseUserRepository<User> {
       
       // login to create and print an access token - for test purposes only
       user = login("justin_roiland", "rickandmorty");
-      token = "Access Token: " + user.getAccessToken();
+      token = "access_token=" + user.getAccessToken();
       System.out.println("User created. Authorization: Bearer " + user.getAccessToken());
     } else {
       User user = login("justin_roiland", "rickandmorty");
-      token = "Access Token: " + user.getAccessToken();
+      token = "access_token=" + user.getAccessToken();
       System.out.println("Authorization: Bearer " + user.getAccessToken());
     }
     return token;

@@ -38,6 +38,7 @@ class ExceptionMapper : javax.ws.rs.ext.ExceptionMapper<Exception> {
       }
       response.errorCode = exception.response.status
       return javax.ws.rs.core.Response.fromResponse(exception.response)
+        .status(exception.response.status)
         .entity(response).build()
     } else if (exception is MissingRequiredException || exception is InvalidParameterException ||
       exception is ConstraintViolationException || exception is DuplicateEntryException) {
@@ -49,7 +50,8 @@ class ExceptionMapper : javax.ws.rs.ext.ExceptionMapper<Exception> {
       val code = getErrorCode(exception)
       if (code > -1) response.errorCode = code
     }
-    return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.OK).entity(response).build()
+    return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.BAD_REQUEST)
+      .entity(response).build()
   }
 
   private fun getErrorCode(e: FrogrException): Int {

@@ -22,13 +22,20 @@ public interface Filter extends Predicate<Object> {
 
   String getProperty();
   void setProperty(String property);
+
+  static Filter getStringFilter(String field, String value) {
+    if(value.startsWith("*") && value.endsWith("*")) return new Filter.Contains(field, value.substring(1, value.length() - 1));
+    if(value.startsWith("*")) return new Filter.EndsWith(field, value.substring(1));
+    if(value.endsWith("*")) return new Filter.StartsWith(field, value.substring(0, value.length() - 1));
+    return new Filter.Equals(field, value);
+  }
   
   abstract class Default implements Filter {
     private Object value;
     private String property;
     
     @JsonCreator
-    public Default(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
+    Default(@JsonProperty("property") String property, @JsonProperty("value") Object value) {
       this.property = property;
       this.value = value;
     }

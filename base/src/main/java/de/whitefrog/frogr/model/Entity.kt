@@ -214,13 +214,13 @@ abstract class Entity : Model, Comparable<Base> {
   }
 
   companion object {
-    @JvmField val AllFields = "all"
-    @JvmField val IdProperty = "id"
-    @JvmField val LastModified = "lastModified"
-    @JvmField val Created = "created"
-    @JvmField val Type = "type"
-    @JvmField val Model = "model"
-    @JvmField val Uuid = "uuid"
+    const val AllFields = "all"
+    const val IdProperty = "id"
+    const val LastModified = "lastModified"
+    const val Created = "created"
+    const val Type = "type"
+    const val Model = "model"
+    const val Uuid = "uuid"
     private val random = Random()
   }
 }

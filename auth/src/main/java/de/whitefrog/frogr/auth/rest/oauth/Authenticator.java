@@ -23,6 +23,10 @@ public class Authenticator<U extends BaseUser> implements io.dropwizard.auth.Aut
   public static void updateLastApiAccess(String accessToken) {
     lastApiAccess.put(accessToken, System.currentTimeMillis());
   }
+  
+  public static void removeToken(String accessToken) {
+    lastApiAccess.remove(accessToken);
+  }
 
   @Override
   public Optional<U> authenticate(String accessToken) {

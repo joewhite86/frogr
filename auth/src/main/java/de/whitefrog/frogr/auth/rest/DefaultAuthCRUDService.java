@@ -28,14 +28,16 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
 
   @POST
   @RolesAllowed({Role.User})
-  public List<M> create(@Auth U user, List<M> models) {
+  public javax.ws.rs.core.Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
           throw new WebApplicationException(javax.ws.rs.core.Response.Status.FORBIDDEN);
         }
+        SaveContext<M> context = new SaveContext<>(repository(), model);
+        authorize(user, model, context);
         try {
-          repository().save(model);
+          repository().save(context);
         } catch(Exception e) {
           logger.error("failed to save {}", model);
           throw e;
@@ -45,7 +47,9 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
       tx.success();
     }
 
-    return models;
+    return javax.ws.rs.core.Response
+      .status(javax.ws.rs.core.Response.Status.CREATED)
+      .entity(Response.build(models)).build();
   }
 
   @PUT
@@ -70,15 +74,6 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   }
 
   @GET
-  @Path("{id: [0-9]+}")
-  @RolesAllowed({Role.User})
-  @SuppressWarnings("unchecked")
-  public M read(@Auth U user, @PathParam("id") long id,
-                @SearchParam SearchParameter params) {
-    return (M) search(user, params.ids(id)).singleton();
-  }
-
-  @GET
   @Path("{uuid: [a-zA-Z0-9]+}")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
@@ -91,10 +86,10 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @RolesAllowed({Role.User})
   @JsonView({ Views.Public.class })
   public Response<M> search(@Auth U user, @SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer("myband." + repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
     Response<M> response = new Response<>();
 
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
       if(params.limit() > 0) {
         List<M> list = repository().search().params(params).list();
@@ -134,8 +129,19 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @POST
   @Path("authorize")
   public void authorize(@Validated Model model) {}
-  
+
+  /**
+   * Called on create and update to verify the user has access to the resource.
+   * @param user Authenticated user
+   * @param model Model to create or update
+   * @param context The created save context
+   */
   public void authorize(U user, M model, SaveContext<M> context) {}
 
+  /**
+   * Called on delete to verify the user has access to the resource.
+   * @param user Authenticated user
+   * @param model Model to delete
+   */
   public void authorizeDelete(U user, M model) {}
 }

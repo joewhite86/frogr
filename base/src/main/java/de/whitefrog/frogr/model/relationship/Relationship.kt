@@ -9,4 +9,9 @@ import de.whitefrog.frogr.model.Model
 interface Relationship<From : Model, To : Model> : Base {
   var from: From
   var to: To
+  
+  companion object {
+    const val From = "from"
+    const val To = "to"
+  }
 }

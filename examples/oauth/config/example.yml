@@ -5,12 +5,6 @@ server:
     adminConnectors:
       - type: http
         port: 8286
-    requestLog:
-        appenders:
-          - type: file
-            currentLogFilename: logs/access.log
-            threshold: ALL
-            archive: false
 logging:
     level: WARN
     loggers:

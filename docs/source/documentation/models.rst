@@ -30,8 +30,10 @@ Fields can be annotated with hibernate annotations extended by a set of unique o
 ``@Fetch``
   Indicates that a field should be automatically fetched.
 
-``@Indexed``
+``@Indexed(type=IndexType.Default)``
   Indicates that a field should be handled by an index.
+
+| ``type`` can be either Default or LowerCase for case-insensitive matches.
 
 ``@Lazy``
   Indicator for lists to fetch them lazily on demand, not every list item at once.

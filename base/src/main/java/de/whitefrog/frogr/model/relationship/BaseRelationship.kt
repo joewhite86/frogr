@@ -129,12 +129,12 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   }
 
   companion object {
-    @JvmField val AllFields = "all"
-    @JvmField val IdProperty = "id"
-    @JvmField val LastModified = "lastModified"
-    @JvmField val Created = "created"
-    @JvmField val Type = "type"
-    @JvmField val Uuid = "uuid"
+    const val AllFields = "all"
+    const val IdProperty = "id"
+    const val LastModified = "lastModified"
+    const val Created = "created"
+    const val Type = "type"
+    const val Uuid = "uuid"
     private val random = Random()
   }
 }

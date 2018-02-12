@@ -1,12 +1,13 @@
 package de.whitefrog.frogr.auth.repository;
 
+import de.whitefrog.frogr.auth.exception.AuthenticationException;
 import de.whitefrog.frogr.auth.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
 import de.whitefrog.frogr.exception.MissingRequiredException;
 import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.FieldList;
+import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.repository.BaseModelRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +15,6 @@ import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.helpers.collection.Iterators;
-import org.neo4j.helpers.collection.MapUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +59,17 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
         save(user);
         return user;
       } else {
-        throw new RuntimeException("Wrong username or password");
+        throw new AuthenticationException("Wrong username or password");
       }
     } finally {
       result.close();
     }
+  }
+  
+  public void logout(U user) {
+    Authenticator.removeToken(BaseUser.AccessToken);
+    user.removeProperty(BaseUser.AccessToken);
+    save(user);
   }
 
   public void register(U user) {
@@ -97,9 +103,6 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
   public void validateModel(SaveContext<U> context) {
     U user = context.model();
     if(!user.getPersisted()) {
-      if(user.getPassword() == null || user.getPassword().isEmpty()) {
-        throw new MissingRequiredException("must provide a password");
-      }
       if(user.getRole() == null) {
         throw new MissingRequiredException("no role specified");
       }

@@ -4,6 +4,7 @@ import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.Filter;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.model.annotation.IndexType;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
@@ -36,11 +37,13 @@ public class QueryBuilder {
   private final Map<String, String> matches = new HashMap<>();
   private final List<String> queryFields = new ArrayList<>();
   private final Persistence persistence;
+  private final FieldParser fieldParser;
 
   public QueryBuilder(Repository repository) {
     this.repository = repository;
     this.persistence = repository.service().persistence();
     this.type = repository.getModelClass().getSimpleName();
+    this.fieldParser = new FieldParser(repository);
     persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
       if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
         queryFields.add(descriptor.field().getName());
@@ -209,6 +212,7 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
+        boolean lowerCaseIndex = fieldParser.isLowerCase(lookup);
         if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
           lookup = lookup.replace(".to", "_to");
         if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
@@ -216,11 +220,19 @@ public class QueryBuilder {
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
+        if(lowerCaseIndex) {
+          lookup += "_lower";
+        }
+        
         String marker = filter.getProperty().replaceAll("\\.", "") + i;
 
         Object value = filter.getValue();
         if(value != null && value instanceof Date) {
           value = ((Date) value).getTime();
+        }
+        // for fulltext searches we have to convert to lower case
+        if(value != null && value instanceof String && lowerCaseIndex) {
+          value = ((String) value).toLowerCase();
         }
 
         if(filter instanceof Filter.Equals) {
@@ -296,6 +308,7 @@ public class QueryBuilder {
         String[] split = params.query().split(":", 2);
         String field = split[0].trim();
         String query = split[1].trim();
+        if(fieldParser.isLowerCase(field)) field+= "_lower";
         if(query.isEmpty()) {
           throw new IllegalArgumentException("empty queries not allowed: \"" + params.query() + "\"");
         }
@@ -309,6 +322,7 @@ public class QueryBuilder {
         String comparator = getQueryComparator(params.query());
         List<String> queries = new LinkedList<>();  
         for(String queryField: queryFields) {
+          if(fieldParser.isLowerCase(queryField)) queryField+= "_lower";
           queries.add(MessageFormat.format("{0}.{1} {2} '{'query'}'", id(), queryField, comparator));
         }
         wheres.add("(" + StringUtils.join(queries, " OR ") + ")");

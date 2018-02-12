@@ -18,7 +18,7 @@ public class Persons extends AuthCRUDService<PersonRepository, Person, User> {
   @Path("find-morty")
   @RolesAllowed(Role.User)
   public Person findMorty(@Auth User user) {
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       return repository().findMorty();
     }
   }

@@ -17,6 +17,13 @@ public class Response<T> implements Serializable {
   private Integer pages;
   private List<T> data = new ArrayList<>();
   
+  public static <T> Response<T> build(List<T> data) {
+    Response<T> response = new Response<>();
+    response.success = true;
+    response.data = data;
+    return response;
+  }
+  
   public void add(T... data) {
     CollectionUtils.addAll(this.data, data);
   }

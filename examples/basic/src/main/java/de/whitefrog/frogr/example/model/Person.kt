@@ -13,7 +13,7 @@ class Person() : Entity() {
   
   // Unique and required property
   @Unique
-  @Indexed
+  @Indexed(type = IndexType.LowerCase)
   @Required
   var name: String? = null
 
