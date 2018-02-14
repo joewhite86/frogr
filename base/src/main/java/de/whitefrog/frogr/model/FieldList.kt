@@ -1,7 +1,9 @@
 package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.google.common.collect.ImmutableSet
 import de.whitefrog.frogr.exception.QueryParseException
+import org.parboiled.common.ImmutableList
 import java.util.*
 
 /**
@@ -12,7 +14,10 @@ import java.util.*
   getterVisibility = JsonAutoDetect.Visibility.NONE, 
   setterVisibility = JsonAutoDetect.Visibility.NONE
 )
-class FieldList : HashSet<QueryField>() {
+class FieldList() : HashSet<QueryField>() {
+  constructor(list: FieldList): this() {
+    addAll(ImmutableSet.copyOf(list))
+  }
   fun containsField(name: String): Boolean {
     return this.any { it.field == name }
   }
@@ -23,6 +28,15 @@ class FieldList : HashSet<QueryField>() {
   
   fun getOrEmpty(name: String): QueryField {
     return firstOrNull { it.field == name } ?: QueryField(name)
+  }
+
+  override fun toString(): String {
+    var out = ""
+    this.forEachIndexed { i, field ->
+      out+= field
+      if(i + 1 < size) out+= ","
+    }
+    return out
   }
 
   companion object {

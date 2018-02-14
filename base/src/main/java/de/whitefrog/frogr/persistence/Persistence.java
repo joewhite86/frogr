@@ -2,6 +2,7 @@ package de.whitefrog.frogr.persistence;
 
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
+import com.google.common.collect.ImmutableSet;
 import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.helper.ReflectionUtil;
@@ -221,20 +222,17 @@ public class Persistence {
         model.setId(((Node) node).getId());
       } else {
         org.neo4j.graphdb.Relationship rel = (org.neo4j.graphdb.Relationship) node; 
-        Model from = get(rel.getStartNode());
-        if(fields.get("from") != null && !fields.get("from").subFields().isEmpty()) {
-          service.repository(from.getClass()).fetch(from, fields.get("from").subFields());
-        }
-        Model to = get(rel.getEndNode());
-        if(fields.get("to") != null && !fields.get("to").subFields().isEmpty())
-          service.repository(to.getClass()).fetch(to, fields.get("to").subFields());
+        Model from = get(rel.getStartNode(), fields.getOrEmpty("from").subFields());
+        Model to = get(rel.getEndNode(), fields.getOrEmpty("to").subFields());
+        
         Constructor<T> constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, new Class[] {from.getClass(), to.getClass()});
         model = constructor.newInstance(from, to);
         model.setId(rel.getId());
+        fields = new FieldList(fields);
         fields.remove(new QueryField("from"));
         fields.remove(new QueryField("to"));
       }
-      service.repository(clazz).fetch(model, fields);
+      if(!fields.isEmpty()) service.repository(clazz).fetch(model, fields);
       return model;
     } catch(IllegalStateException e) {
       throw e;

@@ -9,7 +9,7 @@ import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
-import de.whitefrog.frogr.rest.response.Response;
+import de.whitefrog.frogr.rest.response.FrogrResponse;
 import de.whitefrog.frogr.rest.service.DefaultRestService;
 import io.dropwizard.auth.Auth;
 import io.dropwizard.validation.Validated;
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,11 +29,11 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
 
   @POST
   @RolesAllowed({Role.User})
-  public javax.ws.rs.core.Response create(@Auth U user, List<M> models) {
+  public Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
-          throw new WebApplicationException(javax.ws.rs.core.Response.Status.FORBIDDEN);
+          throw new WebApplicationException(Response.Status.FORBIDDEN);
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
         authorize(user, model, context);
@@ -47,9 +48,9 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
       tx.success();
     }
 
-    return javax.ws.rs.core.Response
-      .status(javax.ws.rs.core.Response.Status.CREATED)
-      .entity(Response.build(models)).build();
+    return Response
+      .status(Response.Status.CREATED)
+      .entity(FrogrResponse.build(models)).build();
   }
 
   @PUT
@@ -85,9 +86,9 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @GET
   @RolesAllowed({Role.User})
   @JsonView({ Views.Public.class })
-  public Response<M> search(@Auth U user, @SearchParam SearchParameter params) {
+  public FrogrResponse<M> search(@Auth U user, @SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
-    Response<M> response = new Response<>();
+    FrogrResponse<M> response = new FrogrResponse<>();
 
     try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
@@ -109,7 +110,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   @Path("search")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
-  public Response<M> searchPost(@Auth U user, SearchParameter params) {
+  public FrogrResponse<M> searchPost(@Auth U user, SearchParameter params) {
     return search(user, params);
   }
 

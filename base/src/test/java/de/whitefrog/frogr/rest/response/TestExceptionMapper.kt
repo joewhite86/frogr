@@ -17,8 +17,8 @@ class TestExceptionMapper {
   fun mapForbidden() {
     val response = mapper.toResponse(ForbiddenException())
     assertThat(response.status).isEqualTo(Status.FORBIDDEN.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(403)
   }
@@ -26,8 +26,8 @@ class TestExceptionMapper {
   fun mapNotAuthorized() {
     val response = mapper.toResponse(NotAuthorizedException(javax.ws.rs.core.Response.noContent()))
     assertThat(response.status).isEqualTo(Status.UNAUTHORIZED.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(401)
   }
@@ -35,8 +35,8 @@ class TestExceptionMapper {
   fun mapBadRequest() {
     val response = mapper.toResponse(BadRequestException())
     assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(400)
   }
@@ -44,8 +44,8 @@ class TestExceptionMapper {
   fun mapNotFound() {
     val response = mapper.toResponse(NotFoundException())
     assertThat(response.status).isEqualTo(Status.NOT_FOUND.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(404)
   }
@@ -54,8 +54,8 @@ class TestExceptionMapper {
     val person = Person("test")
     val response = mapper.toResponse(MissingRequiredException(person, "requiredField"))
     assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(601)
   }
@@ -64,8 +64,8 @@ class TestExceptionMapper {
     val person = Person("test")
     val response = mapper.toResponse(DuplicateEntryException("testmsg", person))
     assertThat(response.status).isEqualTo(Status.BAD_REQUEST.statusCode)
-    assertThat(response.entity).isInstanceOf(Response::class.java)
-    val entity = response.entity as Response<*>
+    assertThat(response.entity).isInstanceOf(FrogrResponse::class.java)
+    val entity = response.entity as FrogrResponse<*>
     assertThat(entity.isSuccess).isFalse()
     assertThat(entity.errorCode).isEqualTo(602)
   }

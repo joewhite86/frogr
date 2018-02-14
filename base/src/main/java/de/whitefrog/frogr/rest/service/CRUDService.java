@@ -8,18 +8,19 @@ import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.repository.Repository;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
-import de.whitefrog.frogr.rest.response.Response;
+import de.whitefrog.frogr.rest.response.FrogrResponse;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 public abstract class CRUDService<R extends Repository<M>, M extends Model> extends RestService<R, M> {
   private static final Logger logger = LoggerFactory.getLogger(CRUDService.class);
   @POST
-  public javax.ws.rs.core.Response create(List<M> models) {
+  public Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
@@ -37,9 +38,9 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
       tx.success();
     }
 
-    return javax.ws.rs.core.Response
-      .status(javax.ws.rs.core.Response.Status.CREATED)
-      .entity(Response.build(models)).build();
+    return Response
+      .status(Response.Status.CREATED)
+      .entity(FrogrResponse.build(models)).build();
   }
 
   @PUT
@@ -74,9 +75,9 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
 
   @GET
   @JsonView({ Views.Public.class })
-  public Response search(@SearchParam SearchParameter params) {
+  public FrogrResponse search(@SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
-    Response response = new Response<>();
+    FrogrResponse response = new FrogrResponse<>();
 
     try(Transaction tx = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
@@ -97,7 +98,7 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   @POST
   @Path("search")
   @JsonView({Views.Public.class})
-  public Response searchPost(SearchParameter params) {
+  public FrogrResponse searchPost(SearchParameter params) {
     return search(params);
   }
 

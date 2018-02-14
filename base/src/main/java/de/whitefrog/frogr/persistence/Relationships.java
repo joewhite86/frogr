@@ -368,7 +368,7 @@ public class Relationships {
           Base other = persistence.get(relationship.getOtherNode(node));
           if(!collection.contains(other)) {
             relationship.delete();
-            logger.info("relationship between {} and {} removed", model, other);
+            logger.info("{}: relationship to {} removed", model, other);
           }
         }
       }

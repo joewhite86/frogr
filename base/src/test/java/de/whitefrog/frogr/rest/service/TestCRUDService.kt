@@ -1,7 +1,7 @@
 package de.whitefrog.frogr.rest.service
 
 import de.whitefrog.frogr.model.SearchParameter
-import de.whitefrog.frogr.rest.response.Response
+import de.whitefrog.frogr.rest.response.FrogrResponse
 import de.whitefrog.frogr.test.TestApplication
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
@@ -43,7 +43,7 @@ class TestCRUDService {
       webTarget = client.target("http://localhost:8282")
     }
 
-    private fun response(): GenericType<Response<Person>> = object : GenericType<Response<Person>>() {}
+    private fun response(): GenericType<FrogrResponse<Person>> = object : GenericType<FrogrResponse<Person>>() {}
 
     @AfterClass
     @JvmStatic

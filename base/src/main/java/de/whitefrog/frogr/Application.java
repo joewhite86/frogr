@@ -85,19 +85,22 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
     });
 
     // print the port in log
-    if(configuration.getServerFactory() instanceof DefaultServerFactory) {
-      DefaultServerFactory serverFactory = (DefaultServerFactory) configuration.getServerFactory();
-      for(ConnectorFactory connector : serverFactory.getApplicationConnectors()) {
-        if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
-          logger.info("Service available at: http://localhost:{}", ((HttpConnectorFactory) connector).getPort());
-          break;
+    if(logger.isInfoEnabled()) {
+      if(configuration.getServerFactory() instanceof DefaultServerFactory) {
+        DefaultServerFactory serverFactory = (DefaultServerFactory) configuration.getServerFactory();
+        for(ConnectorFactory connector : serverFactory.getApplicationConnectors()) {
+          if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
+            logger.info("Service available at: http://localhost:{}", ((HttpConnectorFactory) connector).getPort());
+            break;
+          }
         }
       }
-    } else {
-      SimpleServerFactory serverFactory = (SimpleServerFactory) configuration.getServerFactory();
-      HttpConnectorFactory connector = (HttpConnectorFactory) serverFactory.getConnector();
-      if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
-        logger.info("Service available at: http://localhost:{}", connector.getPort());
+      else {
+        SimpleServerFactory serverFactory = (SimpleServerFactory) configuration.getServerFactory();
+        HttpConnectorFactory connector = (HttpConnectorFactory) serverFactory.getConnector();
+        if(connector.getClass().isAssignableFrom(HttpConnectorFactory.class)) {
+          logger.info("Service available at: http://localhost:{}", connector.getPort());
+        }
       }
     }
   }

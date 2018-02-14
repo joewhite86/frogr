@@ -34,13 +34,4 @@ interface Base : Serializable {
 
   fun getLastModified(): Long?
   fun updateLastModified()
-
-  companion object {
-    const val AllFields = "all"
-    const val IdProperty = "id"
-    const val LastModified = "lastModified"
-    const val Created = "created"
-    const val Type = "type"
-    const val Uuid = "uuid"
-  }
 }

@@ -1,6 +1,10 @@
 package de.whitefrog.frogr.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.mrbean.MrBeanModule;
+import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.model.Base;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -8,9 +12,11 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Model cache to reduce reflection usage for models to a minimum.
@@ -30,23 +36,32 @@ public class ModelCache {
     packages
       .forEach(pkg -> configurationBuilder.addUrls(ClasspathHelper.forPackage(pkg)));
     reflections = new Reflections(configurationBuilder);
+    ObjectMapper mapper = new ObjectMapper();
+// com.fasterxml.jackson.module.mrbean.MrBeanModule:
+    mapper.registerModule(new MrBeanModule());
+    
     for(Class clazz : reflections.getSubTypesOf(Base.class)) {
+//      if(clazz.isInterface()) continue;
       modelCache.put(clazz.getSimpleName(), clazz);
 
-      List<FieldDescriptor> descriptors = new ArrayList<>();
-      Class traverse = clazz;
-
-      while(traverse != null && Base.class.isAssignableFrom(traverse)) {
-        for(Field field : traverse.getDeclaredFields()) {
-          if(!ignoreFields.contains(field.getName()) &&
-            !Modifier.isStatic(field.getModifiers()) &&
-            !containsField(descriptors, field.getName())) {
-            descriptors.add(new FieldDescriptor<>(field));
-          }
+      List<Field> fields;
+      if(clazz.isInterface()) {
+        try {
+          Object instance = mapper.readValue("{}", clazz);
+          fields = FieldUtils.getAllFieldsList(instance.getClass());
+        } catch(IOException e) {
+          throw new FrogrException("could not parse interface " + clazz.getSimpleName());
         }
-        traverse = traverse.getSuperclass();
+      } else {
+        fields = FieldUtils.getAllFieldsList(clazz);
       }
-
+      List<FieldDescriptor> descriptors = fields.stream()
+        .filter(field -> 
+          !ignoreFields.contains(field.getName()) &&
+          !Modifier.isStatic(field.getModifiers()))
+        .map(FieldDescriptor::new)
+        .collect(Collectors.toList());
+      
       cache.put(clazz, descriptors);
     }
     
@@ -101,13 +116,6 @@ public class ModelCache {
 
   public List<FieldDescriptor> fieldMap(Class clazz) {
     return cache.get(clazz);
-  }
-  
-  private <M extends Base> boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
-    for(FieldDescriptor<M> descriptor : descriptors) {
-      if(descriptor.field().getName().equals(fieldName)) return true;
-    }
-    return false;
   }
 
   public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {

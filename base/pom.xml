@@ -26,6 +26,11 @@
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-shell</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-mrbean</artifactId>
+        </dependency>
         
         <dependency>
             <groupId>commons-configuration</groupId>

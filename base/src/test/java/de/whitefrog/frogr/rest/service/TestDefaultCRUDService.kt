@@ -2,11 +2,9 @@ package de.whitefrog.frogr.rest.service
 
 import de.whitefrog.frogr.model.SearchParameter
 import de.whitefrog.frogr.repository.ModelRepository
-import de.whitefrog.frogr.rest.response.Response
+import de.whitefrog.frogr.rest.response.FrogrResponse
 import de.whitefrog.frogr.test.TestApplication
 import de.whitefrog.frogr.test.model.Clothing
-import de.whitefrog.frogr.test.model.Person
-import de.whitefrog.frogr.test.repository.PersonRepository
 import io.dropwizard.Configuration
 import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
@@ -45,7 +43,7 @@ class TestDefaultCRUDService {
       webTarget = client.target("http://localhost:8282")
     }
 
-    private fun response(): GenericType<Response<Clothing>> = object : GenericType<Response<Clothing>>() {}
+    private fun response(): GenericType<FrogrResponse<Clothing>> = object : GenericType<FrogrResponse<Clothing>>() {}
 
     @AfterClass
     @JvmStatic

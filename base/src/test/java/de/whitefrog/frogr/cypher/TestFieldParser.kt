@@ -3,6 +3,7 @@ package de.whitefrog.frogr.cypher
 import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
+import de.whitefrog.frogr.test.model.InventoryItem
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -44,5 +45,16 @@ class TestFieldParser {
     assertEquals(Clothing::class.java, fieldList[2].baseClass())
     assertEquals("name", fieldList[3].name)
     assertEquals(String::class.java, fieldList[3].baseClass())
+  }
+  
+  @Test
+  fun parseInterfaceRelationship() {
+    val parser = FieldParser(persons)
+    val fieldList = parser.parse("inventory.uuid")
+    assertThat(fieldList).hasSize(2)
+    assertEquals("inventory", fieldList[0].name)
+    assertEquals(InventoryItem::class.java, fieldList[0].baseClass())
+    assertEquals("uuid", fieldList[1].name)
+    assertEquals(String::class.java, fieldList[1].baseClass())
   }
 }

@@ -28,7 +28,7 @@ class ExceptionMapper : javax.ws.rs.ext.ExceptionMapper<Exception> {
   }
 
   override fun toResponse(exception: Exception): javax.ws.rs.core.Response {
-    val response = Response<Any>()
+    val response = FrogrResponse<Any>()
     response.isSuccess = false
     response.message = exception.message
     if (exception is WebApplicationException) {

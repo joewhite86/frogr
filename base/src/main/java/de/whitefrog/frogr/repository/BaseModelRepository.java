@@ -3,9 +3,11 @@ package de.whitefrog.frogr.repository;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
+import de.whitefrog.frogr.model.Entity;
 import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
+import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Label;
@@ -13,6 +15,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.PropertyContainer;
 
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,10 +64,15 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
     Set<String> output = new HashSet<>();
     Class<?>[] interfaces = clazz.getInterfaces();
     for(Class<?> i: interfaces) {
+      // scan only up to the model interface
       if(Model.class.isAssignableFrom(i) && !i.equals(Model.class)) {
         output.add(i.getSimpleName());
         output.addAll(getModelInterfaces(i));
       }
+    }
+    for(Class<?> parent = clazz.getSuperclass(); parent != null && !Modifier.isAbstract(parent.getModifiers()); parent = parent.getSuperclass()) {
+      if(Entity.class.isAssignableFrom(parent) || BaseRelationship.class.isAssignableFrom(parent)) break;
+      output.add(parent.getSimpleName());
     }
     return output;
   }

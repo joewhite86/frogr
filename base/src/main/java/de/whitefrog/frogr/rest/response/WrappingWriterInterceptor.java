@@ -32,11 +32,11 @@ public class WrappingWriterInterceptor implements ContainerResponseFilter, Conta
     if(entity instanceof String || entity instanceof File || entity instanceof StreamingOutput) {
       containerResponse.getHeaders().add("Cache-Control", "no-cache");
       return;
-    } else if(entity instanceof Response) {
+    } else if(entity instanceof FrogrResponse) {
       return;
     }
 
-    final Response response = new Response();
+    final FrogrResponse response = new FrogrResponse();
     response.setSuccess(true);
     // Handle JSON responses
     if(entity instanceof ValidationErrorMessage) {

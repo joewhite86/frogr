@@ -277,6 +277,19 @@ class TestSearch {
       assertThat(result[0]).isEqualTo(list[1])
     }
   }
+
+  @Test
+  fun searchLikedPersonsById() {
+    service.beginTx().use {
+      val list = prepareData()
+      val result = persons.search()
+        .filter(Filter.Equals("likes.id", list[1].id))
+        .returns("likes")
+        .list<Person>()
+      assertThat(result).isNotEmpty
+      assertThat(result[0]).isEqualTo(list[1])
+    }
+  }
   
   @Test
   fun start() {

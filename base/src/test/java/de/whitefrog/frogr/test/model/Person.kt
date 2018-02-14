@@ -32,6 +32,8 @@ class Person(var field: String? = null, @Indexed var number: Long? = null) : Ent
   var marriedWithRelationship: MarriedWith? = null
   @RelatedTo(direction = Direction.OUTGOING, type = "Wears")
   var wears: ArrayList<Clothing> = ArrayList()
+  @RelatedTo(direction = Direction.OUTGOING, type = "HasInventory")
+  var inventory: ArrayList<InventoryItem> = ArrayList()
 
   override fun equals(other: Any?): Boolean {
     if(other !is Person) return false

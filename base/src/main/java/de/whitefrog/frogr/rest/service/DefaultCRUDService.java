@@ -7,7 +7,7 @@ import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.rest.Views;
 import de.whitefrog.frogr.rest.request.SearchParam;
-import de.whitefrog.frogr.rest.response.Response;
+import de.whitefrog.frogr.rest.response.FrogrResponse;
 import io.dropwizard.validation.Validated;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -22,11 +23,11 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
   private static final Logger logger = LoggerFactory.getLogger(DefaultCRUDService.class);
 
   @POST
-  public javax.ws.rs.core.Response create(List<M> models) {
+  public Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
         if(model.getPersisted()) {
-          throw new WebApplicationException(javax.ws.rs.core.Response.Status.FORBIDDEN);
+          throw new WebApplicationException(Response.Status.FORBIDDEN);
         }
         try {
           repository().save(model);
@@ -39,9 +40,9 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
       tx.success();
     }
 
-    return javax.ws.rs.core.Response
-      .status(javax.ws.rs.core.Response.Status.CREATED)
-      .entity(Response.build(models)).build();
+    return Response
+      .status(Response.Status.CREATED)
+      .entity(FrogrResponse.build(models)).build();
   }
 
   @PUT
@@ -73,9 +74,9 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
 
   @GET
   @JsonView({ Views.Public.class })
-  public Response<M> search(@SearchParam SearchParameter params) {
+  public FrogrResponse<M> search(@SearchParam SearchParameter params) {
     Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
-    Response<M> response = new Response<>();
+    FrogrResponse<M> response = new FrogrResponse<>();
 
     try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
@@ -96,7 +97,7 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
   @POST
   @Path("search")
   @JsonView({Views.Public.class})
-  public Response<M> searchPost(SearchParameter params) {
+  public FrogrResponse<M> searchPost(SearchParameter params) {
     return search(params);
   }
 

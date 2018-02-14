@@ -84,7 +84,7 @@ class QueryField @JsonCreator constructor(@JsonProperty("field") var field: Stri
   override fun toString(): String {
     var str = field
     if(!subFields().isEmpty()) {
-      str += "{"
+      str += ".{"
       subFields().forEachIndexed { i, f ->
         str += f.toString() +
           (if (f.limit != SearchParameter.DefaultLimit) "(limit: " + f.limit + ")" else "") +

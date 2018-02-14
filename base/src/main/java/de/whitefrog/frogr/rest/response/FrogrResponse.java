@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Model to format responses in a unified way.
  */
-public class Response<T> implements Serializable {
+public class FrogrResponse<T> implements Serializable {
   private boolean success;
   private Long total;
   private String message;
@@ -17,8 +17,8 @@ public class Response<T> implements Serializable {
   private Integer pages;
   private List<T> data = new ArrayList<>();
   
-  public static <T> Response<T> build(List<T> data) {
-    Response<T> response = new Response<>();
+  public static <T> FrogrResponse<T> build(List<T> data) {
+    FrogrResponse<T> response = new FrogrResponse<>();
     response.success = true;
     response.data = data;
     return response;

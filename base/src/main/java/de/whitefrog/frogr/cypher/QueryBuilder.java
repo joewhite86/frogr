@@ -212,7 +212,7 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        boolean lowerCaseIndex = fieldParser.isLowerCase(lookup);
+        
         if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
           lookup = lookup.replace(".to", "_to");
         if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
@@ -220,8 +220,16 @@ public class QueryBuilder {
         String[] split = lookup.split("\\.");
         lookup = !lookup.contains(".")? 
           id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
-        if(lowerCaseIndex) {
-          lookup += "_lower";
+
+        boolean lowerCaseIndex;
+        if(lookup.endsWith(".id")) {
+          lookup = "id(" + lookup.substring(0, lookup.length() - 3) + ")";
+          lowerCaseIndex = false;
+        } else {
+          lowerCaseIndex = fieldParser.isLowerCase(lookup);
+          if(lowerCaseIndex) {
+            lookup += "_lower";
+          }
         }
         
         String marker = filter.getProperty().replaceAll("\\.", "") + i;

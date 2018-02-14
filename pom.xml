@@ -21,6 +21,7 @@
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <dropwizard.version>1.2.2</dropwizard.version>
+        <jackson.version>2.9.1</jackson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -367,7 +368,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.1</version>
+                <version>3.7</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -467,7 +468,12 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
-                <version>2.9.0</version>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-mrbean</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
