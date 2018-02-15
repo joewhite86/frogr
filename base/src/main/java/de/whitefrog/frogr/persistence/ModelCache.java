@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Model cache to reduce reflection usage for models to a minimum.
@@ -120,11 +119,8 @@ public class ModelCache {
     return cache.get(clazz);
   }
   
-  private <M extends Base> boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
-    for(FieldDescriptor<M> descriptor : descriptors) {
-      if(descriptor.field().getName().equals(fieldName)) return true;
-    }
-    return false;
+  private boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
+    return descriptors.stream().anyMatch(descriptor -> descriptor.field().getName().equals(fieldName));
   }
 
   public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 @Ignore
 class BenchmarkSearch : BaseBenchmark() {
   companion object {
-    const val initPersons = 1000000
+    const val initPersons = 100000
     const val searchCount = 200000
     
     private val personList = ArrayList<Person>(initPersons)
