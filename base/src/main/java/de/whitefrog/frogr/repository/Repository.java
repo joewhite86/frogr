@@ -6,6 +6,7 @@ import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.SearchParameter;
+import de.whitefrog.frogr.persistence.ModelCache;
 import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.persistence.Relationships;
 import de.whitefrog.frogr.service.Search;
@@ -21,6 +22,8 @@ import java.util.List;
  */
 public interface Repository<T extends Base> {
   boolean contains(T entity);
+
+  ModelCache cache();
 
   /**
    * Create appropriate the model for a neo4j property container.

@@ -172,9 +172,9 @@ public class Search {
       (params.returns().size() == 1 && params.returns().contains(repository.queryIdentifier()))) {
       stream = result.stream().map(new ResultMapper<>(repository, params));
     } else if(params.returns().size() == 1 && !params.returns().contains(repository.queryIdentifier())) {
-      FieldDescriptor descriptor = service.persistence().cache().fieldDescriptor(repository.getModelClass(),
+      FieldDescriptor descriptor = service.cache().fieldDescriptor(repository.getModelClass(),
         params.returns().get(0));
-      Repository<? extends Base> otherRepository = service.repository(descriptor.baseClass().getSimpleName());
+      Repository<? extends Base> otherRepository = service.repository(descriptor.baseClassName());
       stream = result.stream().map(new ResultMapper<>(otherRepository, params));
     } else { // params.returns().size() > 0, first return should be identifier
       stream = result.stream().map(new ResultMapper<>(repository, params));
@@ -412,14 +412,14 @@ public class Search {
           if(value instanceof Collection) {
             List<Base> related = new ArrayList<>(((Collection) value).size());
             for(PropertyContainer container: (Collection<PropertyContainer>) value) {
-                related.add(repository.service().persistence().get(container, fieldList));
+                related.add(repository.persistence().get(container, fieldList));
             }
             value = related;
           } else {
             PropertyContainer related = (PropertyContainer) result.get(resultEntry.getKey());
             value = repository.service().persistence().get(related, fieldList);
           }
-          FieldDescriptor field = repository.service().persistence().cache().fieldDescriptor(model.getClass(), resultEntry.getKey());
+          FieldDescriptor field = repository.cache().fieldDescriptor(model.getClass(), resultEntry.getKey());
 
           try {
             field.field().set(model, value);

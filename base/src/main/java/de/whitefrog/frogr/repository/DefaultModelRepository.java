@@ -13,7 +13,7 @@ public class DefaultModelRepository<T extends Model> extends BaseModelRepository
   @Override
   public Class<?> getModelClass() {
     if(modelClass == null) {
-      modelClass = service().persistence().cache().getModel(getType());
+      modelClass = cache().getModel(getType());
       if(modelClass == null) modelClass = Model.class;
     }
 

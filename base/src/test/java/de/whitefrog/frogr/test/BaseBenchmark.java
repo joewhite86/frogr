@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.test;
 
+import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.helper.TimeUtils;
 import junit.framework.TestCase;
 import org.junit.*;
@@ -14,9 +15,11 @@ import java.util.concurrent.TimeUnit;
 public class BaseBenchmark {
   @Rule
   public TestName test = new TestName();
+  private Task currentTask;
 
   private static final Map<String, Task> results = new HashMap<>();
   private static long benchmarkStart;
+  private static Service service;
 
 
   public static class Task {
@@ -36,11 +39,15 @@ public class BaseBenchmark {
 
   @BeforeClass
   public static void startBenchmark() {
+    System.out.println("starting");
     benchmarkStart = System.nanoTime();
+    service = new TemporaryService();
+    service.connect();
   }
 
   @AfterClass
   public static void printStatistics() {
+    service.shutdown();
     PrintStream stream = System.out;
 
     stream.println("");
@@ -81,19 +88,27 @@ public class BaseBenchmark {
       Benchmark benchmark = getClass().getMethod(test.getMethodName()).getAnnotation(Benchmark.class);
       Task task = new Task(benchmark);
       results.put(test.getMethodName(), task);
+      currentTask = task;
     }
   }
 
   @After
-  public void after() throws Exception {
+  public void after() {
     if(results.containsKey(test.getMethodName())) {
-      Task task = results.get(test.getMethodName());
-      task.result = (System.nanoTime() - task.start) / task.count;
-      printStatistics(task);
-      if(task.expectation > 0) {
-        TestCase.assertTrue("expected " + task.result + " to be less than " + task.expectation,
-          task.result < task.expectation);
+      currentTask.result = (System.nanoTime() - currentTask.start) / currentTask.count;
+      printStatistics(currentTask);
+      if(currentTask.expectation > 0) {
+        TestCase.assertTrue("expected " + currentTask.result + " to be less than " + currentTask.expectation,
+          currentTask.result < currentTask.expectation);
       }
     }
+  }
+  
+  public static Service service() {
+    return service;
+  }
+  
+  public Task task() {
+    return currentTask;
   }
 }

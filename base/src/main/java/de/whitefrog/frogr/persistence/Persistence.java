@@ -36,11 +36,11 @@ public class Persistence {
   private Service service;
   private ModelCache cache;
   private Relationships relationships;
+  private TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator();
   
-  public Persistence(Service service) {
+  public Persistence(Service service, ModelCache cache) {
     this.service = service;
-    cache = new ModelCache();
-    cache.scan(service.registry());
+    this.cache = cache;
     relationships = new Relationships(service, this);
   }
 
@@ -142,7 +142,6 @@ public class Persistence {
           // handle relationships
           if(annotations.relatedTo != null && valueChanged && model instanceof Model) {
             relationships.saveField((SaveContext<? extends Model>) context, descriptor);
-            logger.info("{}: updated relationships \"{}\"", model, field.getName());
           }
           // Handle other values
           else if(!(value instanceof Collection) && !(value instanceof Model)) {
@@ -232,7 +231,7 @@ public class Persistence {
         fields.remove(new QueryField("from"));
         fields.remove(new QueryField("to"));
       }
-      if(!fields.isEmpty()) service.repository(clazz).fetch(model, fields);
+      service.repository(clazz).fetch(model, fields);
       return model;
     } catch(IllegalStateException e) {
       throw e;
@@ -265,7 +264,6 @@ public class Persistence {
    * @return Generated uuid.
    */
   private String generateUuid() {
-    TimeBasedGenerator uuidGenerator = Generators.timeBasedGenerator();
     UUID uuid = uuidGenerator.generate();
     return Long.toHexString(uuid.getMostSignificantBits()) + Long.toHexString(uuid.getLeastSignificantBits());
   }

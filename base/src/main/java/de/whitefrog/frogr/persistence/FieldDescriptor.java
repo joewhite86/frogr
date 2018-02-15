@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.persistence;
 
+import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Model;
@@ -15,6 +16,7 @@ public class FieldDescriptor<T extends Base> {
   private boolean collection;
   private boolean relationship;
   private Class<T> baseClass;
+  private String baseClassName;
 
   @SuppressWarnings("unchecked")
   FieldDescriptor(Field field) {
@@ -42,6 +44,7 @@ public class FieldDescriptor<T extends Base> {
     } else {
       this.baseClass = (Class<T>) field.getType();
     }
+    this.baseClassName = this.baseClass.getSimpleName(); 
     
     this.relationship = Relationship.class.isAssignableFrom(baseClass);
   }
@@ -55,6 +58,7 @@ public class FieldDescriptor<T extends Base> {
   public Class<T> baseClass() {
     return baseClass;
   }
+  public String baseClassName() { return baseClassName; }
   public Field field() {
     return field;
   }

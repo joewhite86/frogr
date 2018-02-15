@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.model
 
+import de.whitefrog.frogr.exception.FrogrException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -25,5 +26,10 @@ class TestFieldList {
     assertThat(fields.containsField("children")).isTrue()
     assertThat(fields["marriedWith"]!!.subFields()).hasSize(3)
     assertThat(fields["marriedWith"]!!.subFields()["to"]!!.subFields()).hasSize(1)
+  }
+  @Test(expected = FrogrException::class)
+  fun wrongSubfieldFormat() {
+    val list = mutableListOf("name", "marriedWith.[to.name,from.{name,age},years(100)]", "children.[age,name]", "children.[children]")
+    FieldList.parseFields(list)
   }
 }

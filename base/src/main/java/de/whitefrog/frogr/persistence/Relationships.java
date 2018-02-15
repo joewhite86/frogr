@@ -151,7 +151,7 @@ public class Relationships {
       Relationship relationship = iterator.next();
       Node other = relationship.getOtherNode(node);
       String type = (String) other.getProperty(Entity.Type);
-      if(annotation.restrictType() && !type.equals(descriptor.baseClass().getSimpleName())) {
+      if(annotation.restrictType() && !type.equals(persistence.cache().getModelName(descriptor.baseClass()))) {
         count--; continue;
       }
       ModelRepository<M> repository = service.repository(type);
@@ -278,7 +278,7 @@ public class Relationships {
       context.setNode(relationship);
       model.setId(relationship.getId());
       model.setCreated(System.currentTimeMillis());
-      model.setType(model.getClass().getSimpleName());
+      model.setType(persistence.cache().getModelName(model.getClass()));
     } else {
       if(model.getType() == null) model.setType(context.repository().getType());
       model.updateLastModified();

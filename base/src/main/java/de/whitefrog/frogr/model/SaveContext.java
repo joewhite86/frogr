@@ -52,7 +52,7 @@ public class SaveContext<T extends Base> {
       original = repository.findByUuid(model.getUuid());
       model.setId(original.getId());
     }
-    fieldMap = repository.service().persistence().cache().fieldMap(model.getClass());
+    fieldMap = repository.cache().fieldMap(model.getClass());
   }
 
   /**
@@ -79,7 +79,7 @@ public class SaveContext<T extends Base> {
   }
   private boolean fieldChanged(Field field) {
     AnnotationDescriptor annotation = 
-      repository.service().persistence().cache().fieldAnnotations(repository().getModelClass(), field.getName());
+      repository.cache().fieldAnnotations(repository().getModelClass(), field.getName());
     try {
       if(!field.isAccessible()) field.setAccessible(true);
       Object value = field.get(model);

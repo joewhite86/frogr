@@ -7,6 +7,7 @@ import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.*;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
+import de.whitefrog.frogr.persistence.ModelCache;
 import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.persistence.Relationships;
 import de.whitefrog.frogr.service.Search;
@@ -34,15 +35,23 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private String type;
   private Persistence persistence;
   private Relationships relationships;
+  private QueryBuilder queryBuilder;
+  private String queryIdentifier;
+  private ModelCache modelCache;
   protected Class<?> modelClass;
 
-  public BaseRepository() {
+  BaseRepository() {
     this.logger = LoggerFactory.getLogger(getClass());
     this.type = getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Repository"));
   }
-  public BaseRepository(String type) {
+  BaseRepository(String type) {
     this.logger = LoggerFactory.getLogger(getClass());
     this.type = type;
+  }
+
+  @Override
+  public ModelCache cache() {
+    return modelCache;
   }
 
   @Override
@@ -63,7 +72,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   @Override
   public Class<?> getModelClass() {
     if(modelClass == null) {
-      modelClass = service.persistence().cache().getModel(getType());
+      modelClass = cache().getModel(getType());
     }
 
     return modelClass;
@@ -117,16 +126,20 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
     return service().graph();
   }
 
-  public void initialize() {}
+  public void initialize() {
+    this.modelCache = service.cache();
+    this.queryBuilder = new QueryBuilder(this);
+  }
 
   @Override
   public QueryBuilder queryBuilder() {
-    return new QueryBuilder(this);
+    return queryBuilder;
   }
   
   @Override
   public String queryIdentifier() {
-    return getType().toLowerCase();
+    if(queryIdentifier == null) queryIdentifier = getType().toLowerCase();
+    return queryIdentifier;
   }
 
   @Override
@@ -223,7 +236,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   public void validateModel(SaveContext<T> context) {
     context.fieldMap().forEach(f -> {
       if(context.model().getCheckedFields().contains(f.getName())) return;
-      AnnotationDescriptor annotations = service.persistence().cache().fieldAnnotations(context.model().getClass(), f.getName());
+      AnnotationDescriptor annotations = cache().fieldAnnotations(context.model().getClass(), f.getName());
       // check if required fields are set
       if(!context.model().getPersisted() && annotations.required) {
         try {

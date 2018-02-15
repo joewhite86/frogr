@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.cypher
 
+import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.model.Base
 import de.whitefrog.frogr.model.annotation.IndexType
 import de.whitefrog.frogr.persistence.FieldDescriptor
@@ -19,7 +20,7 @@ class FieldParser(val repository: Repository<*>) {
     var clazz = repository.modelClass
     
     while(index < fields.size) {
-      val descriptor = repository.persistence().cache().fieldDescriptor(clazz, fields[index])
+      val descriptor = repository.cache().fieldDescriptor(clazz, fields[index])
       if(descriptor != null) {
         descriptors.add(descriptor)
 
@@ -27,7 +28,7 @@ class FieldParser(val repository: Repository<*>) {
           clazz = descriptor.baseClass()
         }
       } else {
-        logger.warn("field {} could not be found on {}", fields[index], clazz.simpleName)
+        throw FrogrException("\"field ${fields[index]} could not be found on ${clazz.simpleName}")
       }
       
       index++
@@ -37,7 +38,12 @@ class FieldParser(val repository: Repository<*>) {
   }
   
   fun isLowerCase(value: String): Boolean {
-    val field = parse(value).last()
-    return field.annotations().indexed != null && field.annotations().indexed.type == IndexType.LowerCase
+    return try {
+      val field = parse(value).last()
+      field.annotations().indexed != null && field.annotations().indexed.type == IndexType.LowerCase
+    } catch(e: FrogrException) {
+      logger.warn(e.message, e)
+      false
+    }
   }
 }

@@ -13,7 +13,7 @@ public class DefaultRelationshipRepository<T extends BaseRelationship> extends B
   @Override
   public Class<?> getModelClass() {
     if(modelClass == null) {
-      modelClass = service().persistence().cache().getModel(getType());
+      modelClass = cache().getModel(getType());
       if(modelClass == null) modelClass = BaseRelationship.class;
     }
 

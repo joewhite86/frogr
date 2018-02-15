@@ -55,12 +55,14 @@ public class ModelCache {
       } else {
         fields = FieldUtils.getAllFieldsList(clazz);
       }
-      List<FieldDescriptor> descriptors = fields.stream()
-        .filter(field -> 
-          !ignoreFields.contains(field.getName()) &&
-          !Modifier.isStatic(field.getModifiers()))
-        .map(FieldDescriptor::new)
-        .collect(Collectors.toList());
+      List<FieldDescriptor> descriptors = new ArrayList<>();
+      for(Field field: fields) {
+        if( !ignoreFields.contains(field.getName()) &&
+            !Modifier.isStatic(field.getModifiers()) &&
+            !containsField(descriptors, field.getName())) {
+          descriptors.add(new FieldDescriptor(field));
+        }
+      }
       
       cache.put(clazz, descriptors);
     }
@@ -117,6 +119,13 @@ public class ModelCache {
   public List<FieldDescriptor> fieldMap(Class clazz) {
     return cache.get(clazz);
   }
+  
+  private <M extends Base> boolean containsField(List<FieldDescriptor> descriptors, String fieldName) {
+    for(FieldDescriptor<M> descriptor : descriptors) {
+      if(descriptor.field().getName().equals(fieldName)) return true;
+    }
+    return false;
+  }
 
   public static Field getField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
     Class<?> tmpClass = clazz;
@@ -141,5 +150,11 @@ public class ModelCache {
   
   public Class getModel(String name) {
     return modelCache.get(name);
+  }
+  public String getModelName(Class modelClass) {
+    for(String name: modelCache.keySet()) {
+      if(modelClass.equals(modelCache.get(name))) return name;
+    }
+    return null;
   }
 }

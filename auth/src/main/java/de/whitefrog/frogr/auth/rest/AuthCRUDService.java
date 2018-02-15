@@ -92,7 +92,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   @JsonView({ Views.Public.class })
   @SuppressWarnings("unchecked")
   public FrogrResponse search(@Auth U user, @SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().cache().getModelName(repository().getModelClass()).toLowerCase() + ".search").time();
     FrogrResponse response = new FrogrResponse<>();
 
     try(Transaction ignored = service().beginTx()) {

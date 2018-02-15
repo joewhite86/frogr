@@ -2,6 +2,7 @@ package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.google.common.collect.ImmutableSet
+import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.exception.QueryParseException
 import org.parboiled.common.ImmutableList
 import java.util.*
@@ -71,6 +72,7 @@ class FieldList() : HashSet<QueryField>() {
 
       var field = ""
       var brackets = 0
+      var inLimitString = false
       for(char in input) {
         when {
           char == '}' -> {
@@ -83,7 +85,12 @@ class FieldList() : HashSet<QueryField>() {
             field+= char
           }
           brackets > 0 || char != ',' -> {
-            field+= char
+            if(char == '(') inLimitString = true
+            else if(char == ')') inLimitString = false
+            else if(brackets == 0 && !inLimitString && !char.isLetter() && char != '.' && char != ' ') 
+              throw FrogrException("cannot parse character '$char' ($input)")
+            
+            if(char != ' ') field+= char
           }
           else -> {
             // brackets is 0 and current char is ',' (end of field)

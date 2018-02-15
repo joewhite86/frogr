@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.test;
 
+import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.helper.TimeUtils;
 import junit.framework.TestCase;
 import org.junit.*;
@@ -17,6 +18,7 @@ public class BaseBenchmark {
 
   private static final Map<String, Task> results = new HashMap<>();
   private static long benchmarkStart;
+  private Service service;
 
 
   public static class Task {
@@ -76,6 +78,8 @@ public class BaseBenchmark {
 
   @Before
   public void before() throws Exception {
+    service = new TemporaryService();
+    service.connect();
     Method method = getClass().getMethod(test.getMethodName());
     if(method.isAnnotationPresent(Benchmark.class)) {
       Benchmark benchmark = getClass().getMethod(test.getMethodName()).getAnnotation(Benchmark.class);
@@ -85,7 +89,8 @@ public class BaseBenchmark {
   }
 
   @After
-  public void after() throws Exception {
+  public void after() {
+    service.shutdown();
     if(results.containsKey(test.getMethodName())) {
       Task task = results.get(test.getMethodName());
       task.result = (System.nanoTime() - task.start) / task.count;

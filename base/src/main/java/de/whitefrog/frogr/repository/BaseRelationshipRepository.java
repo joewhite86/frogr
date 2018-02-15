@@ -24,20 +24,23 @@ import java.lang.reflect.Constructor;
 public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
     extends BaseRepository<T> implements RelationshipRepository<T> {
   private final Logger logger;
+  private Constructor constructor;
 
   public BaseRelationshipRepository() {
     super();
     this.logger = LoggerFactory.getLogger(getClass());
   }
-  public BaseRelationshipRepository(String modelName) {
+  
+  BaseRelationshipRepository(String modelName) {
     super(modelName);
     this.logger = LoggerFactory.getLogger(getClass());
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public T createModel(Model from, Model to) {
     try {
-      Constructor constructor = ConstructorUtils.getMatchingAccessibleConstructor(getModelClass(),
+      if(constructor == null) constructor = ConstructorUtils.getMatchingAccessibleConstructor(getModelClass(),
         new Class[] {from.getClass(), to.getClass()});
       return (T) constructor.newInstance(from, to);
     } catch(ReflectiveOperationException e) {
@@ -66,7 +69,6 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   @Override
   public org.neo4j.graphdb.Relationship getRelationship(Relationship model) {
     Validate.notNull(model, "The model is null");
-    Validate.notNull(model.getId(), "ID can not be null.");
     try {
       return service().graph().getRelationshipById(model.getId());
     } catch(NotFoundException e) {

@@ -4,7 +4,6 @@ import de.whitefrog.frogr.helper.ReflectionUtil;
 import de.whitefrog.frogr.model.Filter;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SearchParameter;
-import de.whitefrog.frogr.model.annotation.IndexType;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
@@ -35,6 +34,7 @@ public class QueryBuilder {
   private SearchParameter params;
   private final String type;
   private final Map<String, String> matches = new HashMap<>();
+  // list of indexed fields
   private final List<String> queryFields = new ArrayList<>();
   private final Persistence persistence;
   private final FieldParser fieldParser;
@@ -42,7 +42,7 @@ public class QueryBuilder {
   public QueryBuilder(Repository repository) {
     this.repository = repository;
     this.persistence = repository.service().persistence();
-    this.type = repository.getModelClass().getSimpleName();
+    this.type = persistence.cache().getModelName(repository.getModelClass());
     this.fieldParser = new FieldParser(repository);
     persistence.cache().fieldMap(repository.getModelClass()).forEach(descriptor -> {
       if(descriptor.annotations().indexed != null || descriptor.annotations().unique) {
@@ -60,6 +60,7 @@ public class QueryBuilder {
   }
 
   private StringBuilder match() {
+    matches.clear();
     // add required matches for ordered fields when counted
     for(SearchParameter.OrderBy order : params.orderBy()) {
       if(!order.field().contains(".") && !matches.keySet().contains(order.field())) {
@@ -74,11 +75,11 @@ public class QueryBuilder {
               descriptor.relationshipCount.direction().equals(Direction.BOTH)) {
             match.from(id()).fromLabel(type);
             if(!descriptor.relationshipCount.otherModel().equals(Model.class)) 
-              match.toLabel(descriptor.relationshipCount.otherModel().getSimpleName());
+              match.toLabel(persistence.cache().getModelName(descriptor.relationshipCount.otherModel()));
           } else {
             match.to(id()).toLabel(type);
             if(!descriptor.relationshipCount.otherModel().equals(Model.class))
-              match.fromLabel(descriptor.relationshipCount.otherModel().getSimpleName());
+              match.fromLabel(persistence.cache().getModelName(descriptor.relationshipCount.otherModel()));
           }
           if(descriptor.relationshipCount.direction().equals(Direction.BOTH)) {
             match.undirected();
@@ -166,7 +167,7 @@ public class QueryBuilder {
     }
     
     AnnotationDescriptor annotations = descriptor.annotations();
-    String className = descriptor.baseClass().getSimpleName();
+    String className = descriptor.baseClassName();
 
     if(annotations.relatedTo != null) {
       if(annotations.relatedTo.direction().equals(Direction.OUTGOING) ||
@@ -212,14 +213,6 @@ public class QueryBuilder {
       int i = 0;
       for(Filter filter : params.filters()) {
         String lookup = filter.getProperty();
-        
-        if(lookup.contains(".to.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "to") == null) 
-          lookup = lookup.replace(".to", "_to");
-        if(lookup.contains(".from.") && persistence.cache().fieldDescriptor(repository().getModelClass(), "from") == null)
-          lookup = lookup.replace(".from", "_from");
-        String[] split = lookup.split("\\.");
-        lookup = !lookup.contains(".")? 
-          id() + "." + lookup: split[split.length - 2] + "." + split[split.length - 1];
 
         boolean lowerCaseIndex;
         if(lookup.endsWith(".id")) {
@@ -230,7 +223,11 @@ public class QueryBuilder {
           if(lowerCaseIndex) {
             lookup += "_lower";
           }
+          if(!lookup.contains(".")) {
+            lookup = id() + "." + lookup;
+          }
         }
+        
         
         String marker = filter.getProperty().replaceAll("\\.", "") + i;
 
