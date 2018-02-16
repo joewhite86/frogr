@@ -40,7 +40,7 @@ class FieldParser(val repository: Repository<*>) {
   fun isLowerCase(value: String): Boolean {
     return try {
       val field = parse(value).last()
-      field.annotations().indexed != null && field.annotations().indexed.type == IndexType.LowerCase
+      field.annotations().indexed?.type == IndexType.LowerCase
     } catch(e: FrogrException) {
       logger.warn(e.message, e)
       false

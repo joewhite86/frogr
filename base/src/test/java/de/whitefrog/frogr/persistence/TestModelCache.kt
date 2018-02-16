@@ -28,7 +28,7 @@ class TestModelCache {
   
   @Test(expected = NoSuchFieldException::class)
   fun getUnknownField() {
-    ModelCache.getField(Person::class.java, "unknownField")
+    service.cache().getField(Person::class.java, "unknownField")
   }
   @Test
   fun containsModel() {
@@ -40,7 +40,7 @@ class TestModelCache {
     val field = Person::class.java.getDeclaredField("field")
     val descriptor = service.persistence().cache().fieldDescriptor(field)
     assertNotNull(descriptor)
-    assertThat(descriptor.field()).isEqualTo(field)
+    assertThat(descriptor!!.field()).isEqualTo(field)
   }
   @Test
   fun subtypesOf() {

@@ -54,11 +54,11 @@ class TestRelationships {
       persons.save(person2, person3, person1)
       
       val descriptor = persistence.cache().fieldDescriptor(Person::class.java, "likesRelationships")
-      val likes = persistence.relationships().getRelationships<Likes>(person1, descriptor, 
+      val likes = persistence.relationships().getRelationships<Likes>(person1, descriptor!!, 
         QueryField("likesRelationships"), FieldList.parseFields("to.field"))
       assertNotNull(likes)
       assertThat(likes).hasSize(2)
-      assertThat(likes.elementAt(0)!!.to.field).isEqualTo("test2")
+      assertThat(likes.elementAt(0).to.field).isEqualTo("test2")
     }
   }
   @Test

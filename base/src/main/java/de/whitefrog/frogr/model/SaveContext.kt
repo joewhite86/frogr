@@ -6,7 +6,6 @@ import de.whitefrog.frogr.persistence.FieldDescriptor
 import de.whitefrog.frogr.repository.Repository
 import org.neo4j.graphdb.PropertyContainer
 import java.lang.reflect.Field
-import java.util.stream.Collectors
 
 /**
  * Context for entity/relationship save operations.

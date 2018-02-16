@@ -109,7 +109,7 @@ public class QueryBuilder {
         if(descriptor.relatedTo != null) {
           boolean isRelationship = false;
           try {
-            Field field = ModelCache.getField(repository().getModelClass(), returnsKey);
+            Field field = persistence.cache().getField(repository().getModelClass(), returnsKey);
             if(Collection.class.isAssignableFrom(field.getType())) {
               isRelationship = Relationship.class.isAssignableFrom(ReflectionUtil.getGenericClass(field));
             }

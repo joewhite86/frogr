@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.google.common.collect.ImmutableSet
 import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.exception.QueryParseException
-import org.parboiled.common.ImmutableList
 import java.util.*
 
 /**
