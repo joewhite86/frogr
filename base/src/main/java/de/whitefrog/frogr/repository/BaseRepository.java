@@ -238,7 +238,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
       if(context.model().getCheckedFields().contains(f.getName())) return;
       AnnotationDescriptor annotations = cache().fieldAnnotations(context.model().getClass(), f.getName());
       // check if required fields are set
-      if(!context.model().getPersisted() && annotations.required) {
+      if(!context.model().isPersisted() && annotations.required) {
         try {
           Object value = f.field().get(context.model());
           if(value == null || (value instanceof String && ((String) value).isEmpty())) {

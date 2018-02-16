@@ -2,7 +2,6 @@ package de.whitefrog.frogr.persistence;
 
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
-import com.google.common.collect.ImmutableSet;
 import de.whitefrog.frogr.Service;
 import de.whitefrog.frogr.exception.*;
 import de.whitefrog.frogr.helper.ReflectionUtil;
@@ -81,7 +80,7 @@ public class Persistence {
     Label label = repository.label();
     boolean create = false;
 
-    if(!model.getPersisted()) {
+    if(!model.isPersisted()) {
       create = true;
       Node node = service.graph().createNode(label);
       context.setNode(node);
@@ -343,7 +342,7 @@ public class Persistence {
    */
   public <T extends Base> void fetch(T model, FieldList fields, boolean refetch) {
     Validate.notNull(model, "model cannot be null");
-    if(!model.getPersisted()) throw new FrogrException("the model " + model + " is not persisted yet");
+    if(!model.isPersisted()) throw new FrogrException("the model " + model + " is not persisted yet");
     PropertyContainer node;
 
     try {

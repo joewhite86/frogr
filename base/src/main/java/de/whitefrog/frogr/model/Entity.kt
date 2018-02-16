@@ -54,7 +54,7 @@ abstract class Entity : Model, Comparable<Base> {
    * Timestamp, updated each time the entity is perstisted.
    */
   @JsonView(Views.Secure::class)
-  private var lastModified: Long? = null
+  override var lastModified: Long? = null
 
   /**
    * True, if the id was set automatically. False when set by a database.
@@ -87,7 +87,7 @@ abstract class Entity : Model, Comparable<Base> {
   /**
    * True, if the entity was already persisted.
    */
-  override val persisted: Boolean
+  override val isPersisted: Boolean
     @JsonIgnore
     get() = id > -1 || uuid != null
 
@@ -103,6 +103,7 @@ abstract class Entity : Model, Comparable<Base> {
    * Create a clone of this entity.
    * @param fields List of fields to clone
    */
+  @Suppress("UNCHECKED_CAST")
   override fun <T : Base> clone(fields: List<String>): T {
     val base: T
     try {
@@ -136,22 +137,6 @@ abstract class Entity : Model, Comparable<Base> {
    */
   override fun addCheckedField(field: String) {
     checkedFields.add(field)
-  }
-
-  /**
-   * Get the last modified timestamp.
-   * @return Last modified timestamp
-   */
-  override fun getLastModified(): Long? {
-    return lastModified
-  }
-
-  /**
-   * Set the last modified timestamp.
-   * @param lastModified Timestamp
-   */
-  fun setLastModified(lastModified: Long) {
-    this.lastModified = lastModified
   }
 
   /**

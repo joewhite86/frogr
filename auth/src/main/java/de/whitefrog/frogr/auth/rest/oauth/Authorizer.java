@@ -13,7 +13,7 @@ public class Authorizer<U extends BaseUser> implements io.dropwizard.auth.Author
 
   @Override
   public boolean authorize(U user, String role) {
-    try(Transaction tx = repository.service().beginTx()) {
+    try(Transaction ignored = repository.service().beginTx()) {
       return user != null && repository.getRoles().inRole(user.getRole(), role);
     }
   }

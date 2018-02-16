@@ -41,7 +41,7 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
   override var type: String? = null
   override var created: Long? = null
   @JsonView(Views.Secure::class)
-  private var lastModified: Long? = null
+  override var lastModified: Long? = null
 
   @NotPersistent
   private var initialId = true
@@ -72,21 +72,18 @@ open class BaseRelationship<From : Model, To : Model>() : Relationship<From, To>
     removeProperties.add(property)
   }
 
-  override fun getLastModified(): Long? {
-    return lastModified
-  }
-
   override fun updateLastModified() {
     this.lastModified = System.currentTimeMillis()
   }
 
-  override val persisted: Boolean
+  override val isPersisted: Boolean
     get() = id > -1 || uuid != null
 
   override fun <T : Base> clone(vararg fields: String): T {
     return clone(Arrays.asList(*fields))
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun <T : Base> clone(fields: List<String>): T {
     val base: T
     try {

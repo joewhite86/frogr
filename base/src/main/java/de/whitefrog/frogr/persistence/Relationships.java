@@ -263,12 +263,12 @@ public class Relationships {
     T model = context.model();
     boolean create = false;
 
-    if(!model.getPersisted()) {
+    if(!model.isPersisted()) {
       create = true;
       
-      if(!model.getFrom().getPersisted()) 
+      if(!model.getFrom().isPersisted()) 
         throw new FrogrException("the model " + model.getFrom() + " is not yet persisted, but used as 'from' in relationship " + model);
-      if(!model.getTo().getPersisted())
+      if(!model.getTo().isPersisted())
         throw new FrogrException("the model " + model.getTo() + " is not yet persisted, but used as 'to' in relationship " + model);
       
       Node fromNode = persistence.getNode(model.getFrom());
@@ -303,11 +303,11 @@ public class Relationships {
   
   @SuppressWarnings("unchecked")
   private <T extends BaseRelationship> void save(Model model, T relModel, RelatedTo annotation) {
-    if(!relModel.getFrom().getPersisted()) {
+    if(!relModel.getFrom().isPersisted()) {
       throw new RelatedNotPersistedException(
         "the 'from' model " + relModel.getFrom() + " (" + annotation.type() + ") is not yet persisted");
     }
-    if(!relModel.getTo().getPersisted()) {
+    if(!relModel.getTo().isPersisted()) {
       throw new RelatedNotPersistedException(
         "the 'to' model " + relModel.getTo() + " (" + annotation.type() + ") is not yet persisted");
     }

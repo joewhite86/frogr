@@ -26,7 +26,7 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
   public Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(model.getPersisted()) {
+        if(model.isPersisted()) {
           throw new WebApplicationException(Response.Status.FORBIDDEN);
         }
         try {

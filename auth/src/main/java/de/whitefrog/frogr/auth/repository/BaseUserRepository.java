@@ -82,7 +82,7 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
     U user = context.model();
 
     // encrypt password and set defaults for new users
-    if(!user.getPersisted()) {
+    if(!user.isPersisted()) {
       if(StringUtils.isEmpty(user.getPassword())) throw new MissingRequiredException("must provide a password");
       Set<ConstraintViolation<U>> violations = service().validator().validateProperty(user, BaseUser.Password);
       if(!violations.isEmpty()) {
@@ -102,7 +102,7 @@ public class BaseUserRepository<U extends BaseUser> extends BaseModelRepository<
   @Override
   public void validateModel(SaveContext<U> context) {
     U user = context.model();
-    if(!user.getPersisted()) {
+    if(!user.isPersisted()) {
       if(user.getRole() == null) {
         throw new MissingRequiredException("no role specified");
       }

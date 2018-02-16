@@ -19,8 +19,9 @@ interface Base : Serializable {
   var checkedFields: HashSet<String>
   var fetchedFields: HashSet<String>
   var removeProperties: HashSet<String>
-  val persisted: Boolean
+  val isPersisted: Boolean
   var created: Long?
+  var lastModified: Long?
 
   fun addCheckedField(field: String)
   fun removeProperty(property: String)
@@ -31,7 +32,5 @@ interface Base : Serializable {
   fun type(): String?
 
   fun resetId()
-
-  fun getLastModified(): Long?
   fun updateLastModified()
 }

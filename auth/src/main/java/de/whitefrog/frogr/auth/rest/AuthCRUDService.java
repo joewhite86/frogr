@@ -32,7 +32,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   public Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(model.getPersisted()) {
+        if(model.isPersisted()) {
           throw new ForbiddenException("the model is not yet persisted");
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
@@ -59,7 +59,7 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   public List<M> update(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(!model.getPersisted()) {
+        if(!model.isPersisted()) {
           throw new ForbiddenException("the model has to be created first");
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
@@ -82,9 +82,10 @@ abstract public class AuthCRUDService <R extends Repository<M>, M extends Model,
   @Path("{uuid: [a-zA-Z0-9]+}")
   @RolesAllowed({Role.User})
   @JsonView({Views.Public.class})
-  public Model read(@Auth U user, @PathParam("uuid") String uuid,
+  @SuppressWarnings("unchecked")
+  public M read(@Auth U user, @PathParam("uuid") String uuid,
                     @SearchParam SearchParameter params) {
-    return (Model) search(user, params.uuids(uuid)).singleton();
+    return (M) search(user, params.uuids(uuid)).singleton();
   }
 
   @GET

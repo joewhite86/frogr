@@ -32,7 +32,7 @@ public abstract class DefaultAuthCRUDService<M extends Model, U extends BaseUser
   public Response create(@Auth U user, List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(model.getPersisted()) {
+        if(model.isPersisted()) {
           throw new WebApplicationException(Response.Status.FORBIDDEN);
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);

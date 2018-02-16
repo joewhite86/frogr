@@ -1,7 +1,9 @@
 package de.whitefrog.frogr.test.model
 
+import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.*
+import de.whitefrog.frogr.rest.Views
 import org.neo4j.graphdb.Direction
 import java.util.*
 
@@ -13,6 +15,10 @@ class Person(@Indexed var field: String? = null, @Indexed var number: Long? = nu
   var lowerCaseIndex: String? = null
   var age: Age? = null
   var dateField: Date? = null
+  @Fetch
+  var autoFetch: String? = null
+  @JsonView(Views.Secure::class)
+  var secureField: String? = null
   @NullRemove
   var nullRemoveField: String? = null
   @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")

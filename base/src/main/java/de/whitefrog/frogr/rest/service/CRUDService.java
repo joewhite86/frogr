@@ -23,7 +23,7 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   public Response create(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(model.getPersisted()) {
+        if(model.isPersisted()) {
           throw new ForbiddenException("the model is not yet persisted");
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
@@ -47,7 +47,7 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   public List<M> update(List<M> models) {
     try(Transaction tx = service().beginTx()) {
       for(M model : models) {
-        if(!model.getPersisted()) {
+        if(!model.isPersisted()) {
           throw new ForbiddenException("the model has to be created first");
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
