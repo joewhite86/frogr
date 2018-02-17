@@ -2,7 +2,7 @@ package de.whitefrog.frogr.jobs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.whitefrog.frogr.Service;
-import de.whitefrog.frogr.model.relationship.BaseRelationship;
+import de.whitefrog.frogr.model.relationship.FRelationship;
 import org.neo4j.graphdb.Transaction;
 
 import java.io.File;
@@ -27,7 +27,7 @@ public class Export {
 //        mapper.writerWithDefaultPrettyPrinter().writeValue(output, models);
 
         output = new File(path + "/relationships.json");
-        List<BaseRelationship> relationships = new ArrayList<>();
+        List<FRelationship> relationships = new ArrayList<>();
 //        for(Base model : models) {
 //          Node node = Persistence.getRelationship(model);
 //          for(Relationship relationship : node.getRelationships(Direction.OUTGOING)) {

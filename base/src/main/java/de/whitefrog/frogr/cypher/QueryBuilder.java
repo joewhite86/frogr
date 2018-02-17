@@ -7,7 +7,6 @@ import de.whitefrog.frogr.model.SearchParameter;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
-import de.whitefrog.frogr.persistence.ModelCache;
 import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.repository.RelationshipRepository;
 import de.whitefrog.frogr.repository.Repository;

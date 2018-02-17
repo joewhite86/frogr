@@ -8,7 +8,7 @@ import de.whitefrog.frogr.helper.ReflectionUtil
 import de.whitefrog.frogr.model.*
 import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.IndexType
-import de.whitefrog.frogr.model.relationship.BaseRelationship
+import de.whitefrog.frogr.model.relationship.Relationship as FRelationship
 import de.whitefrog.frogr.repository.ModelRepository
 import org.apache.commons.lang.Validate
 import org.apache.commons.lang.reflect.ConstructorUtils
@@ -28,7 +28,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     private val logger = LoggerFactory.getLogger(Persistence::class.java)
   }
   
-  private val relationships: Relationships = Relationships(service, this)
+  private val relationships = Relationships(service, this)
   private val uuidGenerator = Generators.timeBasedGenerator()
 
   fun cache(): ModelCache {
@@ -78,11 +78,11 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
         .filter { l -> !node.hasLabel(l) }
         .forEach({ node.addLabel(it) })
       model.id = node.id
-      model.created = System.currentTimeMillis()
+      if(model is FBase) model.created = System.currentTimeMillis()
       model.type = label.name()
     } else {
       if (model.type == null) model.type = label.name()
-      model.updateLastModified()
+      if(model is FBase) model.updateLastModified()
     }
 
     for (property in context.model().removeProperties) {
@@ -198,7 +198,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
       var clazz: Class<T>? = getClass(node) as Class<T>
       if (clazz == null) {
         // choose basic classes when there is none defined
-        clazz = if (node is Node) Model::class.java as Class<T> else BaseRelationship::class.java as Class<T>
+        clazz = if (node is Node) Model::class.java as Class<T> else FRelationship::class.java as Class<T>
       }
       val model: T
       if (node is Node) {
@@ -237,7 +237,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     val className = if (node is Relationship) {
       node.type.name()
     } else {
-      node.getProperty(if (node.hasProperty(Model.Model)) Entity.Model else Entity.Type) as String
+      node.getProperty(if (node.hasProperty(Entity.Model)) Entity.Model else Base.Type) as String
     }
     return cache().getModel(className)
   }
@@ -287,8 +287,8 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     return when {
       model.id > -1 ->
         service.graph().getNodeById(model.id)
-      model.uuid != null && model.type != null -> {
-        val node = service.graph().findNode(Label.label(model.type!!), Entity.Uuid, model.uuid)
+      model is FBase && model.uuid != null && model.type != null -> {
+        val node = service.graph().findNode(Label.label(model.type!!), FBase.Uuid, model.uuid)
         model.id = node.id
         node
       } 
@@ -333,8 +333,8 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     val node: PropertyContainer
 
     try {
-      node = if (model is BaseRelationship<*, *>) {
-        val relModel = model as BaseRelationship<*, *>
+      node = if (model is FRelationship<*, *>) {
+        val relModel = model as FRelationship<*, *>
         relationships.getRelationship(relModel)
       } else {
         getNode(model as Model)
@@ -348,8 +348,8 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
         // always fetch when field is 'type' or 'uuid', or when allFields is set 
         // or the field list contains the current field
         val fetch = descriptor.annotations().fetch ||
-          descriptor.name == Entity.Type || descriptor.name == Entity.Uuid ||
-          fields.containsField(Entity.AllFields) || fields.containsField(descriptor.name)
+          descriptor.name == Base.Type || descriptor.name == FBase.Uuid ||
+          fields.containsField(Base.AllFields) || fields.containsField(descriptor.name)
 
         if (fetch) {
           // still fetch if refetch is true or field is not in fetchedFields 
@@ -376,7 +376,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     field.isAccessible = true
 
     if (node is Relationship) {
-      val relModel = model as BaseRelationship<*, *>
+      val relModel = model as FRelationship<*, *>
       if (field.name == "from" && fields.containsField("from") && !fields["from"]!!.subFields().isEmpty()) {
         service.repository(relModel.from.javaClass).fetch(relModel.from, fields["from"]!!.subFields())
       }
@@ -398,7 +398,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
         val related: Collection<*> = if (descriptor.isModel) {
           relationships.getRelatedModels<Model>(model as Model, descriptor, fieldDescriptor, subFields)
         } else {
-          relationships.getRelationships<BaseRelationship<Model, Model>>(model as Model, descriptor, fieldDescriptor, subFields)
+          relationships.getRelationships<FRelationship<Model, Model>>(model as Model, descriptor, fieldDescriptor, subFields)
         }
         field.set(model, if (Set::class.java.isAssignableFrom(field.type)) related else ArrayList(related))
       } else {
@@ -432,7 +432,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
    * @return The found model or null if none was found
    */
   fun <T : Model> findByUuid(label: String, uuid: String): T? {
-    val iterator = service.graph().findNodes(Label.label(label), Entity.Uuid, uuid)
+    val iterator = service.graph().findNodes(Label.label(label), FBase.Uuid, uuid)
     return if (iterator.hasNext()) get(iterator.next()) else null
   }
 }

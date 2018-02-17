@@ -14,14 +14,11 @@ import javax.xml.bind.annotation.XmlRootElement
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 interface Base : Serializable {
   var id: Long
-  var uuid: String?
   var type: String?
   var checkedFields: HashSet<String>
   var fetchedFields: HashSet<String>
   var removeProperties: HashSet<String>
   val isPersisted: Boolean
-  var created: Long?
-  var lastModified: Long?
 
   fun addCheckedField(field: String)
   fun removeProperty(property: String)
@@ -30,7 +27,11 @@ interface Base : Serializable {
   fun <T : Base> clone(fields: List<String>): T
 
   fun type(): String?
-
   fun resetId()
-  fun updateLastModified()
+  
+  companion object {
+    const val AllFields = "all"
+    const val Id = "id"
+    const val Type = "type"
+  }
 }

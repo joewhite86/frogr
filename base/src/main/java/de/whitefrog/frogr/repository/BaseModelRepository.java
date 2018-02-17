@@ -3,11 +3,10 @@ package de.whitefrog.frogr.repository;
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
 import de.whitefrog.frogr.exception.TypeMismatchException;
-import de.whitefrog.frogr.model.Entity;
-import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.relationship.BaseRelationship;
+import de.whitefrog.frogr.model.relationship.FRelationship;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.neo4j.graphdb.Label;
@@ -71,7 +70,7 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
       }
     }
     for(Class<?> parent = clazz.getSuperclass(); parent != null && !Modifier.isAbstract(parent.getModifiers()); parent = parent.getSuperclass()) {
-      if(Entity.class.isAssignableFrom(parent) || BaseRelationship.class.isAssignableFrom(parent)) break;
+      if(Model.class.isAssignableFrom(parent) || FRelationship.class.isAssignableFrom(parent)) break;
       output.add(parent.getSimpleName());
     }
     return output;

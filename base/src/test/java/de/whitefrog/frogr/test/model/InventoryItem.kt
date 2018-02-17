@@ -1,7 +1,5 @@
 package de.whitefrog.frogr.test.model
 
-import de.whitefrog.frogr.model.Model
-
-interface InventoryItem: Model {
+interface InventoryItem {
   var test: String?
 }

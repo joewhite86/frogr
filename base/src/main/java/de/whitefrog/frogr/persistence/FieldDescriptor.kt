@@ -8,12 +8,14 @@ import de.whitefrog.frogr.model.relationship.Relationship
 
 import java.lang.reflect.Field
 
-class FieldDescriptor<T : Base> internal constructor(private val f: Field) {
+@Suppress("UNCHECKED_CAST")
+class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
   private val annotations: AnnotationDescriptor
   val isCollection: Boolean
   val isRelationship: Boolean
   private var baseClass: Class<T>
   private var baseClassName: String
+  private val f = field
   val name: String
     get() { return f.name }
 
@@ -21,28 +23,28 @@ class FieldDescriptor<T : Base> internal constructor(private val f: Field) {
     get() = Model::class.java.isAssignableFrom(baseClass)
 
   init {
-    f.isAccessible = true
-    this.isCollection = Collection::class.java.isAssignableFrom(f.type)
+    field.isAccessible = true
+    this.isCollection = Collection::class.java.isAssignableFrom(field.type)
 
     val descriptor = AnnotationDescriptor()
-    descriptor.indexed = f.getAnnotation(Indexed::class.java)
-    descriptor.notPersistent = f.isAnnotationPresent(NotPersistent::class.java)
-    descriptor.relatedTo = f.getAnnotation(RelatedTo::class.java)
-    descriptor.unique = f.isAnnotationPresent(Unique::class.java)
-    descriptor.fetch = f.isAnnotationPresent(Fetch::class.java)
-    descriptor.required = f.isAnnotationPresent(Required::class.java)
-    descriptor.nullRemove = f.isAnnotationPresent(NullRemove::class.java)
-    descriptor.blob = f.isAnnotationPresent(Blob::class.java)
-    descriptor.uuid = f.isAnnotationPresent(Uuid::class.java)
-    descriptor.lazy = f.isAnnotationPresent(Lazy::class.java)
-    descriptor.relationshipCount = f.getAnnotation(RelationshipCount::class.java)
+    descriptor.indexed = field.getAnnotation(Indexed::class.java)
+    descriptor.notPersistent = field.isAnnotationPresent(NotPersistent::class.java)
+    descriptor.relatedTo = field.getAnnotation(RelatedTo::class.java)
+    descriptor.unique = field.isAnnotationPresent(Unique::class.java)
+    descriptor.fetch = field.isAnnotationPresent(Fetch::class.java)
+    descriptor.required = field.isAnnotationPresent(Required::class.java)
+    descriptor.nullRemove = field.isAnnotationPresent(NullRemove::class.java)
+    descriptor.blob = field.isAnnotationPresent(Blob::class.java)
+    descriptor.uuid = field.isAnnotationPresent(Uuid::class.java)
+    descriptor.lazy = field.isAnnotationPresent(Lazy::class.java)
+    descriptor.relationshipCount = field.getAnnotation(RelationshipCount::class.java)
 
     this.annotations = descriptor
 
     if (this.isCollection) {
-      this.baseClass = ReflectionUtil.getGenericClass(f) as Class<T>
+      this.baseClass = ReflectionUtil.getGenericClass(field) as Class<T>
     } else {
-      this.baseClass = f.type as Class<T>
+      this.baseClass = field.type as Class<T>
     }
     this.baseClassName = this.baseClass.simpleName
 
@@ -62,7 +64,7 @@ class FieldDescriptor<T : Base> internal constructor(private val f: Field) {
   }
 
   fun field(): Field {
-    return f
+    return field
   }
 
   override fun toString(): String {

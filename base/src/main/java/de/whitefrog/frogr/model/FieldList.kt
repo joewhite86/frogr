@@ -41,7 +41,7 @@ class FieldList() : HashSet<QueryField>() {
 
   companion object {
     @JvmField
-    var All = parseFields(Entity.AllFields)
+    var All = parseFields(Base.AllFields)
 
     @JvmStatic
     fun parseFields(vararg fields: String): FieldList {

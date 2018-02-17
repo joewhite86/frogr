@@ -42,7 +42,7 @@ class SaveContext<T : Base>(
   init {
     if (model.id > -1) {
       original = repository.createModel(node())
-    } else if (model.uuid != null) {
+    } else if (model is FBase && model.uuid != null) {
       original = repository.findByUuid(model.uuid)
       model.id = original!!.id
     }
@@ -55,7 +55,7 @@ class SaveContext<T : Base>(
    */
   fun changedFields(): List<FieldDescriptor<*>> {
     if (changedFields == null) {
-      if (original() != null) repository.fetch(original(), Entity.AllFields)
+      if (original() != null) repository.fetch(original(), Base.AllFields)
       changedFields = fieldMap
         .filter { f -> fieldChanged(f.field()) }
     }

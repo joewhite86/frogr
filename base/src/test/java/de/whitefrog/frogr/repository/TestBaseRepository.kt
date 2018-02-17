@@ -9,6 +9,7 @@ import de.whitefrog.frogr.model.Filter
 import de.whitefrog.frogr.model.SearchParameter
 import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
+import de.whitefrog.frogr.test.model.LightweightPerson
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonRequiredField
 import de.whitefrog.frogr.test.repository.PersonRepository
@@ -90,6 +91,31 @@ class TestBaseRepository {
       assertThat(person.uuid).isNotEmpty()
       val found = persons.findByUuid(person.uuid)
       assertThat(found).isEqualTo(person)
+    }
+  }
+  
+  @Test
+  fun findLightweightModel() {
+    service.beginTx().use {
+      val repository = service.repository(LightweightPerson::class.java)
+      val person = LightweightPerson("test")
+      repository.save(person)
+      
+      var found = repository.search()
+        .filter("field", "test")
+        .fields("field")
+        .single<LightweightPerson>()
+      
+      assertEquals(person, found)
+      assertEquals(person.field, found.field)
+      
+      found = repository.search()
+        .ids(person.id)
+        .fields("field")
+        .single()
+
+      assertEquals(person, found)
+      assertEquals(person.field, found.field)
     }
   }
 

@@ -3,9 +3,7 @@ package de.whitefrog.frogr.persistence
 import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.*
 import de.whitefrog.frogr.model.*
-import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.RelatedTo
-import de.whitefrog.frogr.model.relationship.BaseRelationship
 import de.whitefrog.frogr.repository.DefaultRelationshipRepository
 import de.whitefrog.frogr.repository.ModelRepository
 import de.whitefrog.frogr.repository.RelationshipRepository
@@ -13,6 +11,7 @@ import org.apache.commons.lang.Validate
 import org.neo4j.graphdb.*
 import org.slf4j.LoggerFactory
 import java.util.*
+import de.whitefrog.frogr.model.relationship.Relationship as FRelationship
 
 /**
  * Handles most persistent operations required for neo4j to deal with frogr relationships.
@@ -29,8 +28,8 @@ class Relationships internal constructor(private val service: Service, private v
   private fun <T : Model> addRelationship(model: T, node: Node, annotation: RelatedTo, _foreignModel: Model) {
     var foreignModel = _foreignModel
     if (foreignModel.id == -1L) {
-      if (foreignModel.uuid != null) {
-        foreignModel = service.repository(foreignModel.javaClass).findByUuid(foreignModel.uuid)
+      if (foreignModel is FBase && foreignModel.uuid != null) {
+        foreignModel = service.repository(foreignModel.javaClass).findByUuid(foreignModel.uuid) as Model
       } else {
         throw RelatedNotPersistedException(
           "the related field $foreignModel is not yet persisted")
@@ -42,7 +41,7 @@ class Relationships internal constructor(private val service: Service, private v
       // the relationship already exists, no more work to do
       return
     }
-    var repository: RelationshipRepository<BaseRelationship<Model, Model>>
+    var repository: RelationshipRepository<FRelationship<Model, Model>>
     try {
       repository = service.repository(relationshipType.name())
     } catch (e: RepositoryNotFoundException) {
@@ -60,7 +59,7 @@ class Relationships internal constructor(private val service: Service, private v
 
     }
 
-    val relationship: BaseRelationship<Model, Model>
+    val relationship: FRelationship<Model, Model>
 
     relationship = when {
       annotation.direction == Direction.OUTGOING -> 
@@ -73,8 +72,8 @@ class Relationships internal constructor(private val service: Service, private v
     repository.save(relationship)
   }
 
-  fun <T : BaseRelationship<*, *>> getRelationshipBetween(
-    model: Model, other: Model, type: RelationshipType, dir: Direction): T? {
+  fun <T : FRelationship<*, *>> getRelationshipBetween(model: Model, other: Model,
+                                                       type: RelationshipType, dir: Direction): T? {
     val relationship = getRelationshipBetween(persistence.getNode(model), persistence.getNode(other), type, dir)
     return if (relationship == null) null else persistence[relationship]
   }
@@ -101,7 +100,7 @@ class Relationships internal constructor(private val service: Service, private v
       if (relationship != null) {
         val node = persistence.getNode(model)
         val other = relationship.getOtherNode(node)
-        val type = other.getProperty(Entity.Type) as String
+        val type = other.getProperty(Base.Type) as String
         val repository = service.repository<ModelRepository<Model>>(type)
         return repository.createModel(other, fields)
       }
@@ -120,7 +119,7 @@ class Relationships internal constructor(private val service: Service, private v
   }
 
   internal fun <M : Model> getRelatedModels(model: Model, descriptor: FieldDescriptor<*>,
-                                            fieldDescriptor: QueryField, fields: FieldList): Set<M> {
+                                            queryField: QueryField, fields: FieldList): Set<M> {
     val annotation = descriptor.annotations().relatedTo!!
     Validate.notNull(model)
     Validate.notNull(annotation.type)
@@ -133,16 +132,16 @@ class Relationships internal constructor(private val service: Service, private v
     var count: Long = 0
 
     while (iterator.hasNext()) {
-      if (count < fieldDescriptor.skip()) {
+      if (count < queryField.skip()) {
         iterator.next()
         count++
         continue
       }
-      if (count++ == (fieldDescriptor.skip() + fieldDescriptor.limit()).toLong()) break
+      if (count++ == (queryField.skip() + queryField.limit()).toLong()) break
 
       val relationship = iterator.next()
       val other = relationship.getOtherNode(node)
-      val type = other.getProperty(Entity.Type) as String
+      val type = other.getProperty(Base.Type) as String
       if (annotation.restrictType && type != persistence.cache().getModelName(descriptor.baseClass())) {
         count--
         continue
@@ -159,7 +158,7 @@ class Relationships internal constructor(private val service: Service, private v
    * @param relationship The relationship model
    * @return The corresponding neo4j relationship
    */
-  fun <R : de.whitefrog.frogr.model.relationship.Relationship<*, *>> getRelationship(relationship: R): Relationship {
+  fun <R : FRelationship<*, *>> getRelationship(relationship: R): Relationship {
     return if (relationship.id > -1) {
       service.graph().getRelationshipById(relationship.id)
     } else {
@@ -177,8 +176,8 @@ class Relationships internal constructor(private val service: Service, private v
    * @return Set of matching relationships
    * descriptor could not be created
    */
-  internal fun <R : BaseRelationship<*, *>> getRelationship(
-    model: Model, descriptor: FieldDescriptor<*>, fields: FieldList): R? {
+  internal fun <R : FRelationship<*, *>> getRelationship(model: Model, descriptor: FieldDescriptor<*>,
+                                                         fields: FieldList): R? {
     val annotation = descriptor.annotations().relatedTo!!
     Validate.notNull(model)
     Validate.notNull(annotation.type)
@@ -206,8 +205,8 @@ class Relationships internal constructor(private val service: Service, private v
    * @return Set of matching relationships
    * descriptor could not be created
    */
-  internal fun <R : BaseRelationship<*, *>> getRelationships(model: Model, descriptor: FieldDescriptor<*>,
-                                                             queryField: QueryField?, fields: FieldList): Set<R> {
+  internal fun <R : FRelationship<*, *>> getRelationships(model: Model, descriptor: FieldDescriptor<*>,
+                                                          queryField: QueryField?, fields: FieldList): Set<R> {
     val annotation = descriptor.annotations().relatedTo!!
     Validate.notNull(model)
     Validate.notNull(annotation.type)
@@ -248,7 +247,7 @@ class Relationships internal constructor(private val service: Service, private v
   /**
    * Save method called from RelationshipRepository's
    */
-  fun <T : de.whitefrog.frogr.model.relationship.Relationship<*, *>> save(context: SaveContext<T>): T {
+  fun <T : FRelationship<*, *>> save(context: SaveContext<T>): T {
     val model = context.model()
     var create = false
 
@@ -266,11 +265,11 @@ class Relationships internal constructor(private val service: Service, private v
       val relationship = fromNode.createRelationshipTo(toNode, relType)
       context.setNode(relationship)
       model.id = relationship.id
-      model.created = System.currentTimeMillis()
+      if(model is FBase) model.created = System.currentTimeMillis()
       model.type = persistence.cache().getModelName(model.javaClass)
     } else {
       if (model.type == null) model.type = context.repository().type
-      model.updateLastModified()
+      if(model is FBase) model.updateLastModified()
     }
 
     for (property in model.removeProperties) {
@@ -290,7 +289,7 @@ class Relationships internal constructor(private val service: Service, private v
     return model
   }
 
-  private fun <T : BaseRelationship<*, *>> save(model: Model, relModel: T, annotation: RelatedTo) {
+  private fun <T : FRelationship<*, *>> save(model: Model, relModel: T, annotation: RelatedTo) {
     if (!relModel.from.isPersisted) {
       throw RelatedNotPersistedException(
         "the 'from' model " + relModel.from + " (" + annotation.type + ") is not yet persisted")
@@ -339,7 +338,7 @@ class Relationships internal constructor(private val service: Service, private v
         val foreignModel = value as Model
         addRelationship(model, node, relatedTo, foreignModel)
       } else {
-        val relModel = value as BaseRelationship<*, *>
+        val relModel = value as FRelationship<*, *>
         save(model, relModel, relatedTo)
       }
     } else {
@@ -362,7 +361,7 @@ class Relationships internal constructor(private val service: Service, private v
           addRelationship(model, node, relatedTo, foreignModel)
         }
       } else {
-        for (relModel in value as Collection<BaseRelationship<*, *>>) {
+        for (relModel in value as Collection<FRelationship<*, *>>) {
           save(model, relModel, relatedTo)
         }
       }// Handle collections of relationship models
@@ -375,7 +374,7 @@ class Relationships internal constructor(private val service: Service, private v
    * @param model Model to remove the property from
    * @param property Property name to remove
    */
-  fun removeProperty(model: de.whitefrog.frogr.model.relationship.Relationship<*, *>, property: String) {
+  fun removeProperty(model: FRelationship<*, *>, property: String) {
     val node = getRelationship(model)
     node.removeProperty(property)
     try {
@@ -392,7 +391,7 @@ class Relationships internal constructor(private val service: Service, private v
    * Used in BaseRelationshipRepository to delete an entire relationship
    * @param relationship Relationship model to delete
    */
-  fun <R : BaseRelationship<*, *>> delete(relationship: R) {
+  fun <R : FRelationship<*, *>> delete(relationship: R) {
     getRelationship(relationship).delete()
     logger.info("relationship {} between {} and {} removed",
       relationship.type(), relationship.from, relationship.to)
@@ -400,9 +399,9 @@ class Relationships internal constructor(private val service: Service, private v
 
   fun <T : Model> delete(model: T, type: RelationshipType, direction: Direction, _foreignModel: Model) {
     var foreignModel = _foreignModel
-    if (foreignModel.id == -1L) {
-      if (foreignModel.uuid != null) {
-        foreignModel = service.repository(foreignModel.javaClass).findByUuid(foreignModel.uuid)
+    if(foreignModel.id == -1L) {
+      if(foreignModel is FBase && foreignModel.uuid != null) {
+        foreignModel = service.repository(foreignModel.javaClass).findByUuid(foreignModel.uuid) as Model
       } else {
         throw RelatedNotPersistedException(
           "the related field $foreignModel is not yet persisted")

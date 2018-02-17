@@ -118,7 +118,7 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   @Override
   public T findByUuid(String uuid, String... fields) {
-    return search().filter(Entity.Uuid, uuid).fields(fields).single();
+    return search().filter(FBase.Uuid, uuid).fields(fields).single();
   }
 
   @Override

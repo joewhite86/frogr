@@ -2,10 +2,9 @@ package de.whitefrog.frogr.repository;
 
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.reflect.ConstructorUtils;
@@ -21,7 +20,7 @@ import java.lang.reflect.Constructor;
  * Base repository for relationships.
  * Provides some basic functionality like model creation and persistance.
  */
-public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
+public abstract class BaseRelationshipRepository<T extends Relationship> 
     extends BaseRepository<T> implements RelationshipRepository<T> {
   private final Logger logger;
   private Constructor constructor;
