@@ -2,7 +2,6 @@ package de.whitefrog.frogr.exception
 
 import de.whitefrog.frogr.model.Base
 import de.whitefrog.frogr.model.relationship.Relationship
-
 import java.lang.reflect.Field
 
 /**

@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>de.whitefrog</groupId>
+            <artifactId>frogr-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
         </dependency>

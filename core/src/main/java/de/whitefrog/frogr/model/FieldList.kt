@@ -1,7 +1,6 @@
 package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
-import com.google.common.collect.ImmutableSet
 import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.exception.QueryParseException
 import java.util.*
@@ -16,7 +15,7 @@ import java.util.*
 )
 class FieldList() : HashSet<QueryField>() {
   constructor(list: FieldList): this() {
-    addAll(ImmutableSet.copyOf(list))
+    addAll(HashSet(list))
   }
   fun containsField(name: String): Boolean {
     return this.any { it.field == name }

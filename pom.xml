@@ -65,6 +65,7 @@
         <module>examples/oauth</module>
         <module>examples/basic</module>
         <module>examples/custom-service</module>
+        <module>core</module>
     </modules>
     
     <build>
@@ -298,6 +299,11 @@
             </dependency>
             <dependency>
                 <groupId>de.whitefrog</groupId>
+                <artifactId>frogr-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.whitefrog</groupId>
                 <artifactId>frogr-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -306,7 +312,12 @@
                 <artifactId>frogr-test</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-graphdb-api</artifactId>
+                <version>${neo4j.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.neo4j</groupId>
                 <artifactId>neo4j-kernel</artifactId>
@@ -473,6 +484,11 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-mrbean</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>

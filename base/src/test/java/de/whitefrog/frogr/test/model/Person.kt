@@ -21,13 +21,17 @@ class Person(@Indexed var field: String? = null, @Indexed var number: Long? = nu
   var secureField: String? = null
   @NullRemove
   var nullRemoveField: String? = null
-  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: ArrayList<Person> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.INCOMING, type = "Likes")
   var likedBy: ArrayList<Person> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likesRelationships: ArrayList<Likes> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.INCOMING, type = "Likes")
   var likedByRelationships: ArrayList<Likes> = ArrayList()
   @RelationshipCount(direction = Direction.OUTGOING, type = "Likes")
   var likesCount: Long? = null

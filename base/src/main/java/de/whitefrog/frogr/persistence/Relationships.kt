@@ -4,6 +4,7 @@ import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.*
 import de.whitefrog.frogr.model.*
 import de.whitefrog.frogr.model.annotation.RelatedTo
+import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.repository.DefaultRelationshipRepository
 import de.whitefrog.frogr.repository.ModelRepository
 import de.whitefrog.frogr.repository.RelationshipRepository
@@ -119,7 +120,7 @@ class Relationships internal constructor(private val service: Service, private v
   }
 
   internal fun <M : Model> getRelatedModels(model: Model, descriptor: FieldDescriptor<*>,
-                                            queryField: QueryField, fields: FieldList): Set<M> {
+                                                                     queryField: QueryField, fields: FieldList): Set<M> {
     val annotation = descriptor.annotations().relatedTo!!
     Validate.notNull(model)
     Validate.notNull(annotation.type)

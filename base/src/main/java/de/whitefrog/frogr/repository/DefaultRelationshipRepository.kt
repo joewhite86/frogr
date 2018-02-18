@@ -2,7 +2,6 @@ package de.whitefrog.frogr.repository
 
 import de.whitefrog.frogr.model.relationship.BaseRelationship
 import de.whitefrog.frogr.model.relationship.Relationship
-import de.whitefrog.frogr.model.relationship.FRelationship
 
 /**
  * Will be used by [RepositoryFactory] method when no other repository was found.

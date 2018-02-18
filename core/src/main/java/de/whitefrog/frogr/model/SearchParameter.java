@@ -1,8 +1,7 @@
 package de.whitefrog.frogr.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
@@ -19,8 +18,6 @@ public class SearchParameter implements Serializable {
   public static final Locale DefaultLocale = Locale.GERMAN;
 
   public enum SortOrder {ASC, DESC}
-
-  private static final ObjectMapper mapper = new ObjectMapper();
   
   private String query;
   private Integer limit;
@@ -259,12 +256,7 @@ public class SearchParameter implements Serializable {
 
   @Override
   public String toString() {
-    try {
-      return "SearchParameter: " + mapper.writeValueAsString(this);
-    } catch(JsonProcessingException e) {
-      e.printStackTrace();
-    }
-    return "[could not decode]";
+    return new ReflectionToStringBuilder(this).toString();
   }
 
 

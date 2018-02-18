@@ -7,6 +7,7 @@ import de.whitefrog.frogr.helper.KotlinHelper
 import de.whitefrog.frogr.helper.ReflectionUtil
 import de.whitefrog.frogr.model.*
 import de.whitefrog.frogr.model.annotation.IndexType
+import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.repository.ModelRepository
 import org.apache.commons.lang.Validate
 import org.apache.commons.lang.reflect.ConstructorUtils
@@ -353,7 +354,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
   @Throws(ReflectiveOperationException::class)
   @Suppress("UNCHECKED_CAST")
   private fun <T : Base> fetchField(node: PropertyContainer, model: T, descriptor: FieldDescriptor<*>,
-                                    fields: FieldList) {
+                                                             fields: FieldList) {
     val annotations = descriptor.annotations()
     val field = descriptor.field()
     field.isAccessible = true

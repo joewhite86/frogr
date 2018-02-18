@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import de.whitefrog.frogr.exception.FrogrException
-import de.whitefrog.frogr.model.annotation.NotPersistent
 import java.io.Serializable
 import java.util.*
 import javax.xml.bind.annotation.XmlRootElement
@@ -56,7 +55,7 @@ interface Base : Serializable {
    * Create a clone of this entity.
    * @param fields List of fields to clone
    */
-  fun <T:Base> clone(vararg fields: String): T {
+  fun <T: Base> clone(vararg fields: String): T {
     return clone(Arrays.asList(*fields))
   }
 
@@ -66,7 +65,7 @@ interface Base : Serializable {
    * @param fields List of fields to clone
    */
   @Suppress("UNCHECKED_CAST")
-  fun <T:Base> clone(fields: List<String>): T {
+  fun <T: Base> clone(fields: List<String>): T {
     val base: T
     try {
       base = javaClass.newInstance() as T

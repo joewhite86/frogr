@@ -5,6 +5,8 @@ server:
     adminConnectors:
       - type: http
         port: 8286
+    requestLog:
+        appenders: []
 logging:
     level: WARN
     appenders:

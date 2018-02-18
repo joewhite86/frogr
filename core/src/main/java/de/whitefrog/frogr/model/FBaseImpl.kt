@@ -31,7 +31,9 @@ abstract class FBaseImpl : BaseImpl(), FBase {
   /**
    * Unique identifier. String based, guaranteed unique identifier.
    */
-  @Uuid @Fetch @Unique
+  @Uuid
+  @Fetch
+  @Unique
   override var uuid: String? = null
   /**
    * Timestamp, automatically set on first persist.
