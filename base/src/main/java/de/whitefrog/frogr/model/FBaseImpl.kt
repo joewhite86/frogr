@@ -43,17 +43,6 @@ abstract class FBaseImpl : BaseImpl(), FBase {
    */
   @JsonView(Views.Secure::class)
   override var lastModified: Long? = null
-
-  /**
-   * Update the last modified timestamp to current.
-   */
-  override fun updateLastModified() {
-    this.lastModified = System.currentTimeMillis()
-  }
-
-  override fun removeProperty(property: String) {
-    removeProperties.add(property)
-  }
   
   override fun hashCode(): Int {
     return HashCodeBuilder(13, 39)

@@ -76,10 +76,10 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
   @GET
   @JsonView({ Views.Public.class })
   public FrogrResponse search(@SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getType().toLowerCase() + ".search").time();
     FrogrResponse response = new FrogrResponse<>();
 
-    try(Transaction tx = service().beginTx()) {
+    try(Transaction ignored = service().beginTx()) {
       SearchParameter paramsClone = params.clone();
       if(params.limit() > 0) {
         List<M> list = repository().search().params(params).list();

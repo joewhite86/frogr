@@ -19,7 +19,6 @@ public class BaseBenchmark {
 
   private static final Map<String, Task> results = new HashMap<>();
   private static long benchmarkStart;
-  private static Service service;
 
 
   public static class Task {
@@ -41,13 +40,10 @@ public class BaseBenchmark {
   public static void startBenchmark() {
     System.out.println("starting");
     benchmarkStart = System.nanoTime();
-    service = new TemporaryService();
-    service.connect();
   }
 
   @AfterClass
   public static void printStatistics() {
-    service.shutdown();
     PrintStream stream = System.out;
 
     stream.println("");
@@ -102,10 +98,6 @@ public class BaseBenchmark {
           currentTask.result < currentTask.expectation);
       }
     }
-  }
-  
-  public static Service service() {
-    return service;
   }
   
   public Task task() {

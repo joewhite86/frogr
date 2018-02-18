@@ -100,7 +100,7 @@ class Relationships internal constructor(private val service: Service, private v
       if (relationship != null) {
         val node = persistence.getNode(model)
         val other = relationship.getOtherNode(node)
-        val type = other.getProperty(Base.Type) as String
+        val type = other.getProperty(Model.Type) as String
         val repository = service.repository<ModelRepository<Model>>(type)
         return repository.createModel(other, fields)
       }
@@ -141,7 +141,7 @@ class Relationships internal constructor(private val service: Service, private v
 
       val relationship = iterator.next()
       val other = relationship.getOtherNode(node)
-      val type = other.getProperty(Base.Type) as String
+      val type = other.getProperty(Model.Type) as String
       if (annotation.restrictType && type != persistence.cache().getModelName(descriptor.baseClass())) {
         count--
         continue
@@ -266,9 +266,7 @@ class Relationships internal constructor(private val service: Service, private v
       context.setNode(relationship)
       model.id = relationship.id
       if(model is FBase) model.created = System.currentTimeMillis()
-      model.type = persistence.cache().getModelName(model.javaClass)
     } else {
-      if (model.type == null) model.type = context.repository().type
       if(model is FBase) model.updateLastModified()
     }
 
@@ -282,7 +280,7 @@ class Relationships internal constructor(private val service: Service, private v
     model.checkedFields.clear()
 
     if (logger.isInfoEnabled) {
-      logger.info("Relationship {}({}, {}) {}", model.type, model.from, model.to,
+      logger.info("Relationship {}({}, {}) {}", persistence.cache().getModelName(model.javaClass), model.from, model.to,
         if (create) "created" else "updated")
     }
 
@@ -392,9 +390,9 @@ class Relationships internal constructor(private val service: Service, private v
    * @param relationship Relationship model to delete
    */
   fun <R : FRelationship<*, *>> delete(relationship: R) {
-    getRelationship(relationship).delete()
-    logger.info("relationship {} between {} and {} removed",
-      relationship.type(), relationship.from, relationship.to)
+    val neoRel = getRelationship(relationship)
+    neoRel.delete()
+    logger.info("relationship {} between {} and {} removed", neoRel.type, relationship.from, relationship.to)
   }
 
   fun <T : Model> delete(model: T, type: RelationshipType, direction: Direction, _foreignModel: Model) {

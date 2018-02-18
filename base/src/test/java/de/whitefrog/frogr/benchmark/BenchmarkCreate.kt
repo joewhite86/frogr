@@ -2,8 +2,11 @@ package de.whitefrog.frogr.benchmark
 
 import de.whitefrog.frogr.test.BaseBenchmark
 import de.whitefrog.frogr.test.Benchmark
+import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Person
+import org.junit.AfterClass
+import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -11,14 +14,24 @@ import java.util.concurrent.TimeUnit
 @Ignore
 class BenchmarkCreate : BaseBenchmark() {
   companion object {
+    private val service = TemporaryService()
     const val initCount = 5000
     const val count = 50000
+
+    @BeforeClass
+    @JvmStatic
+    fun beforeClass() {
+      service.connect()
+    }
+    @AfterClass
+    @JvmStatic
+    fun shutdown() { service.shutdown() }
   }
   @Test
   @Benchmark(expectation = 200, count = count, timeUnit = TimeUnit.MICROSECONDS)
   fun create() {
-    val persons = service().repository(Person::class.java)
-    service().beginTx().use { tx ->
+    val persons = service.repository(Person::class.java)
+    service.beginTx().use { tx ->
       // warmup
       for (i in (count..count+ initCount)) {
         val person = Person("create$i")
@@ -26,7 +39,7 @@ class BenchmarkCreate : BaseBenchmark() {
       }
       tx.success()
     }
-    service().beginTx().use { tx ->
+    service.beginTx().use { tx ->
       task().start = System.nanoTime()
       
       for(i in (0..count)) {
@@ -40,9 +53,9 @@ class BenchmarkCreate : BaseBenchmark() {
   @Test
   @Benchmark(expectation = 500, count = count, timeUnit = TimeUnit.MICROSECONDS)
   fun createWithRelationship() {
-    val persons = service().repository(Person::class.java)
-    val clothes = service().repository(Clothing::class.java)
-    service().beginTx().use { tx ->
+    val persons = service.repository(Person::class.java)
+    val clothes = service.repository(Clothing::class.java)
+    service.beginTx().use { tx ->
 
       // warmup
       for (i in (count..initCount+count)) {
@@ -56,7 +69,7 @@ class BenchmarkCreate : BaseBenchmark() {
       }
       tx.success()
     }
-    service().beginTx().use { tx ->
+    service.beginTx().use { tx ->
       task().start = System.nanoTime()
 
       for(i in (0..count)) {

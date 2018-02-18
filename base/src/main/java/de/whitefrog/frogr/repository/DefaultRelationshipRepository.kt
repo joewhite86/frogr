@@ -1,5 +1,6 @@
 package de.whitefrog.frogr.repository
 
+import de.whitefrog.frogr.model.relationship.BaseRelationship
 import de.whitefrog.frogr.model.relationship.Relationship
 import de.whitefrog.frogr.model.relationship.FRelationship
 
@@ -10,7 +11,7 @@ class DefaultRelationshipRepository<T : Relationship<*, *>>(modelName: String) :
   override fun getModelClass(): Class<*> {
     if (modelClass == null) {
       modelClass = cache().getModel(type)
-      if (modelClass == null) modelClass = FRelationship::class.java
+      if (modelClass == null) modelClass = BaseRelationship::class.java
     }
 
     return modelClass

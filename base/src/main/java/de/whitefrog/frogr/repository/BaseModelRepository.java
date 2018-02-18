@@ -52,7 +52,8 @@ public abstract class BaseModelRepository<T extends Model> extends BaseRepositor
       throw new TypeMismatchException((Node) node, label());
     }
 
-    return service().persistence().get(node, fields);
+    return getModelClass().isInterface()? service().persistence().get(node, fields):
+      service().persistence().get(node, fields, (Class<T>) getModelClass());
   }
 
   private boolean checkType(Node node) {

@@ -4,7 +4,13 @@ interface FBase: Base {
   var uuid: String?
   var lastModified: Long?
   var created: Long?
-  fun updateLastModified()
+
+  /**
+   * Update the last modified timestamp to current.
+   */
+  fun updateLastModified() {
+    this.lastModified = System.currentTimeMillis()
+  }
   
   companion object {
     const val LastModified = "lastModified"

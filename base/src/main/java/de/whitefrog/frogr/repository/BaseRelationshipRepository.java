@@ -49,7 +49,8 @@ public abstract class BaseRelationshipRepository<T extends Relationship>
 
   @Override
   public T createModel(PropertyContainer node, FieldList fields) {
-    return service().persistence().get(node, fields);
+    return getModelClass().isInterface()? service().persistence().get(node, fields):
+      service().persistence().get(node, fields, (Class<T>) getModelClass());
   }
 
   public T find(long id, FieldList fields) {

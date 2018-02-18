@@ -3,18 +3,23 @@ package de.whitefrog.frogr.model
 import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.model.annotation.Fetch
 
-abstract class Entity : FBaseImpl(), FBase, Model {
+open class BaseModel : BaseImpl(), Model {
   @Fetch
   override var type: String? = null
+  
+  override fun toString(): String {
+    val typeName = type()?: javaClass.simpleName
+    return "$typeName ($id)"
+  }
   /**
    * Create a clone of this entity.
    * @param fields List of fields to clone
    */
   @Suppress("UNCHECKED_CAST")
   override fun <T:Base> clone(fields: List<String>): T {
-    val base: Entity
+    val base: BaseModel
     try {
-      base = javaClass.newInstance() as Entity
+      base = javaClass.newInstance() as BaseModel
       if(id >= 0) base.id = id
       base.type = type()
     } catch (e: ReflectiveOperationException) {
@@ -22,11 +27,5 @@ abstract class Entity : FBaseImpl(), FBase, Model {
     }
 
     return base as T
-  }
-
-  override fun toString(): String {
-    val typeName = type()?: javaClass.simpleName
-    val id = if (id == -1L) uuid else id.toString()
-    return "$typeName ($id)"
   }
 }

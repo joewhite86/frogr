@@ -75,7 +75,7 @@ public abstract class DefaultCRUDService<M extends Model> extends DefaultRestSer
   @GET
   @JsonView({ Views.Public.class })
   public FrogrResponse<M> search(@SearchParam SearchParameter params) {
-    Timer.Context timer = metrics.timer(repository().getModelClass().getSimpleName().toLowerCase() + ".search").time();
+    Timer.Context timer = metrics.timer(repository().getType().toLowerCase() + ".search").time();
     FrogrResponse<M> response = new FrogrResponse<>();
 
     try(Transaction ignored = service().beginTx()) {

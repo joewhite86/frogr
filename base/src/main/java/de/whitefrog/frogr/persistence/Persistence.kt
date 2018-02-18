@@ -6,9 +6,7 @@ import de.whitefrog.frogr.exception.*
 import de.whitefrog.frogr.helper.KotlinHelper
 import de.whitefrog.frogr.helper.ReflectionUtil
 import de.whitefrog.frogr.model.*
-import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.IndexType
-import de.whitefrog.frogr.model.relationship.Relationship as FRelationship
 import de.whitefrog.frogr.repository.ModelRepository
 import org.apache.commons.lang.Validate
 import org.apache.commons.lang.reflect.ConstructorUtils
@@ -16,6 +14,7 @@ import org.neo4j.graphdb.*
 import org.neo4j.helpers.collection.Iterables
 import org.slf4j.LoggerFactory
 import java.util.*
+import de.whitefrog.frogr.model.relationship.Relationship as FRelationship
 
 /**
  * The link between the models and repositories and neo4j itself.
@@ -109,7 +108,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     var value: Any? = null
     try {
       value = field.get(model)
-
+      
       // when the annotation @Required is present, a value is expected
       if (created && annotations.required && (value == null || value is String && value.isEmpty())) {
         throw MissingRequiredException(model, field)
@@ -171,18 +170,6 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
   }
 
   /**
-   * Get a model instance from a neo node.
-   *
-   * @param node Node to create the model from
-   * @return The created model
-   * @throws PersistException Is thrown if a field can not be converted
-   */
-  @Throws(PersistException::class)
-  operator fun <T : Base> get(node: PropertyContainer): T {
-    return get(node, FieldList())
-  }
-
-  /**
    * Get a model instance from a neo4j node.
    *
    * @param node Node to create the model from
@@ -191,15 +178,12 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
    */
   @Throws(PersistException::class)
   @Suppress("UNCHECKED_CAST")
-  operator fun <T : Base> get(node: PropertyContainer, _fields: FieldList): T {
+  @JvmOverloads
+  operator fun <T : Base> get(node: PropertyContainer, _fields: FieldList = FieldList(), _clazz: Class<T>? = null): T {
     var fields = _fields
     Validate.notNull(node, "node can't be null")
     try {
-      var clazz: Class<T>? = getClass(node) as Class<T>
-      if (clazz == null) {
-        // choose basic classes when there is none defined
-        clazz = if (node is Node) Model::class.java as Class<T> else FRelationship::class.java as Class<T>
-      }
+      val clazz = _clazz ?: getClass(node) as Class<T>
       val model: T
       if (node is Node) {
         model = clazz.newInstance()
@@ -237,7 +221,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
     val className = if (node is Relationship) {
       node.type.name()
     } else {
-      node.getProperty(if (node.hasProperty(Entity.Model)) Entity.Model else Base.Type) as String
+      node.getProperty(Model.Type) as String
     }
     return cache().getModel(className)
   }
@@ -343,12 +327,11 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
       // iterate over fields to ensure fields with @Fetch annotation and 'allFields' will be fetched
       for (descriptor in cache.fieldMap(model.javaClass)) {
         // don't fetch the 'id' field and fields annotated with @NotPersistent
-        if (descriptor.name == "id" && descriptor.annotations().notPersistent) continue
+        if (descriptor.name == Base.Id && descriptor.annotations().notPersistent) continue
 
         // always fetch when field is 'type' or 'uuid', or when allFields is set 
         // or the field list contains the current field
-        val fetch = descriptor.annotations().fetch ||
-          descriptor.name == Base.Type || descriptor.name == FBase.Uuid ||
+        val fetch = descriptor.annotations().fetch || 
           fields.containsField(Base.AllFields) || fields.containsField(descriptor.name)
 
         if (fetch) {
