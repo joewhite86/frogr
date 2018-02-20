@@ -1,7 +1,9 @@
 package de.whitefrog.frogr.auth.test.model
 
+import com.fasterxml.jackson.annotation.JsonView
 import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.*
+import de.whitefrog.frogr.rest.Views
 import org.neo4j.graphdb.Direction
 import java.util.*
 
@@ -14,15 +16,21 @@ class Person(var field: String? = null, @Indexed var number: Long? = null) : Ent
   var fulltext: String? = null
   var age: Age? = null
   var dateField: Date? = null
+  @JsonView(Views.Secure::class)
+  var secureField: String? = null
   @NullRemove
   var nullRemoveField: String? = null
-  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likes: ArrayList<Person> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.INCOMING, type = "Likes")
   var likedBy: ArrayList<Person> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.OUTGOING, type = "Likes")
   var likesRelationships: ArrayList<Likes> = ArrayList()
-  @Lazy @RelatedTo(direction = Direction.INCOMING, type = "Likes")
+  @Lazy
+  @RelatedTo(direction = Direction.INCOMING, type = "Likes")
   var likedByRelationships: ArrayList<Likes> = ArrayList()
   @RelationshipCount(direction = Direction.OUTGOING, type = "Likes")
   var likesCount: Long? = null

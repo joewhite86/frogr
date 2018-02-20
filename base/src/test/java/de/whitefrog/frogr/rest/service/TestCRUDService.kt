@@ -1,7 +1,7 @@
 package de.whitefrog.frogr.rest.service
 
 import de.whitefrog.frogr.model.SearchParameter
-import de.whitefrog.frogr.rest.response.Response
+import de.whitefrog.frogr.rest.response.FrogrResponse
 import de.whitefrog.frogr.test.TestApplication
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
@@ -10,8 +10,7 @@ import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Test
@@ -43,7 +42,7 @@ class TestCRUDService {
       webTarget = client.target("http://localhost:8282")
     }
 
-    private fun response(): GenericType<Response<Person>> = object : GenericType<Response<Person>>() {}
+    private fun response(): GenericType<FrogrResponse<Person>> = object : GenericType<FrogrResponse<Person>>() {}
 
     @AfterClass
     @JvmStatic
@@ -91,18 +90,23 @@ class TestCRUDService {
   fun read() {
     val user = Person()
     user.field = "read"
+    user.autoFetch = "read"
+    user.secureField = "secure"
     app.service().beginTx().use { tx ->
       repository.save(user)
       tx.success()
     }
 
     val response = webTarget.path("person")
-      .queryParam("fields", "all")
+      .queryParam("fields", "field,secureField")
       .queryParam("filter", "field:=${user.field}")
       .request(MediaType.APPLICATION_JSON)
       .get(response())
 
     assertThat(response.data).hasSize(1)
+    assertEquals(-1L, response.data[0].id)
+    assertNotNull(response.data[0].autoFetch)
+    assertNull(response.data[0].secureField)
     assertEquals(user.uuid, response.data[0].uuid)
     assertEquals(user.field, response.data[0].field)
   }

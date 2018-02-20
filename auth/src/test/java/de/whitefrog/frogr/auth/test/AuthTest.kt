@@ -2,7 +2,7 @@ package de.whitefrog.frogr.auth.test
 
 import de.whitefrog.frogr.auth.model.Role
 import de.whitefrog.frogr.auth.test.model.User
-import de.whitefrog.frogr.rest.response.Response
+import de.whitefrog.frogr.rest.response.FrogrResponse
 import io.dropwizard.Configuration
 import io.dropwizard.testing.ResourceHelpers
 import io.dropwizard.testing.junit.DropwizardAppRule
@@ -49,7 +49,7 @@ open class AuthTest {
       token = response.data[0].accessToken
     }
 
-    private fun _response(): GenericType<Response<User>> = object : GenericType<Response<User>>() {}
+    private fun _response(): GenericType<FrogrResponse<User>> = object : GenericType<FrogrResponse<User>>() {}
 
     @AfterClass @JvmStatic
     fun after() {

@@ -28,13 +28,9 @@ public class RepositoryFactory {
   
   private static final Logger logger = LoggerFactory.getLogger(RepositoryFactory.class);
   /**
-   * Static {@link Repository repository} cache by name and {@link Service service}.
-   */
-  private static final Map<Service, Map<String, Repository>> staticCache = new HashMap<>();
-  /**
    * Static {@link Repository repository} {@link Class class} cache.
    */
-  private static final Map<String, Class> repositoryCache = new HashMap<>();
+  private final Map<String, Class> repositoryCache = new HashMap<>();
 
   /**
    * Local {@link Service service}.
@@ -43,14 +39,10 @@ public class RepositoryFactory {
   /**
    * Local {@link Repository repository} cache.
    */
-  private final Map<String, Repository> cache;
+  private final Map<String, Repository> cache = new HashMap<>(100);
   
   public RepositoryFactory(Service service) {
     this.service = service;
-    if(!staticCache.containsKey(service)) {
-      staticCache.put(service, new HashMap<>());
-    }
-    this.cache = staticCache.get(service);
     if(repositoryCache.isEmpty()) {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
         .setScanners(new SubTypesScanner());
@@ -87,44 +79,53 @@ public class RepositoryFactory {
    * @return Repository used for the passed model class
    */
   public Repository get(Class modelClass) {
-    Repository repository;
-    String name = modelClass.getSimpleName();
+    return get(service.cache().getModelName(modelClass));
+  }
 
-    if(cache.containsKey(name.toLowerCase())) {
-      repository = cache.get(name.toLowerCase());
-    } else {
-      try {
-        if(!repositoryCache.containsKey(name + "Repository")) {
-          throw new ClassNotFoundException(name + "Repository");
+
+  /**
+   * Get the {@link Repository repository} for the {@link Model model} with a specific name.
+   * @param name Model name used to lookup the repository
+   * @return Repository used for the passed model name
+   */
+  public Repository get(String name) {
+    Repository repository;
+
+    try {
+      if(cache.containsKey(name)) {
+        repository = cache.get(name);
+      }
+      else if(!repositoryCache.containsKey(name + "Repository")) {
+        logger.debug("No repository found for {}, creating a default one", name);
+        Class modelClass = service.cache().getModel(name);
+        if(modelClass == null) {
+          throw new RepositoryNotFoundException(name);
         }
+        if(!Relationship.class.isAssignableFrom(modelClass)) {
+          Constructor<DefaultModelRepository> ctor =
+            DefaultModelRepository.class.getConstructor(String.class);
+          repository = ctor.newInstance(name);
+        } else {
+          Constructor<DefaultRelationshipRepository> ctor =
+            DefaultRelationshipRepository.class.getConstructor(String.class);
+          repository = ctor.newInstance(name);
+        }
+        setRepositoryService(repository);
+        cache.put(name, repository);
+      }
+      else {
         Class c = repositoryCache.get(name + "Repository");
         Constructor<Repository> ctor = c.getDeclaredConstructor();
-        if (ctor == null) {
+        if(ctor == null) {
           throw new RepositoryInstantiationException("No constructor " + name + "Repository() found in " + c.getName());
         }
         repository = ctor.newInstance();
         setRepositoryService(repository);
-      } catch(ClassNotFoundException e) {
-        try {
-          logger.debug("No repository found for " + modelClass.getSimpleName() + ", creating a default one");
-          if(!Relationship.class.isAssignableFrom(modelClass)) {
-            Constructor<DefaultModelRepository> ctor = 
-              DefaultModelRepository.class.getConstructor(String.class);
-            repository = ctor.newInstance(name);
-          } else {
-            Constructor<DefaultRelationshipRepository> ctor = 
-              DefaultRelationshipRepository.class.getConstructor(String.class);
-            repository = ctor.newInstance(name);
-          }
-          setRepositoryService(repository);
-        } catch(ReflectiveOperationException ex) {
-          throw new RepositoryInstantiationException(e);
-        }
-      } catch(ReflectiveOperationException e) {
-        throw new RepositoryInstantiationException(e.getCause());
+        logger.debug("registering " + repository.getClass().getSimpleName() + " for " + name);
       }
-      logger.debug("registering " + repository.getClass().getSimpleName() + " for " + name);
-      cache.put(name.toLowerCase(), repository);
+      cache.put(name, repository);
+    } catch(ReflectiveOperationException e) {
+      throw new RepositoryInstantiationException(e);
     }
 
     return repository;
@@ -135,24 +136,6 @@ public class RepositoryFactory {
     serviceField.setAccessible(true);
     serviceField.set(repository, service);
     BaseRepository.class.getDeclaredMethod("initialize").invoke(repository);
-  }
-
-  /**
-   * Get the {@link Repository repository} for the {@link Model model} with a specific name.
-   * @param name Model name used to lookup the repository
-   * @return Repository used for the passed model name
-   */
-  @SuppressWarnings("unchecked")
-  public Repository get(String name) {
-    if(name == null) throw new NullPointerException("name cannot be null");
-    if(cache.containsKey(name.toLowerCase())) {
-      return cache.get(name.toLowerCase());
-    }
-    Class clazz = service.persistence().cache().getModel(name);
-    if(clazz == null) {
-      throw new RepositoryNotFoundException(name);
-    }
-    return get(clazz);
   }
 
   /**

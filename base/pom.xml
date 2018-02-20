@@ -7,13 +7,17 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>frogr-parent</artifactId>
-        <version>0.1.2</version>
+        <version>0.2.0</version>
         <relativePath>..</relativePath>
     </parent>
     <artifactId>frogr-base</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>de.whitefrog</groupId>
+            <artifactId>frogr-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
@@ -25,6 +29,11 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-shell</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-mrbean</artifactId>
         </dependency>
         
         <dependency>

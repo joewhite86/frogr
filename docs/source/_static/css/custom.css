@@ -23,6 +23,11 @@ a:visited {
   background: #181818;
 }
 
+@media screen and (min-width: 1400px)
+.wy-nav-content {
+  background: #181818;
+}
+
 .wy-nav-side {
   background: #212121;
 }

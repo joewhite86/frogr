@@ -2,10 +2,9 @@ package de.whitefrog.frogr.repository;
 
 import de.whitefrog.frogr.exception.FrogrException;
 import de.whitefrog.frogr.exception.PersistException;
-import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.Model;
+import de.whitefrog.frogr.model.FieldList;
 import de.whitefrog.frogr.model.SaveContext;
-import de.whitefrog.frogr.model.relationship.BaseRelationship;
 import de.whitefrog.frogr.model.relationship.Relationship;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.reflect.ConstructorUtils;
@@ -21,23 +20,26 @@ import java.lang.reflect.Constructor;
  * Base repository for relationships.
  * Provides some basic functionality like model creation and persistance.
  */
-public abstract class BaseRelationshipRepository<T extends BaseRelationship> 
+public abstract class BaseRelationshipRepository<T extends Relationship> 
     extends BaseRepository<T> implements RelationshipRepository<T> {
   private final Logger logger;
+  private Constructor constructor;
 
   public BaseRelationshipRepository() {
     super();
     this.logger = LoggerFactory.getLogger(getClass());
   }
-  public BaseRelationshipRepository(String modelName) {
+  
+  BaseRelationshipRepository(String modelName) {
     super(modelName);
     this.logger = LoggerFactory.getLogger(getClass());
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public T createModel(Model from, Model to) {
     try {
-      Constructor constructor = ConstructorUtils.getMatchingAccessibleConstructor(getModelClass(),
+      if(constructor == null) constructor = ConstructorUtils.getMatchingAccessibleConstructor(getModelClass(),
         new Class[] {from.getClass(), to.getClass()});
       return (T) constructor.newInstance(from, to);
     } catch(ReflectiveOperationException e) {
@@ -47,7 +49,8 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
 
   @Override
   public T createModel(PropertyContainer node, FieldList fields) {
-    return service().persistence().get(node, fields);
+    return getModelClass().isInterface()? service().persistence().get(node, fields):
+      service().persistence().get(node, fields, (Class<T>) getModelClass());
   }
 
   public T find(long id, FieldList fields) {
@@ -66,7 +69,6 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
   @Override
   public org.neo4j.graphdb.Relationship getRelationship(Relationship model) {
     Validate.notNull(model, "The model is null");
-    Validate.notNull(model.getId(), "ID can not be null.");
     try {
       return service().graph().getRelationshipById(model.getId());
     } catch(NotFoundException e) {
@@ -85,7 +87,7 @@ public abstract class BaseRelationshipRepository<T extends BaseRelationship>
     if(getModelClass().isInterface())
       throw new PersistException("cannot save in interface repository");
     validateModel(context);
-    boolean create = !context.model().getPersisted();
+    boolean create = !context.model().isPersisted();
     service().persistence().relationships().save(context);
     logger().info("{} {}", context.model(), create? "created": "updated");
   }

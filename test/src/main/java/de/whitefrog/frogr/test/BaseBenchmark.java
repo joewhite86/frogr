@@ -85,7 +85,7 @@ public class BaseBenchmark {
   }
 
   @After
-  public void after() throws Exception {
+  public void after() {
     if(results.containsKey(test.getMethodName())) {
       Task task = results.get(test.getMethodName());
       task.result = (System.nanoTime() - task.start) / task.count;

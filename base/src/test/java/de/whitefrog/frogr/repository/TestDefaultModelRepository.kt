@@ -2,12 +2,14 @@ package de.whitefrog.frogr.repository
 
 import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.PersistException
+import de.whitefrog.frogr.model.Filter
 import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.model.PersonInterface
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
+import org.junit.Assert.assertEquals
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -52,6 +54,17 @@ class TestDefaultModelRepository {
       val person = Person("test")
       val repository = service.repository(PersonInterface::class.java)
       repository.save(person)
+    }
+  }
+  
+  @Test
+  fun searchInterfaceRepository() {
+    service.beginTx().use {
+      val person = Person("test")
+      service.repository(Person::class.java).save(person)
+      val repository = service.repository(PersonInterface::class.java)
+      val found = repository.find(person.id, "field")
+      assertEquals(person, found)
     }
   }
 }

@@ -11,7 +11,9 @@ import java.security.Principal
 import javax.security.auth.Subject
 
 open class BaseUser : Entity(), Principal {
-  @Unique @Fetch @Required
+  @Unique
+  @Fetch
+  @Required
   open var login: String? = null
   @JsonView(Views.Hidden::class)
   open var password: String? = null

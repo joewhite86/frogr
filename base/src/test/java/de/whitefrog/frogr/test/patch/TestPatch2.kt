@@ -6,7 +6,7 @@ import de.whitefrog.frogr.patch.Patch
 import de.whitefrog.frogr.patch.Version
 import de.whitefrog.frogr.test.model.Person
 
-@Version(value = "10.0.0", proority = 0)
+@Version(value = "10.0.0", priority = 0)
 class TestPatch2(s: Service) : Patch(s) {
   override fun update() {
     service.beginTx().use { tx ->

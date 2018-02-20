@@ -8,6 +8,7 @@ import de.whitefrog.frogr.model.annotation.IndexType;
 import de.whitefrog.frogr.patch.Patcher;
 import de.whitefrog.frogr.persistence.AnnotationDescriptor;
 import de.whitefrog.frogr.persistence.FieldDescriptor;
+import de.whitefrog.frogr.persistence.ModelCache;
 import de.whitefrog.frogr.persistence.Persistence;
 import de.whitefrog.frogr.repository.GraphRepository;
 import de.whitefrog.frogr.repository.ModelRepository;
@@ -54,6 +55,7 @@ public class Service implements AutoCloseable {
   private String neo4jConfig = "config/neo4j.properties";
   private State state = State.Started;
   private Persistence persistence;
+  private ModelCache modelCache;
   private String directory;
 
   public Service() {
@@ -66,11 +68,20 @@ public class Service implements AutoCloseable {
     return graph().beginTx();
   }
 
+  public ModelCache cache() {
+    return modelCache;
+  }
+
   public void connect() {
     if(isConnected()) throw new FrogrException("already running");
     state = State.Connecting;
     graphDb = createGraphDatabase();
-    persistence = new Persistence(this);
+    
+    // create the model cache
+    modelCache = new ModelCache();
+    modelCache.scan(registry());
+    
+    persistence = new Persistence(this, modelCache);
     
     repositoryFactory = new RepositoryFactory(this);
     graphRepository = new GraphRepository(this);
@@ -233,7 +244,7 @@ public class Service implements AutoCloseable {
   private void initializeSchema() {
     try(Transaction tx = beginTx()) {
       Schema schema = graph().schema();
-      for(Class modelClass : persistence.cache().getAllModels()) {
+      for(Class modelClass : cache().getAllModels()) {
         if(!Model.class.isAssignableFrom(modelClass) || Modifier.isAbstract(modelClass.getModifiers())) continue;
         if(!Base.class.isAssignableFrom(modelClass)) 
           throw new FrogrException("model class " + modelClass.getName() + " is not of type Base");
@@ -244,7 +255,7 @@ public class Service implements AutoCloseable {
         List<IndexDefinition> indices = Iterables.asList(
           schema.getIndexes(repository.label()));
         
-        for(FieldDescriptor descriptor : persistence.cache().fieldMap(modelClass)) {
+        for(FieldDescriptor descriptor : cache().fieldMap(modelClass)) {
           AnnotationDescriptor annotations = descriptor.annotations();
           ConstraintDefinition existingConstraint = null;
           String indexName = descriptor.getName() + 

@@ -13,8 +13,7 @@ import de.whitefrog.frogr.test.model.Person
 import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
 import org.neo4j.graphdb.Direction
@@ -54,11 +53,11 @@ class TestRelationships {
       persons.save(person2, person3, person1)
       
       val descriptor = persistence.cache().fieldDescriptor(Person::class.java, "likesRelationships")
-      val likes = persistence.relationships().getRelationships<Likes>(person1, descriptor, 
+      val likes = persistence.relationships().getRelationships<Likes>(person1, descriptor!!, 
         QueryField("likesRelationships"), FieldList.parseFields("to.field"))
       assertNotNull(likes)
       assertThat(likes).hasSize(2)
-      assertThat(likes.elementAt(0)!!.to.field).isEqualTo("test2")
+      assertTrue(likes.any { it.to.field.equals("test2") })
     }
   }
   @Test

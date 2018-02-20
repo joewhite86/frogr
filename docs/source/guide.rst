@@ -11,7 +11,7 @@ Maven
   <dependency>
       <groupId>de.whitefrog</groupId>
       <artifactId>frogr-base</artifactId>
-      <version>0.1.2</version>
+      <version>0.2.0</version>
   </dependency>
 
 Application

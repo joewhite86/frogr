@@ -6,7 +6,7 @@
 
     <groupId>de.whitefrog</groupId>
     <artifactId>frogr-parent</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
     <name>Frogr</name>
     <description>Neo4j powered restful drop-in solution</description>
@@ -21,6 +21,7 @@
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <dropwizard.version>1.2.2</dropwizard.version>
+        <jackson.version>2.9.1</jackson.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -64,6 +65,7 @@
         <module>examples/oauth</module>
         <module>examples/basic</module>
         <module>examples/custom-service</module>
+        <module>core</module>
     </modules>
     
     <build>
@@ -297,6 +299,11 @@
             </dependency>
             <dependency>
                 <groupId>de.whitefrog</groupId>
+                <artifactId>frogr-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.whitefrog</groupId>
                 <artifactId>frogr-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -305,7 +312,12 @@
                 <artifactId>frogr-test</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
+            <dependency>
+                <groupId>org.neo4j</groupId>
+                <artifactId>neo4j-graphdb-api</artifactId>
+                <version>${neo4j.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.neo4j</groupId>
                 <artifactId>neo4j-kernel</artifactId>
@@ -367,7 +379,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.1</version>
+                <version>3.7</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -467,7 +479,17 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
-                <version>2.9.0</version>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-mrbean</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>

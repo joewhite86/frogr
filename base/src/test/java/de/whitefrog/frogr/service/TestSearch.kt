@@ -11,6 +11,7 @@ import de.whitefrog.frogr.test.repository.PersonRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
 import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 
@@ -72,7 +73,7 @@ class TestSearch {
     }
   }
   
-  @Test
+  @Test @Ignore
   fun endsWith() {
     service.beginTx().use {
       prepareData()
@@ -149,14 +150,13 @@ class TestSearch {
       val cal = Calendar.getInstance()
       cal.time = date
       cal.add(Calendar.DAY_OF_MONTH, -1)
-      val found: Person = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
+      var found: Person? = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
       assertThat(found).isEqualTo(person)
 
-// throws nullpointerexception in kotlin
-//      cal.time = date
-//      cal.add(Calendar.DAY_OF_MONTH, 1)
-//      found = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
-//      assertThat(found).isNull()
+      cal.time = date
+      cal.add(Calendar.DAY_OF_MONTH, 1)
+      found = persons.search().filter(Filter.GreaterThan("dateField", cal.time)).single()
+      assertThat(found).isNull()
     }
   }
 
@@ -170,14 +170,13 @@ class TestSearch {
       val cal = Calendar.getInstance()
       cal.time = date
       cal.add(Calendar.DAY_OF_MONTH, 1)
-      val found: Person = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
+      var found: Person? = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
       assertThat(found).isEqualTo(person)
       
-// throws nullpointerexception in kotlin
-//      cal.time = date
-//      cal.add(Calendar.DAY_OF_MONTH, -1)
-//      found = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
-//      assertThat(found).isNull()
+      cal.time = date
+      cal.add(Calendar.DAY_OF_MONTH, -1)
+      found = persons.search().filter(Filter.LessThan("dateField", cal.time)).single()
+      assertThat(found).isNull()
     }
   }
 
@@ -271,6 +270,19 @@ class TestSearch {
       val list = prepareData()
       val result = persons.search()
         .filter(Filter.GreaterThan("likes.number", 10L))
+        .returns("likes")
+        .list<Person>()
+      assertThat(result).isNotEmpty
+      assertThat(result[0]).isEqualTo(list[1])
+    }
+  }
+
+  @Test
+  fun searchLikedPersonsById() {
+    service.beginTx().use {
+      val list = prepareData()
+      val result = persons.search()
+        .filter(Filter.Equals("likes.id", list[1].id))
         .returns("likes")
         .list<Person>()
       assertThat(result).isNotEmpty

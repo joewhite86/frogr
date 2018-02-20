@@ -43,7 +43,7 @@ class TestBaseUserRepository {
       user.login = "test"
       user.password = "test"
       users.register(user)
-      assertTrue(user.persisted)
+      assertTrue(user.isPersisted)
       assertEquals(Role.User, user.role)
     }
   }

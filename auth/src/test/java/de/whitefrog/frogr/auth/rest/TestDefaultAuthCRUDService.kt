@@ -3,7 +3,7 @@ package de.whitefrog.frogr.auth.rest
 import de.whitefrog.frogr.auth.test.AuthTest
 import de.whitefrog.frogr.auth.test.model.Person
 import de.whitefrog.frogr.model.SearchParameter
-import de.whitefrog.frogr.rest.response.Response
+import de.whitefrog.frogr.rest.response.FrogrResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -13,9 +13,10 @@ import javax.ws.rs.core.GenericType
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response.Status
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class TestDefaultAuthCRUDService: AuthTest() {
-  private fun response(): GenericType<Response<Person>> = object : GenericType<Response<Person>>() {}
+  private fun response(): GenericType<FrogrResponse<Person>> = object : GenericType<FrogrResponse<Person>>() {}
   private val repository = app.service().repository(Person::class.java)
 
   @Test
@@ -59,6 +60,7 @@ class TestDefaultAuthCRUDService: AuthTest() {
   fun read() {
     val user = Person()
     user.field = "read"
+    user.secureField = "read"
     app.service().beginTx().use { tx ->
       repository.save(user)
       tx.success()
@@ -72,6 +74,31 @@ class TestDefaultAuthCRUDService: AuthTest() {
       .get(response())
 
     assertThat(response.data).hasSize(1)
+    assertEquals(-1L, response.data[0].id)
+    assertNull(response.data[0].secureField)
+    assertEquals(user.uuid, response.data[0].uuid)
+    assertEquals(user.field, response.data[0].field)
+  }
+
+  @Test
+  fun readInsecure() {
+    val user = Person()
+    user.secureField = "readInsecure"
+    app.service().beginTx().use { tx ->
+      repository.save(user)
+      tx.success()
+    }
+
+    val response = webTarget.path("person/insecure")
+      .queryParam("fields", "all")
+      .queryParam("filter", "secureField:=${user.secureField}")
+      .request(MediaType.APPLICATION_JSON)
+      .header("Authorization", "Bearer $token")
+      .get(response())
+
+    assertThat(response.data).hasSize(1)
+    assertEquals(-1L, response.data[0].id)
+    assertEquals(user.secureField, response.data[0].secureField)
     assertEquals(user.uuid, response.data[0].uuid)
     assertEquals(user.field, response.data[0].field)
   }
