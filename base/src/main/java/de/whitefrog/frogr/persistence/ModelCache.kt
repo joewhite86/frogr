@@ -17,6 +17,10 @@ import java.util.*
 
 /**
  * Model cache to reduce reflection usage for models to a minimum.
+ * Scans all registered packages for classes implementing the {@link Base}
+ * interface, reads all fields and creates a descriptor (see {@link FieldDescriptor}) map.
+ * 
+ * <p>Provides methods for easy access to models and their descriptors.</p>
  */
 class ModelCache {
   companion object {
@@ -28,6 +32,10 @@ class ModelCache {
     "id", "initialId", "checkedFields", "fetchedFields")
   private lateinit var reflections: Reflections
 
+  /**
+   * Get all registered models as {@link Collection}.
+   * @return all registered models as collection.
+   */
   val allModels: Collection<Class<*>>
     get() = modelCache.values
 
@@ -35,10 +43,20 @@ class ModelCache {
     return descriptors.stream().anyMatch { descriptor -> descriptor.field().name == fieldName }
   }
 
+  /**
+   * Tests if a model with a certain name is registered.
+   */
   fun containsModel(name: String): Boolean {
     return modelCache.containsKey(name)
   }
 
+  /**
+   * Get the reflected field of a given class, checks superclasses too.
+   * @param clazz the model class
+   * @param fieldName the fields name
+   * @return the reflected field, when found
+   * @throws NoSuchFieldException when the field cannot be found
+   */
   @Throws(NoSuchFieldException::class)
   fun getField(clazz: Class<*>, fieldName: String): Field {
     var tmpClass: Class<*>? = clazz
@@ -54,6 +72,9 @@ class ModelCache {
     throw NoSuchFieldException("Field '$fieldName' not found on class $clazz")
   }
 
+  /**
+   * Scan for models and parse them.
+   */
   fun scan(packages: Collection<String>) {
     modelCache.clear()
     val configurationBuilder = ConfigurationBuilder()

@@ -24,18 +24,14 @@ abstract class BaseImpl: Base, Comparable<Base> {
     }
   @NotPersistent
   @JsonIgnore
-  override var checkedFields: HashSet<String> = HashSet()
+  override val checkedFields: HashSet<String> = HashSet(20)
   @NotPersistent
   @JsonIgnore
-  override var fetchedFields: HashSet<String> = HashSet()
+  override val fetchedFields: HashSet<String> = HashSet(20)
   @NotPersistent
   @JsonIgnore
-  override var removeProperties: HashSet<String> = HashSet()
+  override val removeProperties: HashSet<String> = HashSet(20)
 
-  /**
-   * Reset the id to a random one.
-   * Sets initialId to true too.
-   */
   override fun resetId() {
     id = random.nextLong()
     initialId = true

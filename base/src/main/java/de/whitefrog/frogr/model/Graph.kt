@@ -1,6 +1,6 @@
 package de.whitefrog.frogr.model
 
-class Graph : BaseImpl() {
+class Graph : BaseModel() {
     var version: String? = null
 
     companion object {

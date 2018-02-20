@@ -20,17 +20,24 @@ interface Base : Serializable {
    * Will be -1 when no id is set yet.
    */
   var id: Long
+  
   /**
    * Already checked fields during a save process. Used to prevent
    * double checking.
    */
-  var checkedFields: HashSet<String>
+  val checkedFields: HashSet<String>
+  
   /**
    * Fields already fetched from database. Used to prevent unneccecary
    * read actions.
    */
-  var fetchedFields: HashSet<String>
-  var removeProperties: HashSet<String>
+  val fetchedFields: HashSet<String>
+
+  /**
+   * Properties, that should be deleted in datatbase on save operations.
+   */
+  val removeProperties: HashSet<String>
+  
   /**
    * True, if the entity was already persisted.
    */
@@ -47,8 +54,20 @@ interface Base : Serializable {
     checkedFields.add(field)
   }
 
-  fun removeProperty(property: String) {
-    removeProperties.add(property)
+  /**
+   * Set a field to unchecked state.
+   * @param field Field name
+   */
+  fun removeCheckedField(field: String) {
+    checkedFields.remove(field)
+  }
+
+  /**
+   * Remove a field. Works on fields without @NullRemove too.
+   * @param field Field name
+   */
+  fun removeProperty(field: String) {
+    removeProperties.add(field)
   }
 
   /**
@@ -77,6 +96,10 @@ interface Base : Serializable {
     return base
   }
 
+  /**
+   * Reset the id to a random one.
+   * Sets initialId to true too.
+   */
   fun resetId()
   
   companion object {

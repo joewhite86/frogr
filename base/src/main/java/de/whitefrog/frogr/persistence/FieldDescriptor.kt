@@ -8,19 +8,35 @@ import de.whitefrog.frogr.model.relationship.Relationship
 
 import java.lang.reflect.Field
 
+/**
+ * Describes a field on any model and provides easy access to its annotations.
+ * Provides methods to check if a field is a collection or a single model.
+ */
 @Suppress("UNCHECKED_CAST")
 class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
   private val annotations: AnnotationDescriptor
-  val isCollection: Boolean
-  val isRelationship: Boolean
   private var baseClass: Class<T>
   private var baseClassName: String
   private val f = field
+
+  /**
+   * Indicates that the field is a model type or a collection of models.
+   */
+  val isModel: Boolean
+  /**
+   * Indicates that the field is a collection.
+   */
+  val isCollection: Boolean
+  /**
+   * Indicates that the field is a relationship type or a collection of relationships.
+   */
+  val isRelationship: Boolean
+
+  /**
+   * Get the fields name.
+   */
   val name: String
     get() { return f.name }
-
-  val isModel: Boolean
-    get() = Model::class.java.isAssignableFrom(baseClass)
 
   init {
     field.isAccessible = true
@@ -49,20 +65,37 @@ class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
     this.baseClassName = this.baseClass.simpleName
 
     this.isRelationship = Relationship::class.java.isAssignableFrom(baseClass)
+    this.isModel = Model::class.java.isAssignableFrom(baseClass)
   }
 
+  /**
+   * Get the annotation descriptor for the described field.
+   * @return the annotation descriptor for the described field
+   */
   fun annotations(): AnnotationDescriptor {
     return annotations
   }
 
+  /**
+   * Get the fields class, or if it's a collection, the generic type.
+   * @return the fields class, or if it's a collection, the generic type
+   */
   fun baseClass(): Class<T> {
     return baseClass
   }
 
+  /**
+   * Get the base class's name.
+   * @return the name of the base class
+   */
   fun baseClassName(): String {
     return baseClassName
   }
 
+  /**
+   * Get the reflected field.
+   * @return the reflected field
+   */
   fun field(): Field {
     return field
   }

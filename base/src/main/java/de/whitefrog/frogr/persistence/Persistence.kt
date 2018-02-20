@@ -93,6 +93,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
       saveField(context, field, create)
     }
     model.checkedFields.clear()
+    model.removeProperties.clear()
 
     logger.info("{} {}", model, if (create) "created" else "updated")
 

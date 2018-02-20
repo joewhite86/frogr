@@ -10,8 +10,7 @@ import java.lang.reflect.Field
 /**
  * Context for entity/relationship save operations.
  * Takes one entity or relationship and tests for property and relationship changes.
- * @param <T> Entity type
-</T> */
+ */
 class SaveContext<T : Base>(
   /**
    * The repository used in the save context.
@@ -64,8 +63,8 @@ class SaveContext<T : Base>(
 
   /**
    * Test if a single field has changed.
-   * @param fieldName Field name.
-   * @return True if the field has changed
+   * @param fieldName field name
+   * @return <code>true</code> if the field has changed, otherwise <code>false</code>
    */
   fun fieldChanged(fieldName: String): Boolean {
     return changedFields().stream().anyMatch { f -> f.name == fieldName }
@@ -97,7 +96,7 @@ class SaveContext<T : Base>(
 
   /**
    * Get the field map for the model in this context.
-   * @return Field map of the model in this context.
+   * @return field map of the model in this context
    */
   fun fieldMap(): List<FieldDescriptor<*>> {
     return fieldMap
@@ -105,7 +104,7 @@ class SaveContext<T : Base>(
 
   /**
    * Get the current model.
-   * @return The model in this context.
+   * @return the model in this context
    */
   fun model(): T {
     return model
@@ -113,7 +112,7 @@ class SaveContext<T : Base>(
 
   /**
    * Get the model repository.
-   * @return The model repository.
+   * @return the model repository
    */
   fun repository(): Repository<T> {
     return repository
@@ -121,7 +120,7 @@ class SaveContext<T : Base>(
 
     /**
    * Get the neo4j node or relationship used as reference in this context.
-   * @return The neo4j node or relationship used as reference in this context.
+   * @return the neo4j node or relationship used as reference in this context
    */ 
   @Suppress("UNCHECKED_CAST")
   fun <N : PropertyContainer> node(): N {
@@ -145,7 +144,7 @@ class SaveContext<T : Base>(
 
   /**
    * The original model used as reference in this context.
-   * @return The original model used as reference in this context.
+   * @return the original model used as reference in this context
    */
   fun original(): T? {
     return original
@@ -154,7 +153,7 @@ class SaveContext<T : Base>(
   /**
    * Set the neo4j node. Used when a new node is created.
    * !!! Should not be used outside of persistence methods.
-   * @param node The neo4j node
+   * @param node the neo4j node
    */
   fun setNode(node: PropertyContainer) {
     this.node = node
