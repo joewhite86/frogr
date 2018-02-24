@@ -7,7 +7,7 @@ Java
 In Java code there's a easy to use method in each repository.
 Here are some examples:
 
-.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/repository/PersonRepository.java
+.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/repository/PersonRepository.java
   :language: java
   :lines: 34-56
   :dedent: 4
@@ -143,7 +143,7 @@ Usage in services
 
 If we want to write a method that takes its own search parameters, we can use the ``@SearchParam`` annotation along with a ``SearchParameter`` argument:
 
-.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
+.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/rest/Persons.java
   :language: java
   :lines: 14-15,28-35
 

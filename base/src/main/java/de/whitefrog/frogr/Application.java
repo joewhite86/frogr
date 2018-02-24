@@ -61,14 +61,14 @@ public abstract class Application<C extends io.dropwizard.Configuration> extends
 
     environment.jersey().packages(packages.toArray(new String[packages.size()]));
 
-    final FilterRegistration.Dynamic cors =
-      environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-    cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-    cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
-    cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, AllowedHeaders);
-    cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, AllowedMethods);
-    cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, AllowedMethods);
-    cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+//    final FilterRegistration.Dynamic cors =
+//      environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+//    cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+//    cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER, "*");
+//    cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, AllowedHeaders);
+//    cors.setInitParameter(CrossOriginFilter.ACCESS_CONTROL_ALLOW_METHODS_HEADER, AllowedMethods);
+//    cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, AllowedMethods);
+//    cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
 
     environment.healthChecks().register("graph", new GraphHealthCheck(service()));
 

@@ -19,7 +19,7 @@ Application
 
 Next we will create the main entry point for the service.
 
-.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/MyApplication.java
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/MyApplication.java
   :language: java
   :lines: 6-
 
@@ -38,14 +38,14 @@ By default these configs should be in your project in a directory 'config'.
 
 ``config/example.yml``
 
-.. literalinclude:: ../../examples/basic/config/example.yml
+.. literalinclude:: ../../examples/config/example.yml
   :language: yaml
 
 Reference: `Dropwizard Configuration`_
 
 ``config/neo4j.properties``
 
-.. literalinclude:: ../../examples/basic/config/neo4j.properties
+.. literalinclude:: ../../examples/config/neo4j.properties
   :language: properties
 
 This file is not required, by default the graph.location is "graph.db" inside your working directory.
@@ -57,9 +57,8 @@ RelationshipTypes
 We should add a class that holds our relationship types, so that we have consistent and convienient access.
 This is not a requirement but I highly recommend it. Doing so we don't have to deal with strings in Java code, which is never a good choice, right?
 
-.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/RelationshipTypes.java
-  :language: java
-  :lines: 5-
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/RelationshipTypes.kt
+  :lines: 3-
 
 Model
 -----
@@ -67,8 +66,7 @@ Model
 Now, let's create a :doc:`model <documentation/models>`. I recommend using Kotlin_ for that.
 All models have to extend the Entity class or implement the Model interface at least.
 
-.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/model/Person.kt
-  :language: kotlin
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/model/Person.kt
   :lines: 9-
 
 As you can see, we used the relationship types created before, to declare our relationships to other models.
@@ -87,7 +85,7 @@ Next we'll have to create the REST :doc:`service <documentation/services>` layer
 basic CRUD operations, so you only have to add methods for special cases. Of course you
 can also use any other JAX-RS annotated class.
 
-.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
+.. literalinclude:: ../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/rest/Persons.java
   :language: java
   :lines: 14-26,35
 
