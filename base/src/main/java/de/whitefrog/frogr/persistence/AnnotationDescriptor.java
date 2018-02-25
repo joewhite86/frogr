@@ -36,10 +36,6 @@ public class AnnotationDescriptor {
    */
   public boolean nullRemove = false;
   /**
-   * See {@link Blob}
-   */
-  public boolean blob = false;
-  /**
    * See {@link Uuid}
    */
   public boolean uuid = false;

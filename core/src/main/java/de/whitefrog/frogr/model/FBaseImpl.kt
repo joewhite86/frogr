@@ -9,10 +9,6 @@ import de.whitefrog.frogr.rest.Views
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 abstract class FBaseImpl : BaseImpl(), FBase {
-  /**
-   * Unique identifier. Not guaranteed unique.
-   * Will be -1 when no id is set yet.
-   */
   @JsonView(Views.Hidden::class)
   override var id = random.nextLong()
     get() {
@@ -22,27 +18,15 @@ abstract class FBaseImpl : BaseImpl(), FBase {
       field = value
       initialId = false
     }
-  /**
-   * True, if the entity was already persisted.
-   */
   override val isPersisted: Boolean
     @JsonIgnore
     get() = id > -1 || uuid != null
-  /**
-   * Unique identifier. String based, guaranteed unique identifier.
-   */
   @Uuid
   @Fetch
   @Unique
   override var uuid: String? = null
-  /**
-   * Timestamp, automatically set on first persist.
-   */
   @JsonView(Views.Secure::class)
   override var created: Long? = null
-  /**
-   * Timestamp, updated each time the entity is perstisted.
-   */
   @JsonView(Views.Secure::class)
   override var lastModified: Long? = null
   

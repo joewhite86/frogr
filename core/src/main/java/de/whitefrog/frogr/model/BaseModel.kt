@@ -11,10 +11,6 @@ open class BaseModel : BaseImpl(), Model {
     val typeName = type()?: javaClass.simpleName
     return "$typeName ($id)"
   }
-  /**
-   * Create a clone of this entity.
-   * @param fields List of fields to clone
-   */
   @Suppress("UNCHECKED_CAST")
   override fun <T: Base> clone(fields: List<String>): T {
     val base: BaseModel

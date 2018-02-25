@@ -50,7 +50,6 @@ class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
     descriptor.fetch = field.isAnnotationPresent(Fetch::class.java)
     descriptor.required = field.isAnnotationPresent(Required::class.java)
     descriptor.nullRemove = field.isAnnotationPresent(NullRemove::class.java)
-    descriptor.blob = field.isAnnotationPresent(Blob::class.java)
     descriptor.uuid = field.isAnnotationPresent(Uuid::class.java)
     descriptor.lazy = field.isAnnotationPresent(Lazy::class.java)
     descriptor.relationshipCount = field.getAnnotation(RelationshipCount::class.java)

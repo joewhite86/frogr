@@ -118,7 +118,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
 
       var valueChanged = created || context.fieldChanged(field.name)
 
-      if (!annotations.notPersistent && !annotations.blob) {
+      if (!annotations.notPersistent) {
         // Generate an uuid when the value is actually null
         if (created && annotations.uuid && field.get(model) == null) {
           val uuid = generateUuid()

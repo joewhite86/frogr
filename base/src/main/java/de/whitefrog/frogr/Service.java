@@ -321,7 +321,7 @@ public class Service implements AutoCloseable {
 
   public void shutdown() {
     state = State.ShuttingDown;
-    repositoryFactory().cache().forEach(Repository::dispose);
+    if(repositoryFactory() != null) repositoryFactory().cache().forEach(Repository::dispose);
     if(graphDb != null) graphDb.shutdown();
     state = State.Started;
   }

@@ -18,7 +18,8 @@ import javax.ws.rs.core.MediaType
 open class AuthTest {
   companion object {
     @ClassRule @JvmField
-    val Rule = DropwizardAppRule<Configuration>(TestApplication::class.java, ResourceHelpers.resourceFilePath("config/test.yml"))
+    val Rule = DropwizardAppRule<Configuration>(TestApplication::class.java, 
+      ResourceHelpers.resourceFilePath("config/test.yml"))
     lateinit var app: TestApplication
     lateinit var client: Client
     lateinit var webTarget: WebTarget

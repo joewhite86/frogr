@@ -6,10 +6,7 @@ import de.whitefrog.frogr.model.annotation.Fetch
 abstract class Entity : FBaseImpl(), FBase, Model {
   @Fetch
   override var type: String? = null
-  /**
-   * Create a clone of this entity.
-   * @param fields List of fields to clone
-   */
+  
   @Suppress("UNCHECKED_CAST")
   override fun <T: Base> clone(fields: List<String>): T {
     val base: Entity

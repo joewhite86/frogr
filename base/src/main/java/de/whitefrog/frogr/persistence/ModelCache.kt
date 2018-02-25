@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.mrbean.MrBeanModule
 import de.whitefrog.frogr.exception.FrogrException
 import de.whitefrog.frogr.model.Base
+import de.whitefrog.frogr.model.relationship.Relationship
 import org.apache.commons.lang3.reflect.FieldUtils
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -118,14 +119,35 @@ class ModelCache {
     for (modelClass in cache.keys) {
       for (descriptor in cache[modelClass]!!) {
         val annotations = descriptor.annotations()
+        
         // check annotations for validity
         if (annotations.indexed != null && annotations.relatedTo != null) {
-          logger.warn("annotations @Indexed and @RelatedTo should not be used together ({}->{})",
+          logger.error("annotations @Indexed and @RelatedTo should not be used together ({}->{})",
             modelClass.simpleName, descriptor.name)
         }
         if (annotations.nullRemove && annotations.required) {
-          logger.warn("annotations @NullRemove and @Required should not be used together ({}->{})",
+          logger.error("annotations @NullRemove and @Required should not be used together ({}->{})",
             modelClass.simpleName, descriptor.name)
+        }
+        
+        // validate relationship models
+        if (modelClass is Relationship<*,*>) {
+          if (annotations.relatedTo != null) {
+            logger.error("annotation @RelatedTo is not allowed in relationship models ({}->{})",
+              modelClass.simpleName, descriptor.name)
+          }
+          if (annotations.relationshipCount != null) {
+            logger.error("annotation @RelationshipCount is not allowed in relationship models ({}->{})",
+              modelClass.simpleName, descriptor.name)
+          }
+          if (annotations.indexed != null) {
+            logger.error("annotation @Indexed is not allowed in relationship models ({}->{})",
+              modelClass.simpleName, descriptor.name)
+          }
+          if (annotations.unique) {
+            logger.error("annotation @Unique is not allowed in relationship models ({}->{})",
+              modelClass.simpleName, descriptor.name)
+          }
         }
       }
     }

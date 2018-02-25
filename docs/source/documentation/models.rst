@@ -33,7 +33,7 @@ Fields can be annotated with hibernate annotations extended by a set of unique o
 ``@Indexed(type=IndexType.Default)``
   Indicates that a field should be handled by an index.
 
-| ``type`` can be either Default or LowerCase for case-insensitive matches.
+| ``type`` can be either IndexType.Default or IndexType.LowerCase for case-insensitive matches.
 
 ``@Lazy``
   Indicator for lists to fetch them lazily on demand, not every list item at once.
@@ -45,9 +45,10 @@ Fields can be annotated with hibernate annotations extended by a set of unique o
 
 ``@NullRemove``
   Remove a property if set to ``null``.
+  Note that this will also delete the property if we save a model where the @NullRemove property is not fetched.
 
 ``@RelatedTo(type=None, direction=Direction.OUTGOING, multiple=false, restrictType=false)``
-  The field represents a relation to another or the same model. 
+  The field represents a relation to another or the same model.
 
 | ``type`` has to be set to the relationship type name.
 | ``direction`` defaults to an outgoing relationship, but can be also incoming or even both.

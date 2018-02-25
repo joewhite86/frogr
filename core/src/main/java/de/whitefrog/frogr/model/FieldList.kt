@@ -6,7 +6,7 @@ import de.whitefrog.frogr.exception.QueryParseException
 import java.util.*
 
 /**
- * Field list used in rest queries. Contains multiple QueryField instances.
+ * Contains multiple QueryField instances.
  */
 @JsonAutoDetect(
   fieldVisibility = JsonAutoDetect.Visibility.ANY, 
@@ -17,14 +17,30 @@ class FieldList() : HashSet<QueryField>() {
   constructor(list: FieldList): this() {
     addAll(HashSet(list))
   }
+
+  /**
+   * Tests if a field with the passed name exists.
+   * @param name field name to look for
+   * @return <code>true</code> if the field is in the list, otherwise <code>false</code>
+   */
   fun containsField(name: String): Boolean {
     return this.any { it.field == name }
   }
 
+  /**
+   * Get a {@link QueryField} by name.
+   * @param name field name to look for
+   * @return QueryField instance if found, otherwise <code>null</code>
+   */
   operator fun get(name: String): QueryField? {
     return this.firstOrNull { it.field == name }
   }
-  
+
+  /**
+   * Convenience method that always returns a {@link QueryField}, even if it doesn't exist in the list.
+   * @param name field name to look for
+   * @return the found QueryField instance, or a newly created one with that name
+   */
   fun getOrEmpty(name: String): QueryField {
     return firstOrNull { it.field == name } ?: QueryField(name)
   }
@@ -46,7 +62,12 @@ class FieldList() : HashSet<QueryField>() {
     fun parseFields(vararg fields: String): FieldList {
       return parseFields(Arrays.asList(*fields))
     }
-    
+
+    /**
+     * Parse an array of fields and return the created {@link FieldList}.
+     * @param fields fields that should be parsed into a new FieldList
+     * @return the parsed FieldList
+     */
     @JvmStatic
     fun parseFields(stringFields: List<String>) : FieldList {
       val fields = FieldList()
@@ -63,7 +84,12 @@ class FieldList() : HashSet<QueryField>() {
       
       return fields
     }
-    
+
+    /**
+     * Parse an array of fields and return the created {@link FieldList}.
+     * @param stringFields fields that should be parsed into a new FieldList
+     * @return the parsed FieldList
+     */
     @JvmStatic
     fun parseFields(input: String) : FieldList {
       val fields = FieldList()
@@ -106,7 +132,13 @@ class FieldList() : HashSet<QueryField>() {
       
       return fields
     }
-    
+
+    /**
+     * Parse a string representation of fields and return the created {@link FieldList}.
+     *
+     * <p>Fields are seperated by ",", subfields are inside curly braces and limits are in round braces.
+     * For Example: "name,friends(30).{name,age},age"</p>
+     */
     @JvmStatic
     private fun parseField(pFieldString: String, parentFields: FieldList) : QueryField {
       val queryField: QueryField?
@@ -118,7 +150,7 @@ class FieldList() : HashSet<QueryField>() {
         var subFieldString = fieldString.substring(field.length + 1, fieldString.length) 
         
         if(subFieldString.startsWith("{")) {
-          if(!subFieldString.endsWith("}")) throw QueryParseException("missing }")
+          if(!subFieldString.endsWith("}")) throw QueryParseException("missing } on field \"$pFieldString\"")
           subFieldString = subFieldString.substring(1, subFieldString.length - 1)
         }
         // if we already have the field in the parent FieldList, we can add all subfields there
