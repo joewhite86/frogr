@@ -103,11 +103,12 @@ class ModelCache {
         fields = FieldUtils.getAllFieldsList(clazz)
       }
       val descriptors = ArrayList<FieldDescriptor<*>>()
-      fields
-        .filter { !ignoreFields.contains(it.name) && 
-                  !Modifier.isStatic(it.modifiers) && 
-                  !containsField(descriptors, it.name) }
-        .forEach { descriptors.add(FieldDescriptor<Base>(it)) }
+      for(field in fields) {
+        if(ignoreFields.contains(field.name)) continue
+        if(Modifier.isStatic(field.modifiers)) continue
+        if(containsField(descriptors, field.name)) continue
+        descriptors.add(FieldDescriptor<Base>(field))
+      }
 
       cache[clazz] = descriptors
     }

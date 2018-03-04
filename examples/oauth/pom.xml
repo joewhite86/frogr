@@ -17,10 +17,12 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-base</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-auth</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
         <dependency>

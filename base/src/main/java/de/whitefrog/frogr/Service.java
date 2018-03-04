@@ -249,6 +249,8 @@ public class Service implements AutoCloseable {
         if(!Base.class.isAssignableFrom(modelClass)) 
           throw new FrogrException("model class " + modelClass.getName() + " is not of type Base");
 
+        if(logger.isDebugEnabled()) logger.debug("creating constraints for {}", modelClass.getSimpleName());
+
         ModelRepository repository = (ModelRepository) repository(modelClass);
         List<ConstraintDefinition> constraints = Iterables.asList(
           schema.getConstraints(repository.label()));
