@@ -26,7 +26,7 @@ public class AnnotationDescriptor {
   /**
    * See {@link Fetch}
    */
-  public boolean fetch = false;
+  public Fetch fetch = null;
   /**
    * See {@link Required}
    */

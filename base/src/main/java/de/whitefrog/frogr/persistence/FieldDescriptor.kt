@@ -47,7 +47,7 @@ class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
     descriptor.notPersistent = field.isAnnotationPresent(NotPersistent::class.java)
     descriptor.relatedTo = field.getAnnotation(RelatedTo::class.java)
     descriptor.unique = field.isAnnotationPresent(Unique::class.java)
-    descriptor.fetch = field.isAnnotationPresent(Fetch::class.java)
+    descriptor.fetch = field.getAnnotation(Fetch::class.java)
     descriptor.required = field.isAnnotationPresent(Required::class.java)
     descriptor.nullRemove = field.isAnnotationPresent(NullRemove::class.java)
     descriptor.uuid = field.isAnnotationPresent(Uuid::class.java)
