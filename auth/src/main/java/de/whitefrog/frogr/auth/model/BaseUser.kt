@@ -10,17 +10,32 @@ import de.whitefrog.frogr.rest.Views
 import java.security.Principal
 import javax.security.auth.Subject
 
+/**
+ * Base user class required for Authentication.
+ */
 open class BaseUser : Entity(), Principal {
-  @Unique
-  @Fetch
-  @Required
+  /**
+   * Unique and required field.
+   */
+  @Unique @Fetch @Required 
   open var login: String? = null
+
+  /**
+   * The password as string.
+   */
   @JsonView(Views.Hidden::class)
   open var password: String? = null
+
+  /**
+   * [Role] in which the user is
+   */
   @JsonView(Views.Hidden::class)
   open var role: String? = null
-  @Indexed
-  @JsonView(Views.Secure::class)
+
+  /**
+   * Used for oAuth user authentication.
+   */
+  @Indexed @JsonView(Views.Secure::class)
   var accessToken: String? = null
 
   override fun getName(): String? {
