@@ -38,6 +38,11 @@ class QueryField @JsonCreator constructor(@JsonProperty("field") var field: Stri
     } else {
       this.field = field
     }
+    if(field.contains(".")) {
+      val index = field.indexOf(".")
+      this.subFields = FieldList.parseFields(this.field.substring(index + 1))
+      this.field = field.substring(0, index)
+    }
   }
 
   fun field(): String {
