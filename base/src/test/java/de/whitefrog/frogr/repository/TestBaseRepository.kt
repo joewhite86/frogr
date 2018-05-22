@@ -210,6 +210,22 @@ class TestBaseRepository {
   }
   
   @Test
+  fun fetchGroup() {
+    service.beginTx().use {
+      var person = Person()
+      person.fetchGroupField1 = "test"
+      person.fetchGroupField2 = "test"
+      persons.save(person)
+      person = persons.find(person.id)
+      assertNull(person.fetchGroupField1)
+      assertNull(person.fetchGroupField2)
+      persons.fetch(person, "testGroup")
+      assertEquals("test", person.fetchGroupField1)
+      assertEquals("test", person.fetchGroupField2)
+    }
+  }
+  
+  @Test
   fun sort() {
     val person1 = Person("test1", 1)
     val person2 = Person("test2", 2)
