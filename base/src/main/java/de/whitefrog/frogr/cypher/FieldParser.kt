@@ -28,7 +28,7 @@ class FieldParser(val repository: Repository<*>) {
           clazz = descriptor.baseClass()
         }
       } else {
-        throw FrogrException("\"field ${fields[index]} could not be found on ${clazz.simpleName}")
+        throw FrogrException("field ${fields[index]} could not be found on ${clazz.name}")
       }
       
       index++
