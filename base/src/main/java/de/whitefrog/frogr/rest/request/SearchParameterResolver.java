@@ -192,6 +192,9 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     String[] splits = filterString.split(",");
     for(String split : splits) {
       String[] splitted = split.split(":");
+      if(splitted.length != 2) {
+        throw new IllegalArgumentException("\"" + split + "\" is not a valid filter");
+      }
       String field = splitted[0];
       String value = splitted[1];
       Filter filter;
