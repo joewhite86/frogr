@@ -7,13 +7,14 @@ import de.whitefrog.frogr.model.annotation.*
 import de.whitefrog.frogr.model.relationship.Relationship
 
 import java.lang.reflect.Field
+import java.lang.reflect.ParameterizedType
 
 /**
  * Describes a field on any model and provides easy access to its annotations.
  * Provides methods to check if a field is a collection or a single model.
  */
 @Suppress("UNCHECKED_CAST")
-class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
+class FieldDescriptor<T : Base> internal constructor(clazz: Class<out Base>, private val field: Field) {
   private val annotations: AnnotationDescriptor
   private var baseClass: Class<T>
   private var baseClassName: String
@@ -56,11 +57,17 @@ class FieldDescriptor<T : Base> internal constructor(private val field: Field) {
 
     this.annotations = descriptor
 
-    if (this.isCollection) {
-      this.baseClass = ReflectionUtil.getGenericClass(field) as Class<T>
-    } else {
-      this.baseClass = field.type as Class<T>
-    }
+    val finalRelationshipClass = clazz.genericSuperclass is ParameterizedType && Relationship::class.java.isAssignableFrom(clazz) 
+    this.baseClass = 
+      if(finalRelationshipClass && field.name == "from")
+        (clazz.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<T>
+      else if(finalRelationshipClass && field.name == "to")
+        (clazz.genericSuperclass as ParameterizedType).actualTypeArguments[1] as Class<T>
+      else if (this.isCollection) 
+        ReflectionUtil.getGenericClass(field) as Class<T>
+      else 
+        field.type as Class<T>
+    
     this.baseClassName = this.baseClass.simpleName
 
     this.isRelationship = Relationship::class.java.isAssignableFrom(baseClass)

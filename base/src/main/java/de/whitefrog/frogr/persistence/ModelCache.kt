@@ -107,7 +107,7 @@ class ModelCache {
         if(ignoreFields.contains(field.name)) continue
         if(Modifier.isStatic(field.modifiers)) continue
         if(containsField(descriptors, field.name)) continue
-        descriptors.add(FieldDescriptor<Base>(field))
+        descriptors.add(FieldDescriptor<Base>(clazz, field))
       }
 
       cache[clazz] = descriptors
