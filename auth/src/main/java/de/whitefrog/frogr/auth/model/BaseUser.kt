@@ -45,6 +45,11 @@ open class BaseUser : Entity(), Principal {
   override fun implies(subject: Subject?): Boolean {
     return subject!!.principals.any { p -> (p as BaseUser).id == id }
   }
+
+  override fun equals(other: Any?): Boolean {
+    return super<Entity>.equals(other)
+  }
+
   companion object {
     const val Login = "login"
     const val Password = "password"

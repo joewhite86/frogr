@@ -18,7 +18,6 @@ public class BaseBenchmark {
   private static final Map<String, Task> results = new HashMap<>();
   private static long benchmarkStart;
 
-
   public static class Task {
     public String text;
     public long expectation;
