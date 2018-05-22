@@ -297,7 +297,7 @@ public class Service implements AutoCloseable {
               .create();
             logger.debug("created {} index on field \"{}\" for model \"{}\"",
               annotations.indexed.type(), descriptor.getName(), repository.getModelClass().getSimpleName());
-          } else if(annotations.indexed == null && !annotations.unique && existingIndex != null) {
+          } else if(annotations.indexed == null && !annotations.unique && existingIndex != null && existingConstraint == null) {
             existingIndex.drop();
             logger.debug("dropped index on field \"{}\" for model \"{}\"",
               descriptor.getName(), repository.getModelClass().getSimpleName());
