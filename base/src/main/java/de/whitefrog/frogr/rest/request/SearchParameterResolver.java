@@ -113,6 +113,9 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         String[] splits = params.split(";");
         for(String split : splits) {
           String[] splitted = split.split(":");
+          if(splitted.length != 2) {
+            throw new IllegalArgumentException("\"" + split + "\" is not a valid query parameter");
+          }
           resolveParameter(searchParamter, splitted[0], splitted[1]);
         }
         return searchParamter;
