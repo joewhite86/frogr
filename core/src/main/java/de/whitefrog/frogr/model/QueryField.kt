@@ -20,6 +20,10 @@ class QueryField @JsonCreator constructor(@JsonProperty("field") var field: Stri
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   private var subFields = FieldList()
 
+  init {
+    parseField(field)
+  }
+
   private fun parseField(field: String) {
     if (field.contains("(")) {
       this.field = field.substring(0, field.indexOf("("))
@@ -33,6 +37,11 @@ class QueryField @JsonCreator constructor(@JsonProperty("field") var field: Stri
       }
     } else {
       this.field = field
+    }
+    if(field.contains(".")) {
+      val index = field.indexOf(".")
+      this.subFields = FieldList.parseFields(this.field.substring(index + 1))
+      this.field = field.substring(0, index)
     }
   }
 
@@ -93,9 +102,5 @@ class QueryField @JsonCreator constructor(@JsonProperty("field") var field: Stri
       str += "}"
     }
     return str
-  }
-
-  init {
-    parseField(field)
   }
 }

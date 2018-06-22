@@ -79,9 +79,19 @@ public class Search {
     Query query = repository.queryBuilder().buildSimple(params);
     query.query(query.query() + " return sum(" + field + ") as c");
     Result result = execute(query);
-    long sum = (long) result.columnAs("c").next();
+    Number sum = (Number) result.columnAs("c").next();
     result.close();
     return sum;
+  }
+  
+  /**
+   * Get a {@link Stream stream} of results.
+   * @return A {@link Stream stream} of results
+   * @throws ClassCastException when the {@link SearchParameter#returns} value was not matching the class to return
+   */
+  @SuppressWarnings("unchecked")
+  public <T extends Base> Stream<T> stream() {
+    return (Stream<T>) search(params);
   }
 
   /**

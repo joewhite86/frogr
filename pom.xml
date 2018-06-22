@@ -6,7 +6,7 @@
 
     <groupId>de.whitefrog</groupId>
     <artifactId>frogr-parent</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <packaging>pom</packaging>
     <name>Frogr</name>
     <description>Neo4j powered restful drop-in solution</description>
@@ -17,7 +17,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <gson.version>2.7</gson.version>
         <neo4j.version>3.3.1</neo4j.version>
-        <kotlin.version>1.2.21</kotlin.version>
+        <kotlin.version>1.2.41</kotlin.version>
         <logback.version>1.2.3</logback.version>
         <slf4j.version>1.7.5</slf4j.version>
         <dropwizard.version>1.2.2</dropwizard.version>
@@ -168,7 +168,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.7</version>
+                    <version>3.0.2</version>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
+                    </configuration>
                 </plugin>
 
                 <!-- Testing -->
@@ -292,27 +295,6 @@
     
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>de.whitefrog</groupId>
-                <artifactId>frogr-base</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.whitefrog</groupId>
-                <artifactId>frogr-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.whitefrog</groupId>
-                <artifactId>frogr-auth</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.whitefrog</groupId>
-                <artifactId>frogr-test</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.neo4j</groupId>
                 <artifactId>neo4j-graphdb-api</artifactId>

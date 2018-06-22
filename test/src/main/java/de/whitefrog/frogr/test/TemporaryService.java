@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2014.
- */
-
 package de.whitefrog.frogr.test;
 
 import de.whitefrog.frogr.Service;

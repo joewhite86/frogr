@@ -17,6 +17,10 @@ class Person(@Indexed var field: String? = null, @Indexed var number: Long? = nu
   var dateField: Date? = null
   @Fetch
   var autoFetch: String? = null
+  @Fetch(group = "testGroup")
+  var fetchGroupField1: String? = null
+  @Fetch(group = "testGroup")
+  var fetchGroupField2: String? = null
   @JsonView(Views.Secure::class)
   var secureField: String? = null
   @NullRemove

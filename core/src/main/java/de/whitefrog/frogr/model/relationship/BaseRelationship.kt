@@ -14,6 +14,6 @@ open class BaseRelationship<From: Model, To: Model>(): BaseImpl(), Relationship<
 
   override fun toString(): String {
     val typeName = javaClass.simpleName
-    return "$typeName ($id)"
+    return "$typeName [$from -> $to]"
   }
 }

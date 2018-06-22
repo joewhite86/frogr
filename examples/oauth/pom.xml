@@ -9,7 +9,7 @@
     <parent>
         <groupId>de.whitefrog</groupId>
         <artifactId>frogr-parent</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1</version>
         <relativePath>../..</relativePath>
     </parent>
     
@@ -17,10 +17,12 @@
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-base</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.whitefrog</groupId>
             <artifactId>frogr-auth</artifactId>
+            <version>${project.version}</version>
         </dependency>
         
         <dependency>

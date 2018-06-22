@@ -118,7 +118,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
 
       var valueChanged = created || context.fieldChanged(field.name)
 
-      if (!annotations.notPersistent && !annotations.blob) {
+      if (!annotations.notPersistent) {
         // Generate an uuid when the value is actually null
         if (created && annotations.uuid && field.get(model) == null) {
           val uuid = generateUuid()
@@ -333,8 +333,9 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
 
         // always fetch when field is 'type' or 'uuid', or when allFields is set 
         // or the field list contains the current field
-        val fetch = descriptor.annotations().fetch || 
-          fields.containsField(Base.AllFields) || fields.containsField(descriptor.name)
+        var fetch = descriptor.annotations().fetch != null && (descriptor.annotations().fetch.group == "auto" ||
+          fields.containsField(descriptor.annotations().fetch.group))
+        if(!fetch) fetch = fields.containsField(Base.AllFields) || fields.containsField(descriptor.name)
 
         if (fetch) {
           // still fetch if refetch is true or field is not in fetchedFields 
@@ -375,7 +376,7 @@ class Persistence(private val service: Service, private val cache: ModelCache) {
       val count = annotations.relationshipCount!!
       field.set(model, Iterables.count(node.getRelationships(count.direction, RelationshipType.withName(count.type))))
     } else if (model is Model && annotations.relatedTo != null) {
-      if (!annotations.fetch && !fields.containsField(field.name)) return
+      if (annotations.fetch == null && !fields.containsField(field.name)) return
       val subFields = if (fields.containsField(field.name)) fields[field.name]!!.subFields() else FieldList()
       val fieldDescriptor = if (fields.containsField(field.name)) fields[field.name]!! else QueryField(field.name)
       // ignore relationships when only AllFields is set

@@ -35,7 +35,6 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
   private String type;
   private Persistence persistence;
   private Relationships relationships;
-  private QueryBuilder queryBuilder;
   private String queryIdentifier;
   private ModelCache modelCache;
   protected Class<?> modelClass;
@@ -128,12 +127,11 @@ public abstract class BaseRepository<T extends Base> implements Repository<T> {
 
   public void initialize() {
     this.modelCache = service.cache();
-    this.queryBuilder = new QueryBuilder(this);
   }
 
   @Override
   public QueryBuilder queryBuilder() {
-    return queryBuilder;
+    return new QueryBuilder(this);
   }
   
   @Override

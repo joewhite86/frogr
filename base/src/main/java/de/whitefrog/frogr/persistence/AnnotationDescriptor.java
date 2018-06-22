@@ -26,7 +26,7 @@ public class AnnotationDescriptor {
   /**
    * See {@link Fetch}
    */
-  public boolean fetch = false;
+  public Fetch fetch = null;
   /**
    * See {@link Required}
    */
@@ -35,10 +35,6 @@ public class AnnotationDescriptor {
    * See {@link NullRemove}
    */
   public boolean nullRemove = false;
-  /**
-   * See {@link Blob}
-   */
-  public boolean blob = false;
   /**
    * See {@link Uuid}
    */

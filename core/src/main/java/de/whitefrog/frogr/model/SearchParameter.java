@@ -1,6 +1,8 @@
 package de.whitefrog.frogr.model;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
   getterVisibility = JsonAutoDetect.Visibility.NONE,
   setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class SearchParameter implements Serializable {
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   public static final int DefaultLimit = 10;
   public static final Locale DefaultLocale = Locale.GERMAN;
 
@@ -256,7 +259,11 @@ public class SearchParameter implements Serializable {
 
   @Override
   public String toString() {
-    return new ReflectionToStringBuilder(this).toString();
+    try {
+      return "SearchParameter " + objectMapper.writeValueAsString(this);
+    } catch(JsonProcessingException e) {
+      return "SearchParameter {\"could not map values\"}";
+    }
   }
 
 

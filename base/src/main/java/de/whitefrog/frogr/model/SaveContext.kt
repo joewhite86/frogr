@@ -50,7 +50,7 @@ class SaveContext<T : Base>(
 
   /**
    * Get a full list of changed fields.
-   * @return List of changed fields
+   * @return list of changed fields
    */
   fun changedFields(): List<FieldDescriptor<*>> {
     if (changedFields == null) {

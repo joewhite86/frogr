@@ -10,7 +10,7 @@ Names should start with the :doc:`model <models>` name and end with "Repository"
 
 If, for example, we want a repository for the ``Person`` model, we would create a repository called ``PersonRepository``:
 
-.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/repository/PersonRepository.java
+.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/repository/PersonRepository.java
   :language: java
   :lines: 11-29,58
 
@@ -18,6 +18,6 @@ We can access our repository easily by calling the ``.repository(..)`` method of
 The method takes either the :doc:`model <models>` class or the name as string.
 There's access to it in any REST service class and inside any repository:
 
-.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/rest/Persons.java
+.. literalinclude:: ../../../examples/basic/src/main/java/de/whitefrog/frogr/example/basic/rest/Persons.java
   :language: java
   :lines: 14-

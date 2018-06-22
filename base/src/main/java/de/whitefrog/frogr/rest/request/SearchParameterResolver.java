@@ -104,7 +104,7 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
       logger.error(e.getMessage(), e);
     }
     try {
-      if(params.startsWith("{")) {
+      if(params.charAt(0) == '{') {
         // map json object formatted as string
         return mapper.readValue(params, SearchParameter.class);
       } else {
@@ -113,6 +113,9 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
         String[] splits = params.split(";");
         for(String split : splits) {
           String[] splitted = split.split(":");
+          if(splitted.length != 2) {
+            throw new IllegalArgumentException("\"" + split + "\" is not a valid query parameter");
+          }
           resolveParameter(searchParamter, splitted[0], splitted[1]);
         }
         return searchParamter;
@@ -176,12 +179,12 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     String[] splits = value.split(",");
     for(String split : splits) {
       SearchParameter.SortOrder dir = SearchParameter.SortOrder.ASC;
-      if(split.startsWith("-")) {
+      if(split.charAt(0) == '-') {
         dir = SearchParameter.SortOrder.DESC;
         split = split.substring(1);
       }
       // " " needs to be captured too since "+" is converted to " " on URIs
-      else if(split.startsWith("+") || split.startsWith(" ")) {
+      else if(split.charAt(0) == '+' || split.charAt(0) == ' ') {
         split = split.substring(1);
       }
       params.orderBy(split, dir);
@@ -192,10 +195,13 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
     String[] splits = filterString.split(",");
     for(String split : splits) {
       String[] splitted = split.split(":");
+      if(splitted.length != 2) {
+        throw new IllegalArgumentException("\"" + split + "\" is not a valid filter");
+      }
       String field = splitted[0];
       String value = splitted[1];
       Filter filter;
-      if(value.startsWith("!")) {
+      if(value.charAt(0) == '!') {
         Object typedValue = guessType(value.substring(1));
         if(typedValue instanceof String) {
           filter = Filter.getStringFilter(field, value.substring(1));
@@ -203,8 +209,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
           filter = new Filter.Equals(field, typedValue);
         }
       } 
-      else if(value.startsWith("<")) {
-        if(value.substring(1, 2).equals("=")) {
+      else if(value.charAt(0) == '<') {
+        if(value.charAt(1) == '=') {
           filter = new Filter.LessThan(field, Long.parseLong(value.substring(2)));
           ((Filter.LessThan) filter).setIncluding(true);
         } else {
@@ -212,8 +218,8 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
           ((Filter.LessThan) filter).setIncluding(false);
         }
       } 
-      else if(value.startsWith(">")) {
-        if(value.substring(1, 2).equals("=")) {
+      else if(value.charAt(0) == '>') {
+        if(value.charAt(1) == '=') {
           filter = new Filter.GreaterThan(field, Long.parseLong(value.substring(2)));
           ((Filter.GreaterThan) filter).setIncluding(true);
         } else {
@@ -221,12 +227,12 @@ public class SearchParameterResolver extends AbstractValueFactoryProvider {
           ((Filter.GreaterThan) filter).setIncluding(false);
         }
       } 
-      else if(value.startsWith("(") && value.contains("-") && value.endsWith(")")) {
+      else if(value.charAt(0) == '(' && value.contains("-") && value.endsWith(")")) {
         String[] range = value.substring(1, value.length() - 1).split("-");
         filter = new Filter.Range(field, Long.parseLong(range[0]), Long.parseLong(range[1]));
       } 
       else {
-        if(value.startsWith("=")) {
+        if(value.charAt(0) == '=') {
           value = value.substring(1);
         }
         Object typedValue = guessType(value);
