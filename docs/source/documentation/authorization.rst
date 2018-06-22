@@ -12,7 +12,7 @@ Maven
   <dependency>
       <groupId>de.whitefrog</groupId>
       <artifactId>frogr-auth</artifactId>
-      <version>0.2.1</version>
+      <version>0.2.2</version>
   </dependency>
 
 User Model
