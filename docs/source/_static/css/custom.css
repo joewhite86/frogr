@@ -19,7 +19,7 @@ a:visited {
   color: #518AB8;
 }
 
-.wy-nav-content-wrap {
+.wy-nav-content {
   background: #181818;
 }
 
@@ -75,46 +75,46 @@ div[class^='highlight'] pre {
   border-radius: 4px;
 }
 
-.c1 {
+.highlight .c1 {
   color: #5F5A60;
 }
 
-.kc, .mi {
+.highlight .kc, .highlight .mi {
   color: #CF6A4C;
 }
 
-.kd {
+.highlight .kd {
   color: #F9EE98;
 }
 
-.n {
+.highlight .n, .highlight .o {
   color: #f8f8f8;
 }
 
-.nt {
+.highlight .nt {
   color: #DAD085;
 }
 
-.nc {
+.highlight .nc {
   color: #9B703F;
 }
 
-.nd {
+.highlight .nd {
   color: #8996A8;
 }
 
-.na {
+.highlight .na {
   color: #7587A6;
 }
 
-.nf {
+.highlight .nf {
   color: #AC885B;
 }
 
-.s, .s2 {
+.highlight .s, .highlight .s2 {
   color: #8F9D6A;
 }
 
-.k {
+.highlight .k {
   color: #CDA869
 }
