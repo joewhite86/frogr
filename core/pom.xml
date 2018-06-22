@@ -37,7 +37,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
             <plugin>
@@ -48,28 +47,36 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>build-docs</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>/usr/bin/make</executable>
-                            <workingDirectory>${project.basedir}/../docs</workingDirectory>
-                            <arguments>
-                                <argument>clean</argument>
-                                <argument>html</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.9</version>
+                <reportSets>
+                    <reportSet>
+                        <reports />
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>sphinx-maven-plugin</artifactId>
+                <version>2.2.2</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>generate</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+                <configuration>
+                    <sourceDirectory>${basedir}/../docs/source</sourceDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
