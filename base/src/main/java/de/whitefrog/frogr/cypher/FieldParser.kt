@@ -38,12 +38,7 @@ class FieldParser(val repository: Repository<*>) {
   }
   
   fun isLowerCase(value: String): Boolean {
-    return try {
-      val field = parse(value).last()
-      field.annotations().indexed?.type == IndexType.LowerCase
-    } catch(e: FrogrException) {
-      logger.warn(e.message, e)
-      false
-    }
+    val field = parse(value).last()
+    return field.annotations().indexed?.type == IndexType.LowerCase
   }
 }
