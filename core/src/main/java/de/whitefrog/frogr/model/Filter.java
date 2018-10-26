@@ -14,7 +14,10 @@ import java.util.function.Predicate;
   @JsonSubTypes.Type(value = Filter.NotEquals.class, name = "neq"),
   @JsonSubTypes.Type(value = Filter.LessThan.class, name = "lt"),
   @JsonSubTypes.Type(value = Filter.GreaterThan.class, name = "gt"),
-  @JsonSubTypes.Type(value = Filter.Range.class, name = "range")
+  @JsonSubTypes.Type(value = Filter.Range.class, name = "range"),
+  @JsonSubTypes.Type(value = Filter.StartsWith.class, name = "startswith"),
+  @JsonSubTypes.Type(value = Filter.EndsWith.class, name = "endswith"),
+  @JsonSubTypes.Type(value = Filter.Contains.class, name = "contains")
 })
 public interface Filter extends Predicate<Object> {
   Object getValue();
@@ -66,7 +69,7 @@ public interface Filter extends Predicate<Object> {
     }
 
     @Override
-      public boolean test(Object other) {
+    public boolean test(Object other) {
           return other.equals(getValue());
       }
   }
@@ -78,7 +81,7 @@ public interface Filter extends Predicate<Object> {
     }
 
     @Override
-      public boolean test(Object other) {
+    public boolean test(Object other) {
           return !other.equals(getValue());
       }
   }
@@ -97,12 +100,12 @@ public interface Filter extends Predicate<Object> {
     }
 
     @Override
-    public Long getValue() {
+    public Object getValue() {
       if(super.getValue() instanceof Integer)
         return ((Integer) super.getValue()).longValue();
       if(super.getValue() instanceof Date)
         return ((Date) super.getValue()).getTime();
-      return (Long) super.getValue();
+      return super.getValue();
     }
 
     public boolean isIncluding() {
@@ -115,10 +118,10 @@ public interface Filter extends Predicate<Object> {
 
     @Override
     public boolean test(Object other) {
-      Long otherLong;
-      if(other instanceof Integer) otherLong = new Long((Integer) other);
-      else otherLong = (Long) other;
-      return isIncluding()? otherLong >= getValue(): otherLong > getValue();
+      if(!(other instanceof Comparable))
+        throw new UnsupportedOperationException(other + " doesn't implement Comparable interface");
+      if(other instanceof Integer) other = new Long((Integer) other);
+      return isIncluding()? ((Comparable)other).compareTo(getValue()) >= 0: ((Comparable)other).compareTo(getValue()) > 0;
     }
   }
 
@@ -135,12 +138,12 @@ public interface Filter extends Predicate<Object> {
       this.including = including;
     }
 
-    public Long getValue() {
+    public Object getValue() {
       if(super.getValue() instanceof Integer)
         return ((Integer) super.getValue()).longValue();
       if(super.getValue() instanceof Date)
         return ((Date) super.getValue()).getTime();
-      return (Long) super.getValue();
+      return super.getValue();
     }
 
     public boolean isIncluding() {
@@ -153,10 +156,10 @@ public interface Filter extends Predicate<Object> {
 
     @Override
     public boolean test(Object other) {
-      Long otherLong;
-      if(other instanceof Integer) otherLong = new Long((Integer) other);
-      else otherLong = (Long) other;
-      return isIncluding()? otherLong <= getValue(): otherLong < getValue();
+      if(!(other instanceof Comparable)) 
+        throw new UnsupportedOperationException(other + " doesn't implement Comparable interface");
+      if(other instanceof Integer) other = new Long((Integer) other);
+      return isIncluding()? ((Comparable)other).compareTo(getValue()) <= 0: ((Comparable)other).compareTo(getValue()) < 0;
     }
   }
   
