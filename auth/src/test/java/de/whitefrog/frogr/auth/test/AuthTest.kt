@@ -46,11 +46,9 @@ open class AuthTest {
         .queryParam("login", "rick")
         .queryParam("password", "morty")
         .request(MediaType.APPLICATION_JSON)
-        .get(_response())
+        .get(object : GenericType<FrogrResponse<User>>() {})
       token = response.data[0].accessToken
     }
-
-    private fun _response(): GenericType<FrogrResponse<User>> = object : GenericType<FrogrResponse<User>>() {}
 
     @AfterClass @JvmStatic
     fun after() {

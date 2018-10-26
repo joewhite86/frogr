@@ -1,7 +1,6 @@
-package de.whitefrog.frogr.auth.model
+package de.whitefrog.frogr.model
 
 import com.fasterxml.jackson.annotation.JsonView
-import de.whitefrog.frogr.model.Entity
 import de.whitefrog.frogr.model.annotation.Fetch
 import de.whitefrog.frogr.model.annotation.Indexed
 import de.whitefrog.frogr.model.annotation.Required

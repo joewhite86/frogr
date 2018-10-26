@@ -164,7 +164,7 @@ class TestAuthCRUDService: AuthTest() {
       .request(MediaType.APPLICATION_JSON)
       .header("Authorization", "Bearer $token")
       .delete()
-    assertEquals(Status.NO_CONTENT.statusCode, response.status)
+    assertEquals(Status.OK.statusCode, response.status)
   }
 
   @Test

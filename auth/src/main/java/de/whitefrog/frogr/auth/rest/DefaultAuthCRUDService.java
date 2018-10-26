@@ -2,7 +2,7 @@ package de.whitefrog.frogr.auth.rest;
 
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
-import de.whitefrog.frogr.auth.model.BaseUser;
+import de.whitefrog.frogr.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;

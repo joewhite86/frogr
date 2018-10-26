@@ -1,7 +1,7 @@
 package de.whitefrog.frogr.auth.repository;
 
 import de.whitefrog.frogr.auth.exception.AuthenticationException;
-import de.whitefrog.frogr.auth.model.BaseUser;
+import de.whitefrog.frogr.model.BaseUser;
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.auth.rest.oauth.Authenticator;
 import de.whitefrog.frogr.exception.MissingRequiredException;

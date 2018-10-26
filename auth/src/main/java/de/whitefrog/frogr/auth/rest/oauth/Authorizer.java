@@ -1,7 +1,7 @@
 package de.whitefrog.frogr.auth.rest.oauth;
 
 import de.whitefrog.frogr.auth.repository.BaseUserRepository;
-import de.whitefrog.frogr.auth.model.BaseUser;
+import de.whitefrog.frogr.model.BaseUser;
 import org.neo4j.graphdb.Transaction;
 
 public class Authorizer<U extends BaseUser> implements io.dropwizard.auth.Authorizer<U> {

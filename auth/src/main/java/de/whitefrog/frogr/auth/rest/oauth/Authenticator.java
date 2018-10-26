@@ -2,7 +2,7 @@ package de.whitefrog.frogr.auth.rest.oauth;
 
 import de.whitefrog.frogr.auth.model.Role;
 import de.whitefrog.frogr.auth.repository.BaseUserRepository;
-import de.whitefrog.frogr.auth.model.BaseUser;
+import de.whitefrog.frogr.model.BaseUser;
 import org.neo4j.graphdb.Transaction;
 
 import java.util.HashMap;
