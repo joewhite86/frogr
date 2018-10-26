@@ -1,6 +1,7 @@
 package de.whitefrog.frogr;
 
 import de.whitefrog.frogr.exception.FrogrException;
+import de.whitefrog.frogr.jobs.JobRunner;
 import de.whitefrog.frogr.model.Base;
 import de.whitefrog.frogr.model.Graph;
 import de.whitefrog.frogr.model.Model;
@@ -57,6 +58,7 @@ public class Service implements AutoCloseable {
   private Persistence persistence;
   private ModelCache modelCache;
   private String directory;
+  private JobRunner jobRunner;
 
   public Service() {
     Locale.setDefault(Locale.GERMAN);
@@ -111,6 +113,9 @@ public class Service implements AutoCloseable {
 
     registerShutdownHook(this);
     state = State.Running;
+
+    jobRunner = new JobRunner(this);
+    jobRunner.initScheduler();
   }
   
   protected GraphDatabaseService createGraphDatabase() {
