@@ -2,7 +2,6 @@ package de.whitefrog.frogr.repository
 
 import de.whitefrog.frogr.Service
 import de.whitefrog.frogr.exception.PersistException
-import de.whitefrog.frogr.model.Filter
 import de.whitefrog.frogr.test.TemporaryService
 import de.whitefrog.frogr.test.model.Clothing
 import de.whitefrog.frogr.test.model.Person

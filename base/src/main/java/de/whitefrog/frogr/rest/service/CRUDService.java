@@ -2,6 +2,8 @@ package de.whitefrog.frogr.rest.service;
 
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.annotation.JsonView;
+import de.whitefrog.frogr.exception.DuplicateEntryException;
+import de.whitefrog.frogr.model.FBase;
 import de.whitefrog.frogr.model.Model;
 import de.whitefrog.frogr.model.SaveContext;
 import de.whitefrog.frogr.model.SearchParameter;
@@ -36,6 +38,8 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
       }
 
       tx.success();
+    } catch(DuplicateEntryException e) {
+      return Response.status(Response.Status.CONFLICT).build();  
     }
 
     return Response
@@ -49,6 +53,9 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
       for(M model : models) {
         if(!model.isPersisted()) {
           throw new ForbiddenException("the model has to be created first");
+        }
+        if(model instanceof FBase && repository().findByUuid(((FBase) model).getUuid()) == null) {
+          throw new NotFoundException("model with uuid \"" + ((FBase) model).getUuid() + "\" could not be found");
         }
         SaveContext<M> context = new SaveContext<>(repository(), model);
         try {
@@ -104,12 +111,14 @@ public abstract class CRUDService<R extends Repository<M>, M extends Model> exte
 
   @DELETE
   @Path("{uuid: [a-zA-Z0-9]+}")
-  public void delete(@PathParam("uuid") String uuid) {
+  public Response delete(@PathParam("uuid") String uuid) {
     try(Transaction tx = service().beginTx()) {
       M model = repository().findByUuid(uuid);
       if(model == null) throw new NotFoundException();
       repository().remove(model);
       tx.success();
     }
+
+    return Response.ok().build();
   }
 }

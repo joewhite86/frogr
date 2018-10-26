@@ -169,6 +169,6 @@ class TestCRUDService {
     val response = webTarget.path("person/${person.uuid}")
       .request(MediaType.APPLICATION_JSON)
       .delete()
-    assertEquals(Status.NO_CONTENT.statusCode, response.status)
+    assertEquals(Status.OK.statusCode, response.status)
   }
 }

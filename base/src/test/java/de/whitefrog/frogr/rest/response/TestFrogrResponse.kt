@@ -21,8 +21,8 @@ class TestFrogrResponse {
     response.errorCode = 404
     val json = jacksonObjectMapper().writeValueAsString(response)
     val fromJson = jacksonObjectMapper().readValue<FrogrResponse<Person>>(json)
-    assertThat(response.errorCode).isEqualTo(fromJson.errorCode)
-    assertThat(response.total).isEqualTo(fromJson.total)
+    assertThat(response.errorCode!!).isEqualTo(fromJson.errorCode)
+    assertThat(response.total!!).isEqualTo(fromJson.total)
     assertThat(response.isSuccess).isEqualTo(fromJson.isSuccess)
     assertThat(response.message).isEqualTo(fromJson.message)
     assertThat(response.data).isEqualTo(fromJson.data)

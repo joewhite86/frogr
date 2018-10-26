@@ -6,6 +6,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.ext.Provider;
 import java.io.File;
@@ -37,19 +38,26 @@ public class WrappingWriterInterceptor implements ContainerResponseFilter, Conta
     }
 
     final FrogrResponse response = new FrogrResponse();
-    response.setSuccess(true);
+    if(containerResponse.getStatus() == Response.Status.OK.getStatusCode() ||
+       containerResponse.getStatus() == Response.Status.CREATED.getStatusCode() ||
+       containerResponse.getStatus() == Response.Status.NO_CONTENT.getStatusCode())
+         response.setSuccess(true);
     // Handle JSON responses
-    if(entity instanceof ValidationErrorMessage) {
-      response.setMessage(((ValidationErrorMessage) entity).getErrors().get(0));
-      response.setSuccess(false);
-    } else if(entity instanceof List) {
-      response.setData((List) entity);
-    } else if(entity instanceof Collection) {
-      response.setData(new ArrayList<>((Collection<?>) entity));
-    } else {
-      response.setData(Collections.singletonList(entity));
+    if(entity != null) {
+      if(entity instanceof ValidationErrorMessage) {
+        response.setMessage(((ValidationErrorMessage) entity).getErrors().get(0));
+        response.setSuccess(false);
+      } else if(entity instanceof List) {
+        response.setData((List) entity);
+      } else if(entity instanceof Collection) {
+        response.setData(new ArrayList<>((Collection<?>) entity));
+      } else {
+        response.setData(Collections.singletonList(entity));
+      }
     }
-
+    if(containerResponse.getHeaderString("Content-Type") == null) {
+      containerResponse.getHeaders().add("Content-Type", "application/json");
+    }
     // Tell JAX-RS about new entity.
     containerResponse.setEntity(response);
   }
