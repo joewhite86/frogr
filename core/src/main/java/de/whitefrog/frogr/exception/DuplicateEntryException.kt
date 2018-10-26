@@ -10,8 +10,8 @@ import java.lang.reflect.Field
 class DuplicateEntryException : PersistException {
   var bean: Base? = null
   var field: Field? = null
-
-  constructor(message: String?, bean: Base) : super(message) {
+  
+  constructor(message: String? = null, bean: Base? = null) : super(message) {
     this.bean = bean
   }
 
