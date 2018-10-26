@@ -11,3 +11,4 @@ Documentation
    services
    searching
    authorization
+   client
